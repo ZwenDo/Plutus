@@ -48,6 +48,12 @@ abstract class Database : RoomDatabase() {
 
             return INSTANCE.books()
         }
+
+        fun transactions(): TransactionDao {
+            require(::INSTANCE.isInitialized) { "Database not initialized" }
+
+            return INSTANCE.transactions()
+        }
     }
 
 }
