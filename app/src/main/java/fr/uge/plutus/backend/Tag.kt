@@ -8,15 +8,39 @@ enum class TagType {
     INCOME,
     EXPENSE,
     TRANSFER,
+    ;
+
+    companion object {
+        fun tagFromString(tag: String): Pair<TagType, String> {
+            require(tag.isNotBlank()) { "Tag name cannot be blank" }
+            val type = when (tag[0]) {
+                '-' -> EXPENSE
+                '+' -> INCOME
+                '=' -> TRANSFER
+                else -> INFO
+            }
+            val name = if (type != INFO) {
+                tag.drop(1).also { require(it.isNotBlank()) { "Tag name cannot be blank" } }
+            } else {
+                tag
+            }
+            return type to name
+        }
+    }
 }
 
 @Entity(
     tableName = "tag",
     foreignKeys = [
-        ForeignKey(entity = Book::class, parentColumns = ["uuid"], childColumns = ["bookId"], onDelete = ForeignKey.CASCADE
+        ForeignKey(
+            entity = Book::class,
+            parentColumns = ["uuid"],
+            childColumns = ["bookId"],
+            onDelete = ForeignKey.CASCADE
         )],
     indices = [
-        Index(value = ["name", "bookId", "type"], unique = true
+        Index(
+            value = ["name", "bookId", "type"], unique = true
         )]
 )
 
@@ -24,39 +48,30 @@ data class Tag(
     val name: String?,
     val type: TagType?,
     val bookId: UUID?,
-    @PrimaryKey val id: UUID = UUID.randomUUID()
+    @PrimaryKey val tagId: UUID = UUID.randomUUID()
 )
-/*
-fun addTag(tagName: String, book: Book) {
-    when {
-        tagName.startsWith("-") -> {
-            Tag(tagName, TagType.EXPENSE, book.uuid)
-        }
-        tagName.startsWith("+") -> {
-            Tag(tagName, TagType.INCOME, book.uuid)
-        }
-        tagName.startsWith("=") -> {
-            Tag(tagName, TagType.TRANSFER, book.uuid)
-        }
-        else -> {
-            Tag(tagName, TagType.INFO, book.uuid)
-        }
-    }
-}
- */
 
 @Dao
 interface TagDao {
 
     @Insert
-    fun insert(tag: Tag)
+    fun _insert(tag: Tag)
 
     @Delete
     fun delete(tag: Tag)
 
     @Query("SELECT * FROM tag WHERE name = :name AND bookId = :bookId")
-    fun findByName(name: String): List<Tag>
+    fun findByName(name: String, bookId: UUID): List<Tag>
 
     @Query("SELECT * FROM tag WHERE bookId = :bookId")
-    fun findByBookId(bookId: Int): List<Tag>
+    fun findByBookId(bookId: UUID): List<Tag>
+
+    fun insert(tag: String, bookId: UUID): Tag {
+        val (type, name) = TagType.tagFromString(tag)
+        val tagEntity = Tag(name, type, bookId)
+        _insert(tagEntity)
+        return tagEntity
+    }
+    @Query("SELECT * FROM tag")
+    fun findAll() : List<Tag>
 }

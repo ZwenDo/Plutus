@@ -47,7 +47,7 @@ class TransactionsTest {
         val transaction = Transaction("First Transaction", Date(0), 10.0, book.uuid)
         transactionDao.insert(transaction)
 
-        val transactionFromDb = transactionDao.findById(transaction.id)
+        val transactionFromDb = transactionDao.findById(transaction.transactionId)
         assertEquals(transaction, transactionFromDb)
     }
 
@@ -93,12 +93,12 @@ class TransactionsTest {
     fun shouldUpdateATransaction() = runTest {
         val transaction = Transaction("Second Transaction", Date(0), 10.0, book.uuid)
         transactionDao.insert(transaction)
-        val transactionFromDb = transactionDao.findById(transaction.id)!!
+        val transactionFromDb = transactionDao.findById(transaction.transactionId)!!
         assertEquals(transaction, transactionFromDb)
 
         val updatedTransaction = transactionFromDb.copy(description = "First transaction")
         transactionDao.update(updatedTransaction)
-        val updatedTransactionFromDb = transactionDao.findById(transaction.id)
+        val updatedTransactionFromDb = transactionDao.findById(transaction.transactionId)
         assertEquals(updatedTransaction, updatedTransactionFromDb)
     }
 
@@ -107,11 +107,11 @@ class TransactionsTest {
     fun shouldDeleteATransaction() = runTest {
         val transaction = Transaction("First Transaction", Date(0), 10.0, book.uuid)
         transactionDao.insert(transaction)
-        val transactionFromDB = transactionDao.findById(transaction.id)!!
+        val transactionFromDB = transactionDao.findById(transaction.transactionId)!!
         assertEquals(transaction, transactionFromDB)
 
         transactionDao.delete(transactionFromDB)
-        val transactionDeleted = transactionDao.findById(transaction.id)
+        val transactionDeleted = transactionDao.findById(transaction.transactionId)
         assertNull(transactionDeleted)
     }
 
@@ -121,14 +121,14 @@ class TransactionsTest {
         val transaction = Transaction("First Transaction", Date(0), 10.0, book.uuid)
         transactionDao.insert(transaction)
 
-        val transactionFromDB = transactionDao.findById(transaction.id)
+        val transactionFromDB = transactionDao.findById(transaction.transactionId)
         assertEquals(transaction, transactionFromDB)
 
         bookDao.delete(book)
 
         val bookFromDB2 = bookDao.findById(book.uuid)
         assertNull(bookFromDB2)
-        val transactionFromDB2 = transactionDao.findById(transaction.id)
+        val transactionFromDB2 = transactionDao.findById(transaction.transactionId)
         assertNull(transactionFromDB2)
     }
 
