@@ -68,7 +68,6 @@ class TagTest {
     }
 
     @Test
-    @OptIn(ExperimentalCoroutinesApi::class)
     fun shouldFailBecauseOfForeignKeyConstraint() = runTest {
         val unknownBookId = UUID.randomUUID()
 
@@ -108,7 +107,6 @@ class TagTest {
         assertThrows(IllegalArgumentException::class.java) {
             tagDao.insert(" ", book.uuid)
         }
-
     }
 
     @Test
@@ -126,7 +124,7 @@ class TagTest {
     }
 
     @Test
-    fun shouldFailBecauseTransactionIsNotInDb() = runTest {
+    fun shouldFailIfTransactionIsNotInDb() = runTest {
         val transaction = Transaction("First", Date(0), 10.0, book.uuid)
 
         val tag = tagDao.insert("4th", book.uuid)
