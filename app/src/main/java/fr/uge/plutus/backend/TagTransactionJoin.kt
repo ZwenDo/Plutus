@@ -21,7 +21,7 @@ import java.util.*
         )
     ]
 )
-data class TagTransactionJoin (
+data class TagTransactionJoin(
     val transactionId: UUID,
 
     val tagId: UUID

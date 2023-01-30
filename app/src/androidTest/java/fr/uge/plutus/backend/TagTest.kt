@@ -47,7 +47,7 @@ class TagTest {
     }
 
     @Test
-    fun shouldCreateATagWithoutFailing() = runTest {
+    fun shouldCreateTagsWithoutFailing() = runTest {
 
         val tag = tagDao.insert("+First Tag", book.uuid)
         val tagFromDb = tagDao.findByName("First Tag", book.uuid)
@@ -99,7 +99,7 @@ class TagTest {
     }
 
     @Test
-    fun shouldFailBecauseOfTagName() = runTest {
+    fun shouldFailBecauseOfInvalidTagName() = runTest {
 
         assertThrows(IllegalArgumentException::class.java) {
             tagDao.insert("=", book.uuid)
@@ -209,7 +209,8 @@ class TagTest {
         tagTransactionJoinDao.insert(transaction, tag)
         val findTagTransactionJoin = tagTransactionJoinDao.findTransactionByTagId(tag.tagId)
         assertEquals(findTagTransactionJoin[0], transaction)
-        val findTransactionTagJoin = tagTransactionJoinDao.findTagsByTransactionId(transaction.transactionId)
+        val findTransactionTagJoin =
+            tagTransactionJoinDao.findTagsByTransactionId(transaction.transactionId)
         assertEquals(findTransactionTagJoin[0], tag)
 
         tagDao.delete(tag)
@@ -218,7 +219,8 @@ class TagTest {
         assertEquals(emptyList<Tag>(), findTag2)
         val tagTransaction = tagTransactionJoinDao.findTransactionByTagId(tag.tagId)
         assertEquals(emptyList<Transaction>(), tagTransaction)
-        val tagTransaction2 = tagTransactionJoinDao.findTagsByTransactionId(transaction.transactionId)
+        val tagTransaction2 =
+            tagTransactionJoinDao.findTagsByTransactionId(transaction.transactionId)
         assertEquals(emptyList<Tag>(), tagTransaction2)
     }
 
@@ -236,7 +238,8 @@ class TagTest {
         tagTransactionJoinDao.insert(transaction, tag)
         val findTagTransactionJoin = tagTransactionJoinDao.findTransactionByTagId(tag.tagId)
         assertEquals(findTagTransactionJoin[0], transaction)
-        val findTransactionTagJoin = tagTransactionJoinDao.findTagsByTransactionId(transaction.transactionId)
+        val findTransactionTagJoin =
+            tagTransactionJoinDao.findTagsByTransactionId(transaction.transactionId)
         assertEquals(findTransactionTagJoin[0], tag)
 
         transactionDao.delete(transaction)
@@ -245,7 +248,8 @@ class TagTest {
         assertNull(findTransaction)
         val tagTransaction = tagTransactionJoinDao.findTransactionByTagId(tag.tagId)
         assertEquals(emptyList<Transaction>(), tagTransaction)
-        val tagTransaction2 = tagTransactionJoinDao.findTagsByTransactionId(transaction.transactionId)
+        val tagTransaction2 =
+            tagTransactionJoinDao.findTagsByTransactionId(transaction.transactionId)
         assertEquals(emptyList<Tag>(), tagTransaction2)
     }
 

@@ -28,7 +28,6 @@ enum class TagType {
         }
     }
 }
-
 @Entity(
     tableName = "tag",
     foreignKeys = [
@@ -72,6 +71,7 @@ interface TagDao {
         _insert(tagEntity)
         return tagEntity
     }
+
     @Query("SELECT * FROM tag")
-    fun findAll() : List<Tag>
+    fun findAll(): List<Tag>
 }

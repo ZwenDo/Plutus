@@ -10,7 +10,12 @@ enum class Currency {
 
 @Entity(
     tableName = "transactions",
-    foreignKeys = [ForeignKey(entity = Book::class, parentColumns = ["uuid"], childColumns = ["bookId"], onDelete = ForeignKey.CASCADE)]
+    foreignKeys = [ForeignKey(
+        entity = Book::class,
+        parentColumns = ["uuid"],
+        childColumns = ["bookId"],
+        onDelete = ForeignKey.CASCADE
+    )]
 )
 data class Transaction(
     val description: String?,
