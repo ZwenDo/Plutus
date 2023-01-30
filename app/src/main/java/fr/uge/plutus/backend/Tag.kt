@@ -28,6 +28,7 @@ enum class TagType {
         }
     }
 }
+
 @Entity(
     tableName = "tag",
     foreignKeys = [
@@ -42,7 +43,6 @@ enum class TagType {
             value = ["name", "bookId", "type"], unique = true
         )]
 )
-
 data class Tag(
     val name: String?,
     val type: TagType?,
