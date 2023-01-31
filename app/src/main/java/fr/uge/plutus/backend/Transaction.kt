@@ -10,7 +10,12 @@ enum class Currency {
 
 @Entity(
     tableName = "transactions",
-    foreignKeys = [ForeignKey(entity = Book::class, parentColumns = ["uuid"], childColumns = ["bookId"], onDelete = ForeignKey.CASCADE)]
+    foreignKeys = [ForeignKey(
+        entity = Book::class,
+        parentColumns = ["uuid"],
+        childColumns = ["bookId"],
+        onDelete = ForeignKey.CASCADE
+    )]
 )
 data class Transaction(
     val description: String?,
@@ -19,7 +24,7 @@ data class Transaction(
     val bookId: UUID?,
     val currency: Currency? = Currency.USD,
 
-    @PrimaryKey val id: UUID = UUID.randomUUID()
+    @PrimaryKey val transactionId: UUID = UUID.randomUUID()
 )
 
 @Dao
@@ -36,6 +41,6 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE bookId = :bookId")
     suspend fun findAllByBookId(bookId: UUID): List<Transaction>
 
-    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
+    @Query("SELECT * FROM transactions WHERE transactionId = :id LIMIT 1")
     suspend fun findById(id: UUID): Transaction?
 }

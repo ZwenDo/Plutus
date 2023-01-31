@@ -11,7 +11,9 @@ import java.util.UUID
 @androidx.room.Database(
     entities = [
         Book::class,
-        Transaction::class
+        Tag::class,
+        Transaction::class,
+        TagTransactionJoin::class
     ],
     version = 1,
     exportSchema = false
@@ -21,7 +23,11 @@ abstract class Database : RoomDatabase() {
 
     abstract fun books(): BookDao
 
+    abstract fun tags(): TagDao
+
     abstract fun transactions(): TransactionDao
+
+    abstract fun tagTransactionJoin() : TagTransactionJoinDao
 
     companion object {
 
@@ -49,10 +55,22 @@ abstract class Database : RoomDatabase() {
             return INSTANCE.books()
         }
 
-        fun transactions(): TransactionDao {
+        fun tags() : TagDao {
+            require(::INSTANCE.isInitialized) { "Database not initialized" }
+
+            return INSTANCE.tags()
+        }
+
+        fun transactions() : TransactionDao {
             require(::INSTANCE.isInitialized) { "Database not initialized" }
 
             return INSTANCE.transactions()
+        }
+
+        fun tagTransactionJoin() : TagTransactionJoinDao {
+            require(::INSTANCE.isInitialized) { "Database not initialized" }
+
+            return INSTANCE.tagTransactionJoin()
         }
     }
 
