@@ -12,6 +12,16 @@
         android:theme="@style/Theme.Plutus"
         tools:targetApi="31">
         <activity
+            android:name=".Transaction"
+            android:exported="false"
+            android:label="@string/title_activity_transaction"
+            android:theme="@style/Theme.Plutus" />
+        <activity
+            android:name=".Pills"
+            android:exported="false"
+            android:label="@string/title_activity_pills"
+            android:theme="@style/Theme.Plutus" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
