@@ -3,11 +3,11 @@ package fr.uge.plutus.backend
 import androidx.room.*
 import java.util.*
 
-enum class TagType {
-    INFO,
-    INCOME,
-    EXPENSE,
-    TRANSFER,
+enum class TagType(val code: String) {
+    INFO(""),
+    INCOME("+"),
+    EXPENSE("-"),
+    TRANSFER("="),
     ;
 
     companion object {
