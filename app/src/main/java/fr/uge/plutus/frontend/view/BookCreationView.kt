@@ -35,6 +35,12 @@ fun BookCreationView(onExit: () -> Unit = {}) {
     LaunchedEffect(creating) {
         if (!creating) return@LaunchedEffect
 
+        if (bookName.isBlank()) {
+            errorMessage = "Book name cannot be empty"
+            creating = false
+            return@LaunchedEffect
+        }
+
         val book = Book(bookName)
         try {
             Database.books().insert(book)
