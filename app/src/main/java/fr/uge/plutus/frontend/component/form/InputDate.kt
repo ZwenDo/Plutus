@@ -42,7 +42,8 @@ import java.util.Date
 @Composable
 fun InputDate(
     label: String,
-    onValueChange: (String) -> Unit
+    errorMessage: String? = null,
+    onValueChange: (String) -> Unit,
 ) {
     val calendar = Calendar.getInstance()
     calendar.time = Date()
@@ -51,6 +52,8 @@ fun InputDate(
     val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
 
     var date by rememberSaveable { mutableStateOf(Date().toStringFormatted()) }
+    onValueChange(date)
+
     val dialog = DatePickerDialog(
         LocalContext.current,
         { _, year, month, day ->
@@ -73,7 +76,7 @@ fun InputDate(
 
         Spacer(Modifier.width(10.dp))
 
-        InputText(label, date, "dd/mm/yyyy") {
+        InputText(label, date, "dd/mm/yyyy", errorMessage = errorMessage) {
             date = it
             onValueChange(date)
         }
