@@ -1,5 +1,6 @@
-package fr.uge.plutus.frontend.components.commons
+package fr.uge.plutus.frontend.components.view
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -8,17 +9,30 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.uge.plutus.backend.*
+import fr.uge.plutus.frontend.components.commons.DisplayPill
+import fr.uge.plutus.ui.theme.PlutusTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 
+
+private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> = withContext(Dispatchers.Default)  {
+    return@withContext Database.tagTransactionJoin().findTagsByTransactionId(transaction.transactionId)
+}
 
 private fun getTagTypeColor(tag: Tag): Color {
     return when(tag.type) {
@@ -29,22 +43,12 @@ private fun getTagTypeColor(tag: Tag): Color {
     }
 }
 
-private fun getTransactionsTags(transaction: Transaction): List<Tag> {
-    val book = Book("Book")
-
-    val t1 = getTagFromString("+Quotidiens", book)
-    val t2 = getTagFromString("-sorties", book)
-    val t3 = getTagFromString("=anniversaries", book)
-    val t4 = getTagFromString("repas", book)
-    val t5 = getTagFromString("animaux", book)
-
-    //return Database.tagTransactionJoin().findTagsByTransactionId(transactionId = transaction.transactionId)
-
-    return listOf(t1, t2, t3, t4, t5)
-}
-
 @Composable
-fun DisplayHeader(transaction: Transaction, backgroundColor: Color = Color.Cyan, fontColor: Color = Color.White) {
+fun DisplayHeader(
+    transaction: Transaction,
+    backgroundColor: Color = MaterialTheme.colors.primary,
+    fontColor: Color = MaterialTheme.colors.onPrimary
+) {
     Column(
         Modifier
             .fillMaxWidth()
@@ -52,7 +56,7 @@ fun DisplayHeader(transaction: Transaction, backgroundColor: Color = Color.Cyan,
             .padding(bottom = 20.dp)
     ) {
         // return button
-        IconButton(onClick = { /*TODO*/ }) {
+        IconButton(onClick = { /* TODO: Navigation go back*/ }) {
             Icon(
                 imageVector = Icons.Filled.ArrowBack,
                 contentDescription = "Back"
@@ -100,7 +104,7 @@ fun DisplayDescriptionSection(transaction: Transaction) {
             color = Color.Gray
         )
         Text(
-            text = transaction.description ?: "",
+            text = transaction.description!!,
             fontSize = 20.sp
         )
     }
@@ -117,63 +121,78 @@ fun DisplayTags(tags: List<Tag>) {
     {
         items(tags) {
             val caption = it.type?.code + it.name
-            DisplayTag(
-                caption = caption,
-                clickHandler = { /*TODO*/ }
-            )
+            DisplayPill(caption) { /* TODO: Display tag's details */ }
         }
     }
 }
 
 @Composable
 fun DisplayTagsSection(transaction: Transaction) {
-    val tags = getTransactionsTags(transaction)
+    var loaded by rememberSaveable { mutableStateOf(false) }
+    var tags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
 
-    Column(Modifier.fillMaxWidth()) {
-        Text(
-            text = "Tags",
-            modifier = Modifier.padding(5.dp),
-            fontSize = 15.sp,
-            color = Color.Gray
-        )
-        DisplayTags(tags = tags)
+    if (!loaded) {
+        Loading {
+            tags = getTransactionsTags(transaction)
+            loaded = true
+        }
+    } else {
+        Column(Modifier.fillMaxWidth()) {
+            Text(
+                text = "Tags",
+                modifier = Modifier.padding(5.dp),
+                fontSize = 15.sp,
+                color = Color.Gray
+            )
+            DisplayTags(tags = tags)
+        }
     }
 }
 
 @Composable
 fun DisplayBody(transaction: Transaction) {
-    Column(Modifier.fillMaxSize()) {
+    Column(
+        Modifier
+            .fillMaxSize()) {
         DisplayDescriptionSection(transaction = transaction)
-        Divider(color = Color.Gray, modifier = Modifier.fillMaxWidth().padding(10.dp).width(1.dp))
+        Divider(color = Color.Gray, modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp)
+            .width(1.dp))
         DisplayTagsSection(transaction = transaction)
     }
 }
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun DisplayTransaction(transaction: Transaction) {
-    val color = Color.hsl(186f, 0.76f, 0.39f)
-    val fontColor = Color.White
-
-    Column(Modifier.fillMaxSize()) {
-        DisplayHeader(
-            transaction = transaction,
-            backgroundColor = color,
-            fontColor = fontColor
-        )
-        DisplayBody(transaction = transaction)
+fun DisplayTransactionDetail(transaction: Transaction) {
+    Scaffold {
+        Column(Modifier.fillMaxSize()) {
+            DisplayHeader(
+                transaction = transaction
+            )
+            DisplayBody(transaction = transaction)
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun Preview() {
-    val book = Book("Book")
-    val transaction = Transaction("First Transaction", Date(0), 1542.15, book.uuid)
+fun TransactionDetailsPreview() {
+    val context = LocalContext.current
+    var loaded by rememberSaveable { mutableStateOf(false) }
+    var transaction by rememberSaveable { mutableStateOf<Transaction?>(null) }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colors.background
-    ) {
-        DisplayTransaction(transaction)
+    if(!loaded) {
+        Database.init(context)
+        Loading {
+            val books = Database.books().getAll()
+            transaction = Database.transactions().findAllByBookId(books[0].uuid)[0]
+            loaded = true
+        }
+    } else {
+        PlutusTheme {
+            DisplayTransactionDetail(transaction!!)
+        }
     }
 }

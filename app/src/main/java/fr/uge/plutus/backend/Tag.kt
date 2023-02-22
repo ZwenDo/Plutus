@@ -2,6 +2,7 @@ package fr.uge.plutus.backend
 
 import androidx.room.*
 import java.util.*
+import java.io.Serializable
 
 enum class TagType(val code: String) {
     INFO(""),
@@ -48,7 +49,7 @@ data class Tag(
     val type: TagType?,
     val bookId: UUID?,
     @PrimaryKey val tagId: UUID = UUID.randomUUID()
-)
+) : Serializable
 
 @Dao
 interface TagDao {

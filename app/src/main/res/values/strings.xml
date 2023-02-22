@@ -3,4 +3,6 @@
     <string name="title_activity_pills">Pills</string>
     <string name="title_activity_transaction">Transaction</string>
     <string name="title_activity_transaction_view">TransactionView</string>
+    <string name="title_activity_tags_view">TagsView</string>
+    <string name="title_activity_loading_view">LoadingView</string>
 </resources>
