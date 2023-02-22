@@ -1,6 +1,5 @@
 package fr.uge.plutus.frontend.components.view
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,19 +24,22 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.components.commons.DisplayPill
 import fr.uge.plutus.ui.theme.PlutusTheme
+import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
 import java.util.*
 
 
-private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> = withContext(Dispatchers.Default)  {
-    return@withContext Database.tagTransactionJoin().findTagsByTransactionId(transaction.transactionId)
-}
+private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
+    withContext(Dispatchers.IO) {
+        Database.tagTransactionJoin()
+            .findTagsByTransactionId(transaction.transactionId)
+    }
 
-private suspend fun getTransactions(book: Book): List<Transaction> = withContext(Dispatchers.Default)  {
-    return@withContext Database.transactions().findAllByBookId(book.uuid)
-}
+private suspend fun getTransactions(book: Book): List<Transaction> =
+    withContext(Dispatchers.IO) {
+        Database.transactions().findAllByBookId(book.uuid)
+    }
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -50,8 +52,7 @@ fun DisplayTransaction(transaction: Transaction, clickHandler: () -> Unit) {
             tags = getTransactionsTags(transaction)
             loaded = true
         }
-    }
-    else {
+    } else {
         Surface(
             modifier = Modifier.padding(8.dp),
             border = BorderStroke(1.dp, Color.Gray),
@@ -66,7 +67,7 @@ fun DisplayTransaction(transaction: Transaction, clickHandler: () -> Unit) {
             ) {
                 // Amount
                 Text(
-                    text = transaction.amount.toString()!! + " " + transaction.currency,
+                    text = "${transaction.amount!!} ${transaction.currency!!}",
                     fontSize = 25.sp,
                     fontWeight = FontWeight(900)
                 )
@@ -89,14 +90,12 @@ fun DisplayTransaction(transaction: Transaction, clickHandler: () -> Unit) {
     }
 }
 
-@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun DisplayTransactions(Book: Book) {
     var transactions by rememberSaveable { mutableStateOf(emptyList<Transaction>()) }
-    val formatter = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
     var loaded by rememberSaveable { mutableStateOf(false) }
+    var oldDate by rememberSaveable { mutableStateOf("") }
     val scaffoldState = rememberScaffoldState()
-    var oldDate = ""
 
     if (!loaded) {
         Loading {
@@ -115,12 +114,14 @@ fun DisplayTransactions(Book: Book) {
                     Icon(Icons.Filled.Add, "New transaction")
                 }
             }
-        ) {
+        ) { padding ->
             LazyColumn(
-                Modifier.fillMaxWidth()
+                Modifier
+                    .fillMaxWidth()
+                    .padding(padding)
             ) {
                 items(transactions.sortedByDescending { it.date }) {
-                    val currentDate = formatter.format(it.date!!)
+                    val currentDate = DateFormatter.format(it.date!!)
                     if (oldDate != currentDate) {
                         Text(
                             text = currentDate,

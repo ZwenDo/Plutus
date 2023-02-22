@@ -1,6 +1,5 @@
 package fr.uge.plutus.frontend.components.view
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -24,24 +23,17 @@ import androidx.compose.ui.unit.sp
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.frontend.components.commons.DisplayPill
 import fr.uge.plutus.ui.theme.PlutusTheme
+import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.*
 
 
-private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> = withContext(Dispatchers.Default)  {
-    return@withContext Database.tagTransactionJoin().findTagsByTransactionId(transaction.transactionId)
-}
-
-private fun getTagTypeColor(tag: Tag): Color {
-    return when(tag.type) {
-        TagType.INCOME -> Color.hsl(105f, 1f, 0.75f)    // green
-        TagType.EXPENSE -> Color.hsl(1f, 1f, 0.75f)     // red
-        TagType.TRANSFER -> Color.hsl(60f, 1f, 0.75f)   // yellow
-        else -> Color.hsl(181f, 1f, 0.75f)              // cyan
+private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
+    withContext(Dispatchers.IO) {
+        Database.tagTransactionJoin()
+            .findTagsByTransactionId(transaction.transactionId)
     }
-}
+
 
 @Composable
 fun DisplayHeader(
@@ -65,7 +57,7 @@ fun DisplayHeader(
 
         // Amount
         Text(
-            text = transaction.amount.toString() + " " + transaction.currency.toString(),
+            text = "${transaction.amount!!} ${transaction.currency!!}",
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             color = fontColor,
@@ -75,8 +67,8 @@ fun DisplayHeader(
 
         // Date
         if (null != transaction.date) {
-            val formatter = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
-            val date = formatter.format(transaction.date).toString()
+
+            val date = DateFormatter.format(transaction.date)
             Text(
                 text = date,
                 modifier = Modifier.fillMaxWidth(),
@@ -120,7 +112,7 @@ fun DisplayTags(tags: List<Tag>) {
     )
     {
         items(tags) {
-            val caption = it.type?.code + it.name
+            val caption = it.type!!.code + it.name
             DisplayPill(caption) { /* TODO: Display tag's details */ }
         }
     }
@@ -153,21 +145,27 @@ fun DisplayTagsSection(transaction: Transaction) {
 fun DisplayBody(transaction: Transaction) {
     Column(
         Modifier
-            .fillMaxSize()) {
+            .fillMaxSize()
+    ) {
         DisplayDescriptionSection(transaction = transaction)
-        Divider(color = Color.Gray, modifier = Modifier
-            .fillMaxWidth()
-            .padding(10.dp)
-            .width(1.dp))
+        Divider(
+            color = Color.Gray, modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+                .width(1.dp)
+        )
         DisplayTagsSection(transaction = transaction)
     }
 }
 
-@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun DisplayTransactionDetail(transaction: Transaction) {
-    Scaffold {
-        Column(Modifier.fillMaxSize()) {
+    Scaffold { padding ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
             DisplayHeader(
                 transaction = transaction
             )
@@ -183,7 +181,7 @@ fun TransactionDetailsPreview() {
     var loaded by rememberSaveable { mutableStateOf(false) }
     var transaction by rememberSaveable { mutableStateOf<Transaction?>(null) }
 
-    if(!loaded) {
+    if (!loaded) {
         Database.init(context)
         Loading {
             val books = Database.books().getAll()

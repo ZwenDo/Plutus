@@ -1,5 +1,6 @@
 package fr.uge.plutus.backend
 
+import androidx.compose.ui.graphics.Color
 import androidx.room.*
 import java.util.*
 import java.io.Serializable
@@ -26,6 +27,15 @@ enum class TagType(val code: String) {
                 tag
             }
             return type to name
+        }
+
+        fun getTagTypeColor(tag: Tag): Color {
+            return when (tag.type) {
+                TagType.INCOME -> Color.hsl(105f, 1f, 0.75f)    // green
+                TagType.EXPENSE -> Color.hsl(1f, 1f, 0.75f)     // red
+                TagType.TRANSFER -> Color.hsl(60f, 1f, 0.75f)   // yellow
+                else -> Color.hsl(181f, 1f, 0.75f)              // cyan
+            }
         }
     }
 }
