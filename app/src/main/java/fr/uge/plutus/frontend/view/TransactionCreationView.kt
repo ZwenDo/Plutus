@@ -1,6 +1,10 @@
 package fr.uge.plutus.frontend.view
 
+import android.database.sqlite.SQLiteConstraintException
+import android.inputmethodservice.Keyboard
 import android.os.Build
+import android.widget.Button
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +40,7 @@ import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.BookStore
 import fr.uge.plutus.util.isValidDate
 import fr.uge.plutus.util.toDateOrNull
+import org.w3c.dom.Text
 
 enum class Field {
     DESCRIPTION,
@@ -46,7 +51,7 @@ enum class Field {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TransactionCreationView() {
+fun TransactionCreationView(onExit: () -> Unit = {}) {
     val currentBook = BookStore.book
     //require(currentBook != null) { "No book selected" }
 
@@ -79,16 +84,21 @@ fun TransactionCreationView() {
             return@LaunchedEffect
         }
 
-        Database.transactions().insert(
-            Transaction(
-                description = description,
-                date = actualDate,
-                amount = actualAmount,
-                currency = currency,
-                bookId = currentBook!!.uuid
+        try {
+            Database.transactions().insert(
+                Transaction(
+                    description = description,
+                    date = actualDate,
+                    amount = actualAmount,
+                    currency = currency,
+                    bookId = currentBook!!.uuid
+                )
             )
-        )
-
+            Toast.makeText(context, "Transaction created", Toast.LENGTH_SHORT).show()
+            onExit()
+        } catch (e: SQLiteConstraintException) {
+            Toast.makeText(context, "Error while creating transaction", Toast.LENGTH_SHORT).show()
+        }
         creating = false
     }
 
