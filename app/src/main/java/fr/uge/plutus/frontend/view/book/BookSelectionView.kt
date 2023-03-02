@@ -1,4 +1,4 @@
-package fr.uge.plutus.frontend.view
+package fr.uge.plutus.frontend.view.book
 
 import androidx.compose.runtime.Composable
 import fr.uge.plutus.backend.Book

@@ -1,4 +1,4 @@
-package fr.uge.plutus.frontend.view
+package fr.uge.plutus.frontend.view.transaction
 
 import android.database.sqlite.SQLiteConstraintException
 import android.inputmethodservice.Keyboard

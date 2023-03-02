@@ -1,4 +1,4 @@
-package fr.uge.plutus.frontend.view
+package fr.uge.plutus.frontend.view.book
 
 import android.database.sqlite.SQLiteConstraintException
 import android.widget.Toast

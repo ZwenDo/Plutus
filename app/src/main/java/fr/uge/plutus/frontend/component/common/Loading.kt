@@ -1,4 +1,4 @@
-package fr.uge.plutus.frontend.components.view
+package fr.uge.plutus.frontend.component.common
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

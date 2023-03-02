@@ -1,4 +1,4 @@
-package fr.uge.plutus.frontend.components.view
+package fr.uge.plutus.frontend.view.transaction
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,7 +21,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.uge.plutus.backend.*
-import fr.uge.plutus.frontend.components.commons.DisplayPill
+import fr.uge.plutus.frontend.component.common.DisplayPill
+import fr.uge.plutus.frontend.component.common.Loading
 import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
