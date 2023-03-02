@@ -24,6 +24,7 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.component.common.Loading
+import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
@@ -92,7 +93,8 @@ fun DisplayTransaction(transaction: Transaction, clickHandler: () -> Unit) {
 }
 
 @Composable
-fun DisplayTransactions(Book: Book) {
+fun DisplayTransactions() {
+    val book = GlobalState.currentBook!!
     var transactions by rememberSaveable { mutableStateOf(emptyList<Transaction>()) }
     var loaded by rememberSaveable { mutableStateOf(false) }
     var oldDate by rememberSaveable { mutableStateOf("") }
@@ -100,7 +102,7 @@ fun DisplayTransactions(Book: Book) {
 
     if (!loaded) {
         Loading {
-            transactions = getTransactions(Book)
+            transactions = getTransactions(book)
             loaded = true
         }
     } else {
@@ -160,7 +162,7 @@ fun TransactionListPreview() {
 
     if (loaded) {
         PlutusTheme {
-            DisplayTransactions(book!!)
+            DisplayTransactions()
         }
     }
 }

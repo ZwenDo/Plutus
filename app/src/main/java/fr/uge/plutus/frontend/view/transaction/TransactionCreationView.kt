@@ -1,9 +1,7 @@
 package fr.uge.plutus.frontend.view.transaction
 
 import android.database.sqlite.SQLiteConstraintException
-import android.inputmethodservice.Keyboard
 import android.os.Build
-import android.widget.Button
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
@@ -37,10 +35,8 @@ import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputSelect
 import fr.uge.plutus.frontend.component.form.InputText
-import fr.uge.plutus.frontend.store.BookStore
-import fr.uge.plutus.util.isValidDate
+import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.util.toDateOrNull
-import org.w3c.dom.Text
 
 enum class Field {
     DESCRIPTION,
@@ -52,7 +48,7 @@ enum class Field {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TransactionCreationView(onExit: () -> Unit = {}) {
-    val currentBook = BookStore.book
+    val currentBook = GlobalState.currentBook
     //require(currentBook != null) { "No book selected" }
 
     val context = LocalContext.current
