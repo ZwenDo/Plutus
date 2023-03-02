@@ -2,6 +2,7 @@ package fr.uge.plutus.backend
 
 import androidx.room.*
 import java.util.*
+import java.io.Serializable
 
 enum class Currency {
     EUR,
@@ -17,7 +18,7 @@ enum class Currency {
         onDelete = ForeignKey.CASCADE
     )]
 )
-data class Transaction(
+data class Transaction (
     val description: String?,
     val date: Date?,
     val amount: Double?,
@@ -25,7 +26,7 @@ data class Transaction(
     val currency: Currency? = Currency.USD,
 
     @PrimaryKey val transactionId: UUID = UUID.randomUUID()
-)
+) : Serializable
 
 @Dao
 interface TransactionDao {

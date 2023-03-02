@@ -12,6 +12,31 @@
         android:theme="@style/Theme.Plutus"
         tools:targetApi="31">
         <activity
+            android:name=".LoadingView"
+            android:exported="false"
+            android:label="@string/title_activity_loading_view"
+            android:theme="@style/Theme.Plutus" />
+        <activity
+            android:name=".TagsView"
+            android:exported="false"
+            android:label="@string/title_activity_tags_view"
+            android:theme="@style/Theme.Plutus" />
+        <activity
+            android:name=".TransactionView"
+            android:exported="false"
+            android:label="@string/title_activity_transaction_view"
+            android:theme="@style/Theme.Plutus" />
+        <activity
+            android:name=".Transaction"
+            android:exported="false"
+            android:label="@string/title_activity_transaction"
+            android:theme="@style/Theme.Plutus" />
+        <activity
+            android:name=".Pills"
+            android:exported="false"
+            android:label="@string/title_activity_pills"
+            android:theme="@style/Theme.Plutus" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"

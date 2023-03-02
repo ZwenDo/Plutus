@@ -1,13 +1,15 @@
 package fr.uge.plutus.backend
 
+import androidx.compose.ui.graphics.Color
 import androidx.room.*
 import java.util.*
+import java.io.Serializable
 
-enum class TagType {
-    INFO,
-    INCOME,
-    EXPENSE,
-    TRANSFER,
+enum class TagType(val code: String) {
+    INFO(""),
+    INCOME("+"),
+    EXPENSE("-"),
+    TRANSFER("="),
     ;
 
     companion object {
@@ -25,6 +27,15 @@ enum class TagType {
                 tag
             }
             return type to name
+        }
+
+        fun getTagTypeColor(tag: Tag): Color {
+            return when (tag.type) {
+                TagType.INCOME -> Color.hsl(105f, 1f, 0.75f)    // green
+                TagType.EXPENSE -> Color.hsl(1f, 1f, 0.75f)     // red
+                TagType.TRANSFER -> Color.hsl(60f, 1f, 0.75f)   // yellow
+                else -> Color.hsl(181f, 1f, 0.75f)              // cyan
+            }
         }
     }
 }
@@ -48,7 +59,7 @@ data class Tag(
     val type: TagType?,
     val bookId: UUID?,
     @PrimaryKey val tagId: UUID = UUID.randomUUID()
-)
+) : Serializable
 
 @Dao
 interface TagDao {
