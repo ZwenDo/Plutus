@@ -10,6 +10,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Update
 import java.util.UUID
+import java.io.Serializable
 
 @Entity(
     tableName = "books",
@@ -21,7 +22,7 @@ data class Book(
     @ColumnInfo(name = "name") val name: String?,
 
     @PrimaryKey val uuid: UUID = UUID.randomUUID(),
-)
+) : Serializable
 
 @Dao
 interface BookDao {
