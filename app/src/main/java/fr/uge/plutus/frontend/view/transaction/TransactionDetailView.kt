@@ -1,10 +1,20 @@
 package fr.uge.plutus.frontend.view.transaction
 
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.*
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
@@ -20,7 +30,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import fr.uge.plutus.backend.*
+import fr.uge.plutus.backend.Database
+import fr.uge.plutus.backend.Tag
+import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.component.common.Loading
 import fr.uge.plutus.ui.theme.PlutusTheme
@@ -40,7 +52,8 @@ private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
 fun DisplayHeader(
     transaction: Transaction,
     backgroundColor: Color = MaterialTheme.colors.primary,
-    fontColor: Color = MaterialTheme.colors.onPrimary
+    fontColor: Color = MaterialTheme.colors.onPrimary,
+    onBack: () -> Unit
 ) {
     Column(
         Modifier
@@ -49,7 +62,7 @@ fun DisplayHeader(
             .padding(bottom = 20.dp)
     ) {
         // return button
-        IconButton(onClick = { /* TODO: Navigation go back*/ }) {
+        IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.Filled.ArrowBack,
                 contentDescription = "Back"
@@ -160,18 +173,10 @@ fun DisplayBody(transaction: Transaction) {
 }
 
 @Composable
-fun DisplayTransactionDetail(transaction: Transaction) {
-    Scaffold { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            DisplayHeader(
-                transaction = transaction
-            )
-            DisplayBody(transaction = transaction)
-        }
+fun DisplayTransactionDetail(transaction: Transaction, onBack: () -> Unit) {
+    Column(Modifier.fillMaxSize()) {
+        DisplayHeader(transaction, onBack = onBack)
+        DisplayBody(transaction)
     }
 }
 
@@ -191,7 +196,9 @@ fun TransactionDetailsPreview() {
         }
     } else {
         PlutusTheme {
-            DisplayTransactionDetail(transaction!!)
+            DisplayTransactionDetail(transaction!!) {
+                Log.d("TransactionDetails", "Back")
+            }
         }
     }
 }

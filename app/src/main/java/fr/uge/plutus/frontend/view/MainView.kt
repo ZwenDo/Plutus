@@ -40,7 +40,9 @@ fun MainView() {
         View.TRANSACTION_CREATION -> TransactionCreationView {
             currentView = View.TRANSACTION_LIST
         }
-        View.TRANSACTION_LIST -> DisplayTransactions()
+        View.TRANSACTION_LIST -> DisplayTransactions {
+            currentView = View.TRANSACTION_CREATION
+        }
         View.TRANSACTION_DETAIL -> DisplayTransactionDetail(GlobalState.currentTransaction!!)
     }
 }
