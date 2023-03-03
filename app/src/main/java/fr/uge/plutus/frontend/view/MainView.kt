@@ -10,7 +10,6 @@ import androidx.compose.runtime.setValue
 import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.frontend.view.book.BookCreationView
 import fr.uge.plutus.frontend.view.book.BookSelectionView
-import fr.uge.plutus.frontend.view.transaction.DisplayTransactionDetail
 import fr.uge.plutus.frontend.view.transaction.DisplayTransactions
 import fr.uge.plutus.frontend.view.transaction.TransactionCreationView
 
@@ -20,7 +19,6 @@ private enum class View {
 
     TRANSACTION_CREATION,
     TRANSACTION_LIST,
-    TRANSACTION_DETAIL,
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -43,6 +41,5 @@ fun MainView() {
         View.TRANSACTION_LIST -> DisplayTransactions {
             currentView = View.TRANSACTION_CREATION
         }
-        View.TRANSACTION_DETAIL -> DisplayTransactionDetail(GlobalState.currentTransaction!!)
     }
 }

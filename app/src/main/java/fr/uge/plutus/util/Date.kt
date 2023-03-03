@@ -30,8 +30,3 @@ fun Date.toStringFormatted(): String {
     val year = calendar.get(Calendar.YEAR)
     return "$day/$month/$year"
 }
-
-fun main() {
-    val date = "10/2/2023".isValidDate()
-    println(date)
-}
