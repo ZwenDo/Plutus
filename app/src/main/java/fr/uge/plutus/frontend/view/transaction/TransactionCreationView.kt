@@ -2,6 +2,7 @@ package fr.uge.plutus.frontend.view.transaction
 
 import android.database.sqlite.SQLiteConstraintException
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +34,7 @@ import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.form.InputDate
-import fr.uge.plutus.frontend.component.form.InputSelect
+import fr.uge.plutus.frontend.component.form.InputSelectEnum
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.util.toDateOrNull
@@ -49,7 +50,7 @@ enum class Field {
 @Composable
 fun TransactionCreationView(onExit: () -> Unit = {}) {
     val currentBook = GlobalState.currentBook
-    //require(currentBook != null) { "No book selected" }
+    require(currentBook != null) { "No book selected" }
 
     val context = LocalContext.current
     var creating by rememberSaveable { mutableStateOf(false) }
@@ -135,7 +136,7 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                         }
                     }
                     Box(Modifier.weight(2f / 5f)) {
-                        InputSelect(
+                        InputSelectEnum(
                             label = "Currency",
                             options = Currency.values().toList(),
                             initial = Currency.USD,

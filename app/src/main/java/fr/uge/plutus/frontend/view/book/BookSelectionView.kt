@@ -47,8 +47,6 @@ fun BookSelectionView(onChosen: (Book) -> Unit) {
         return
     }
 
-    var scroll = rememberScrollState()
-
     Scaffold(
         scaffoldState = rememberScaffoldState(),
         topBar = { TopAppBar(title = { Text("Books") }) }
@@ -57,7 +55,7 @@ fun BookSelectionView(onChosen: (Book) -> Unit) {
             Modifier
                 .fillMaxSize()
                 .padding(padding + 8.dp)
-                .scrollable(scroll, orientation = Orientation.Vertical),
+                .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             userScrollEnabled = true
         ) {

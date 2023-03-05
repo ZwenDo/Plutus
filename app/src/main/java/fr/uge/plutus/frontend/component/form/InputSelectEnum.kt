@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.toSize
 import fr.uge.plutus.backend.Currency
 
 @Composable
-fun <T : Enum<T>> InputSelect(
+fun <T : Enum<T>> InputSelectEnum(
     label: String,
     options: List<T>,
     initial: T,
@@ -47,7 +47,13 @@ fun <T : Enum<T>> InputSelect(
     Column {
         OutlinedTextField(
             selected.toString(),
-            { selected = mapper(it) },
+            {
+                selected = try {
+                    mapper(it)
+                } catch (e: IllegalArgumentException) {
+                    selected
+                }
+            },
             Modifier
                 .fillMaxWidth()
                 .onGloballyPositioned { actualWidth = it.size.toSize().width },
@@ -88,7 +94,7 @@ private fun Preview() {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colors.background
     ) {
-        InputSelect(
+        InputSelectEnum(
             label = "Currency",
             options = Currency.values().toList(),
             initial = Currency.USD,

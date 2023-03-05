@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fr.uge.plutus.util.useDoOnceOnMounted
 import fr.uge.plutus.util.toStringFormatted
 import java.util.Calendar
 import java.util.Date
@@ -39,7 +40,10 @@ fun InputDate(
     val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
 
     var date by rememberSaveable { mutableStateOf(Date().toStringFormatted()) }
-    onValueChange(date)
+
+    useDoOnceOnMounted {
+        onValueChange(date)
+    }
 
     val dialog = DatePickerDialog(
         LocalContext.current,

@@ -62,30 +62,20 @@ fun BookCreationView(onExit: () -> Unit = {}) {
         creating = false
     }
 
-    Box(
-        modifier = Modifier
+    Column(
+        Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Column(
-            Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "Create a book", style = MaterialTheme.typography.h5)
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                InputText(label = "Book name", value = bookName, errorMessage = errorMessage) {
-                    bookName = it
-                    errorMessage = null
-                }
-            }
-            Button(modifier = Modifier.fillMaxWidth(), onClick = { creating = true }) {
-                Text(text = "CREATE", fontWeight = FontWeight.SemiBold)
-            }
+        Text(text = "Create a book", style = MaterialTheme.typography.h5)
+        InputText(label = "Book name", value = bookName, errorMessage = errorMessage) {
+            bookName = it
+            errorMessage = null
+        }
+        Button(modifier = Modifier.fillMaxWidth(), onClick = { creating = true }) {
+            Text(text = "CREATE", fontWeight = FontWeight.SemiBold)
         }
     }
 }
