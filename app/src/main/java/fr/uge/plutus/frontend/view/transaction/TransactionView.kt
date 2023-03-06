@@ -1,5 +1,6 @@
-package fr.uge.plutus.frontend.components.view
+package fr.uge.plutus.frontend.view.transaction
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,12 +23,14 @@ import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.Transaction
-import fr.uge.plutus.frontend.components.commons.DisplayPill
+import fr.uge.plutus.frontend.component.common.DisplayPill
+import fr.uge.plutus.frontend.component.common.Loading
+import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
+import java.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.*
 
 
 private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
@@ -90,16 +93,53 @@ fun DisplayTransaction(transaction: Transaction, clickHandler: () -> Unit) {
     }
 }
 
+enum class TransactionView {
+    LIST, DETAILS
+}
+
 @Composable
-fun DisplayTransactions(Book: Book) {
+fun TransactionList(
+    padding: PaddingValues,
+    transactions: List<Transaction>,
+    onTransactionClick: (Transaction) -> Unit
+) {
+    var oldDate by rememberSaveable { mutableStateOf("") }
+
+    LazyColumn(
+        Modifier
+            .fillMaxWidth()
+            .padding(padding)
+    ) {
+        items(transactions.sortedByDescending { it.date }) {
+            val currentDate = DateFormatter.format(it.date!!)
+            if (oldDate != currentDate) {
+                Text(
+                    text = currentDate,
+                    Modifier.padding(horizontal = 10.dp),
+                    color = Color.DarkGray
+                )
+                oldDate = currentDate
+            }
+            DisplayTransaction(it) {
+                onTransactionClick(it)
+            }
+        }
+    }
+}
+
+@Composable
+fun DisplayTransactions(onNewTransactionRequest: () -> Unit) {
+    val book = GlobalState.currentBook!!
     var transactions by rememberSaveable { mutableStateOf(emptyList<Transaction>()) }
     var loaded by rememberSaveable { mutableStateOf(false) }
-    var oldDate by rememberSaveable { mutableStateOf("") }
     val scaffoldState = rememberScaffoldState()
+
+    var transactionView by rememberSaveable { mutableStateOf(TransactionView.LIST) }
+    var currentTransaction by rememberSaveable { mutableStateOf<Transaction?>(null) }
 
     if (!loaded) {
         Loading {
-            transactions = getTransactions(Book)
+            transactions = getTransactions(book)
             loaded = true
         }
     } else {
@@ -110,28 +150,21 @@ fun DisplayTransactions(Book: Book) {
             },
             floatingActionButton =
             {
-                FloatingActionButton(onClick = { /*TODO new Transaction*/ }) {
+                FloatingActionButton(onClick = onNewTransactionRequest) {
                     Icon(Icons.Filled.Add, "New transaction")
                 }
             }
         ) { padding ->
-            LazyColumn(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(padding)
-            ) {
-                items(transactions.sortedByDescending { it.date }) {
-                    val currentDate = DateFormatter.format(it.date!!)
-                    if (oldDate != currentDate) {
-                        Text(
-                            text = currentDate,
-                            Modifier.padding(horizontal = 10.dp),
-                            color = Color.DarkGray
-                        )
-                        oldDate = currentDate
+            when (transactionView) {
+                TransactionView.LIST -> {
+                    TransactionList(padding, transactions) {
+                        currentTransaction = it
+                        transactionView = TransactionView.DETAILS
                     }
-                    DisplayTransaction(it) {
-                        /* TODO open transaction details */
+                }
+                TransactionView.DETAILS -> {
+                    DisplayTransactionDetail(currentTransaction!!) {
+                        transactionView = TransactionView.LIST
                     }
                 }
             }
@@ -159,7 +192,9 @@ fun TransactionListPreview() {
 
     if (loaded) {
         PlutusTheme {
-            DisplayTransactions(book!!)
+            DisplayTransactions {
+                Log.d("TransactionView", "New transaction request")
+            }
         }
     }
 }

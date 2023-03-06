@@ -1,4 +1,4 @@
-package fr.uge.plutus.frontend.components.commons
+package fr.uge.plutus.frontend.component.common
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
