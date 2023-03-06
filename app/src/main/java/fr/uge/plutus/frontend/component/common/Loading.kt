@@ -13,9 +13,7 @@ import kotlinx.coroutines.runBlocking
 @Composable
 fun Loading(animation: Boolean = true, callBack: suspend () -> Unit) {
     LaunchedEffect(true) {
-        runBlocking {
-            callBack()
-        }
+        callBack()
     }
 
     if (animation) {
