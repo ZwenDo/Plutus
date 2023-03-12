@@ -1,13 +1,10 @@
 package fr.uge.plutus.frontend.view.transaction
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Divider
@@ -35,6 +32,8 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.component.common.Loading
+import fr.uge.plutus.frontend.view.tag.TagCreationView
+import fr.uge.plutus.frontend.view.tag.TagSelectionView
 import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
@@ -105,7 +104,7 @@ fun DisplayDescriptionSection(transaction: Transaction) {
             .padding(5.dp)
     ) {
         Text(
-            text = "Descritpion de la transaction",
+            text = "Description de la transaction",
             fontSize = 15.sp,
             color = Color.Gray
         )
@@ -132,10 +131,12 @@ fun DisplayTags(tags: List<Tag>) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayTagsSection(transaction: Transaction) {
     var loaded by rememberSaveable { mutableStateOf(false) }
     var tags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
+    var tagSelect by rememberSaveable { mutableStateOf(false) }
 
     if (!loaded) {
         Loading {
@@ -151,6 +152,9 @@ fun DisplayTagsSection(transaction: Transaction) {
                 color = Color.Gray
             )
             DisplayTags(tags = tags)
+        }
+        Row {
+            TagCreationView() {}
         }
     }
 }
