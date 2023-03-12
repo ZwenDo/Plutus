@@ -159,6 +159,7 @@ fun DisplayTransactions(onNewTransactionRequest: () -> Unit) {
                 TransactionView.LIST -> {
                     TransactionList(padding, transactions) {
                         currentTransaction = it
+                        GlobalState.currentTransaction = it
                         transactionView = TransactionView.DETAILS
                     }
                 }
