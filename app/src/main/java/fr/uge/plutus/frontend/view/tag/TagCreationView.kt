@@ -28,16 +28,12 @@ private suspend fun removeTags(transaction: Transaction, tag: Tag) =
         Database.tagTransactionJoin().delete(transaction, tag)
     }
 
-private suspend fun updateTagMap(book: Book): Map<String, Tag> =
+private suspend fun updateTagMap(book: Book, transaction: Transaction): Map<String, Tag> =
     withContext(Dispatchers.IO) {
         val tagsValue = Database.tags().findByBookId(book.uuid)
-        return@withContext tagsValue.associateBy { it.name!! }
-    }
-
-private suspend fun createTag(book: Book, name: String, transaction: Transaction) =
-    withContext(Dispatchers.IO) {
-        val tag = Database.tags().insert(name, book.uuid)
-        Database.tagTransactionJoin().insert(transaction, tag)
+        val alreadyExistTag = Database.tagTransactionJoin().findTagsByTransactionId(transaction.transactionId)
+        val tags = tagsValue.filter { !alreadyExistTag.contains(it) }
+        return@withContext tags.associateBy { it.name!! }
     }
 
 @Composable
@@ -51,22 +47,18 @@ fun TagCreationView(onExit: () -> Unit) {
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var tagMap by rememberSaveable { mutableStateOf(emptyMap<String, Tag>()) }
     var loaded by rememberSaveable { mutableStateOf(false) }
-    val tagToAdd = rememberSaveable { mutableStateListOf<Tag>() }
+    val tagToAdd = remember { mutableStateListOf<Tag>() }
 
     LaunchedEffect(creating) {
         if (!creating) return@LaunchedEffect
 
-        if (tagToAdd.isEmpty()) {
-            errorMessage = "You must select at least one tag"
-            creating = false
-            return@LaunchedEffect
-        }
-
         if (creatingTag.isNotBlank()) {
             try {
-                createTag(currentBook, creatingTag, currentTransaction)
+                withContext(Dispatchers.IO) {
+                    val tag = Database.tags().insert(creatingTag, currentBook.uuid)
+                    Database.tagTransactionJoin().insert(currentTransaction, tag)
+                }
                 Toast.makeText(context, "Tag created", Toast.LENGTH_SHORT).show()
-                onExit()
             } catch (e: SQLiteConstraintException) {
                 errorMessage = "Tag name already exist"
             }
@@ -79,6 +71,8 @@ fun TagCreationView(onExit: () -> Unit) {
         }
         Toast.makeText(context, "Tag added", Toast.LENGTH_SHORT).show()
         tagToAdd.clear()
+
+
         creating = false
     }
 
@@ -86,7 +80,7 @@ fun TagCreationView(onExit: () -> Unit) {
 
         if (!loaded) {
             Loading {
-                tagMap = updateTagMap(currentBook)
+                tagMap = updateTagMap(currentBook, currentTransaction)
                 loaded = true
             }
         }
@@ -113,7 +107,7 @@ fun TagCreationView(onExit: () -> Unit) {
                             initial = "",
                             mapFromString = { tagMap[it]!! },
                             mapToString = { it.toString() },
-                            onSelected = { tagMap[it]?.let { tag -> tagToAdd += tag } }
+                            onSelected = { tagMap[it]?.let { tag -> tagToAdd.add(tag) } }
                         )
                     }
                     Row(

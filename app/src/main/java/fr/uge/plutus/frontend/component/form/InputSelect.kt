@@ -127,6 +127,7 @@ fun <T : Any> InputSelectCollection(
                     modifier = Modifier.clickable { open = !open }
                 )
             },
+            readOnly = true
         )
 
         DropdownMenu(
