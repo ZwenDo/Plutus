@@ -1,12 +1,8 @@
 package fr.uge.plutus.frontend.view.tag
 
 import android.database.sqlite.SQLiteConstraintException
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -16,26 +12,41 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.backend.Tag
+import fr.uge.plutus.backend.Transaction
+import fr.uge.plutus.frontend.component.common.Loading
+import fr.uge.plutus.frontend.component.form.InputSelectCollection
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.GlobalState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
+private suspend fun removeTags(transaction: Transaction, tag: Tag) =
+    withContext(Dispatchers.IO) {
+        Database.tagTransactionJoin().delete(transaction, tag)
+    }
 
-@RequiresApi(Build.VERSION_CODES.O)
+private suspend fun updateTagMap(book: Book): Map<String, Tag> =
+    withContext(Dispatchers.IO) {
+        val tagsValue = Database.tags().findByBookId(book.uuid)
+        return@withContext tagsValue.associateBy { it.name!! }
+    }
+
 @Composable
 fun TagCreationView(onExit: () -> Unit) {
-    val currentBook = GlobalState.currentBook
+    val currentBook = GlobalState.currentBook!!
+    val currentTransaction = GlobalState.currentTransaction!!
     val context = LocalContext.current
     var isOpen by rememberSaveable { mutableStateOf(false) }
     var tagName by rememberSaveable { mutableStateOf("") }
     var creating by rememberSaveable { mutableStateOf(false) }
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    val options = listOf("Tag 1 ", "Tag 2 ", "Tag 2")
-    var selectedOptionIndex by rememberSaveable { mutableStateOf(0) }
+    var tagMap by rememberSaveable { mutableStateOf(emptyMap<String, Tag>()) }
+    var selectedTag by rememberSaveable { mutableStateOf("") }
+    var loaded by rememberSaveable { mutableStateOf(false) }
+
 
     LaunchedEffect(creating) {
         if (!creating) return@LaunchedEffect
@@ -47,7 +58,10 @@ fun TagCreationView(onExit: () -> Unit) {
         }
 
         try {
-            Database.tags().insert(tagName, currentBook!!.uuid)
+            withContext(Dispatchers.IO) {
+                val tag = Database.tags().insert(tagName, currentBook.uuid)
+                Database.tagTransactionJoin().insert(currentTransaction, tag)
+            }
             Toast.makeText(context, "Tag created", Toast.LENGTH_SHORT).show()
             onExit()
         } catch (e: SQLiteConstraintException) {
@@ -58,6 +72,14 @@ fun TagCreationView(onExit: () -> Unit) {
     }
 
     if (isOpen) {
+
+        if (!loaded) {
+            Loading {
+                tagMap = updateTagMap(currentBook)
+                loaded = true
+            }
+        }
+
         Box(
             contentAlignment = Alignment.Center
         ) {
@@ -71,23 +93,14 @@ fun TagCreationView(onExit: () -> Unit) {
                 ) {
                     InputText(label = "Create a new tag", value = tagName) { tagName = it }
                     Box(modifier = Modifier.wrapContentSize()) {
-                        Button(onClick = { expanded = true }) {
-                            Text(text = "Select an existing tag")
-                        }
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            options.forEachIndexed() { index, option ->
-                                DropdownMenuItem(onClick = {
-                                    selectedOptionIndex = index
-                                    expanded = false
-                                }) {
-                                    Text(text = option)
-                                }
-                            }
-                        }
+                        InputSelectCollection(
+                            label = "Select an existing tag",
+                            options = tagMap.values.map { it.name!! },
+                            initial = selectedTag,
+                            mapFromString = { tagMap[it]!! },
+                            mapToString = { it.toString() },
+                            onSelected = { selectedTag = it.toString() }
+                        )
                     }
                     Row(
                         modifier = Modifier
@@ -96,12 +109,18 @@ fun TagCreationView(onExit: () -> Unit) {
                         horizontalArrangement = Arrangement.SpaceBetween
 
                     ) {
-                        Button(onClick = { creating = true }) {
-                            Text(text = "CREATE", fontWeight = FontWeight.SemiBold)
+                        Button(onClick = {
+                            creating = true
+                            isOpen = false
+                            loaded = false
+                        }) {
+                            Text(text = "ADD", fontWeight = FontWeight.SemiBold)
                         }
                         Button(
-                            onClick = { isOpen = false },
-                        ) {
+                            onClick = {
+                                isOpen = false
+                                loaded = false
+                            }) {
                             Text(text = "CLOSE", fontWeight = FontWeight.SemiBold)
                         }
                     }
@@ -114,4 +133,5 @@ fun TagCreationView(onExit: () -> Unit) {
         }
     }
 }
+
 
