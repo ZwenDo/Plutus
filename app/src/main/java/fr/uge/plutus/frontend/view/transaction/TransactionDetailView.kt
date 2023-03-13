@@ -149,7 +149,7 @@ fun DisplayTagsSection(transaction: Transaction) {
             DisplayTags(tags = tags)
         }
         Row {
-            TagCreationView() {}
+            TagCreationView()
         }
     }
 }
