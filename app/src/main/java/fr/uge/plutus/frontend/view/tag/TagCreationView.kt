@@ -56,8 +56,8 @@ fun TagCreationView() {
     var tagMap by rememberSaveable { mutableStateOf(emptyMap<String, Tag>()) }
     var tagMapDelete by rememberSaveable { mutableStateOf(emptyMap<String, Tag>()) }
     var loaded by rememberSaveable { mutableStateOf(false) }
-    val tagToAdd = remember { mutableStateListOf<Tag>() }
-    val tagToDelete = remember { mutableStateListOf<Tag>() }
+    var onSelectDelete by remember { mutableStateOf<Tag?>(null)}
+    var onSelectAdd by remember { mutableStateOf<Tag?>(null)}
 
     LaunchedEffect(update) {
         if (creating) {
@@ -73,34 +73,34 @@ fun TagCreationView() {
                 }
             }
 
-            for (tag in tagToAdd) {
+            if (onSelectAdd != null) {
                 try {
                     withContext(Dispatchers.IO) {
-                        Database.tagTransactionJoin().insert(currentTransaction, tag)
+                        Database.tagTransactionJoin().insert(currentTransaction, onSelectAdd!!)
                     }
                 } catch (e: SQLiteConstraintException) {
                     errorMessage = "Tag is already added"
                 }
             }
             Toast.makeText(context, "Tag added", Toast.LENGTH_SHORT).show()
-            tagToAdd.clear()
             creating = false
         }
 
         if (delete) {
-            for (tag in tagToDelete) {
+            if (onSelectDelete != null) {
                 try {
                     withContext(Dispatchers.IO) {
-                        Database.tags().delete(tag)
+                        Database.tags().delete(onSelectDelete!!)
                     }
                 } catch (e: SQLiteConstraintException) {
                     errorMessage = "Tag is already deleted"
                 }
             }
             Toast.makeText(context, "Tag deleted", Toast.LENGTH_SHORT).show()
-            tagToDelete.clear()
             delete = false
         }
+        onSelectDelete = null
+        onSelectAdd = null
         update = false
     }
 
@@ -109,8 +109,6 @@ fun TagCreationView() {
             alignment = Alignment.CenterStart,
             onDismissRequest = {
                 isOpen = false
-                tagToAdd.clear()
-                tagToDelete.clear()
             },
             properties = PopupProperties(focusable = true)
         ) {
@@ -144,7 +142,7 @@ fun TagCreationView() {
                                 initial = "",
                                 mapFromString = { tagMap[it]!! },
                                 mapToString = { it.toString() },
-                                onSelected = { tagMap[it]?.let { tag -> tagToAdd.add(tag) } }
+                                onSelected = { tagMap[it]?.let { tag -> onSelectAdd = tag } }
                             )
                         }
                         Box(modifier = Modifier.wrapContentSize()) {
@@ -154,7 +152,7 @@ fun TagCreationView() {
                                 initial = "",
                                 mapFromString = { tagMapDelete[it]!! },
                                 mapToString = { it.toString() },
-                                onSelected = { tagMapDelete[it]?.let { tag -> tagToDelete.add(tag) } }
+                                onSelected = { tagMapDelete[it]?.let { tag -> onSelectDelete = tag } }
                             )
                         }
                         Row(
@@ -182,8 +180,6 @@ fun TagCreationView() {
                                 onClick = {
                                     isOpen = false
                                     loaded = false
-                                    tagToAdd.clear()
-                                    tagToDelete.clear()
                                 }) {
                                 Text(text = "CLOSE", fontWeight = FontWeight.SemiBold)
                             }
