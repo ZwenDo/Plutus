@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.backend.Tag
@@ -97,7 +98,12 @@ fun TagCreationView() {
 
     if (isOpen) {
         Popup(alignment = Alignment.CenterStart,
-            onDismissRequest = { isOpen = false }
+            onDismissRequest = {
+                isOpen = false
+                tagToAdd.clear()
+                tagToDelete.clear()
+            },
+            properties = PopupProperties(focusable = true)
         ) {
             if (!loaded) {
                 Loading {
@@ -167,6 +173,8 @@ fun TagCreationView() {
                                 onClick = {
                                     isOpen = false
                                     loaded = false
+                                    tagToAdd.clear()
+                                    tagToDelete.clear()
                                 }) {
                                 Text(text = "CLOSE", fontWeight = FontWeight.SemiBold)
                             }
@@ -175,8 +183,7 @@ fun TagCreationView() {
                 }
             }
         }
-    }
-    else {
+    } else {
         Button(onClick = { isOpen = true }) {
             Text(text = "Create a tag")
         }
