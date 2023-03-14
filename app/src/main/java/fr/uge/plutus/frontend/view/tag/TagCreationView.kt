@@ -74,8 +74,12 @@ fun TagCreationView() {
             }
 
             for (tag in tagToAdd) {
-                withContext(Dispatchers.IO) {
-                    Database.tagTransactionJoin().insert(currentTransaction, tag)
+                try {
+                    withContext(Dispatchers.IO) {
+                        Database.tagTransactionJoin().insert(currentTransaction, tag)
+                    }
+                } catch (e: SQLiteConstraintException) {
+                    errorMessage = "Tag is already added"
                 }
             }
             Toast.makeText(context, "Tag added", Toast.LENGTH_SHORT).show()
@@ -85,8 +89,12 @@ fun TagCreationView() {
 
         if (delete) {
             for (tag in tagToDelete) {
-                withContext(Dispatchers.IO) {
-                    Database.tagTransactionJoin().delete(currentTransaction, tag)
+                try {
+                    withContext(Dispatchers.IO) {
+                        Database.tags().delete(tag)
+                    }
+                } catch (e: SQLiteConstraintException) {
+                    errorMessage = "Tag is already deleted"
                 }
             }
             Toast.makeText(context, "Tag deleted", Toast.LENGTH_SHORT).show()
@@ -97,7 +105,8 @@ fun TagCreationView() {
     }
 
     if (isOpen) {
-        Popup(alignment = Alignment.CenterStart,
+        Popup(
+            alignment = Alignment.CenterStart,
             onDismissRequest = {
                 isOpen = false
                 tagToAdd.clear()
