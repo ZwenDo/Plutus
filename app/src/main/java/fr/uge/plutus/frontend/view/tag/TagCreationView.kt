@@ -90,7 +90,7 @@ fun TagCreationView() {
             if (onSelectDelete != null) {
                 try {
                     withContext(Dispatchers.IO) {
-                        Database.tags().delete(onSelectDelete!!)
+                        Database.tagTransactionJoin().delete(currentTransaction,onSelectDelete!!)
                     }
                 } catch (e: SQLiteConstraintException) {
                     errorMessage = "Tag is already deleted"
@@ -138,21 +138,21 @@ fun TagCreationView() {
                         Box(modifier = Modifier.wrapContentSize()) {
                             InputSelectCollection(
                                 label = "Select an existing tag to add",
-                                options = tagMap.values.map { it.name!! },
-                                initial = "",
+                                options = tagMap.values,
+                                initial = null,
                                 mapFromString = { tagMap[it]!! },
-                                mapToString = { it.toString() },
-                                onSelected = { tagMap[it]?.let { tag -> onSelectAdd = tag } }
+                                mapToString = Tag::stringRepresentation,
+                                onSelected = { onSelectAdd = it }
                             )
                         }
                         Box(modifier = Modifier.wrapContentSize()) {
                             InputSelectCollection(
                                 label = "Select an existing tag to delete",
-                                options = tagMapDelete.values.map { it.name!! },
-                                initial = "",
+                                options = tagMapDelete.values,
+                                initial = null,
                                 mapFromString = { tagMapDelete[it]!! },
-                                mapToString = { it.toString() },
-                                onSelected = { tagMapDelete[it]?.let { tag -> onSelectDelete = tag } }
+                                mapToString = Tag::stringRepresentation ,
+                                onSelected = { onSelectDelete = it }
                             )
                         }
                         Row(
@@ -174,7 +174,7 @@ fun TagCreationView() {
                                 delete = true
                                 loaded = false
                             }) {
-                                Text(text = "DELETE", fontWeight = FontWeight.SemiBold)
+                                Text(text = "REMOVE", fontWeight = FontWeight.SemiBold)
                             }
                             Button(
                                 onClick = {

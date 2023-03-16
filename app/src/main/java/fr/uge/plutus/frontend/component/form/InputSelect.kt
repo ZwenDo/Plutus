@@ -107,7 +107,7 @@ fun <T : Any> InputSelectCollection(
 
     Column {
         OutlinedTextField(
-            selected.toString(),
+            selected?.let(mapToString) ?: "None",
             {
                 selected = try {
                     mapFromString(it)

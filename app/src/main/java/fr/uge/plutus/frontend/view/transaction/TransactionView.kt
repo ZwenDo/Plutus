@@ -85,7 +85,7 @@ fun DisplayTransaction(transaction: Transaction, clickHandler: () -> Unit) {
                     userScrollEnabled = false
                 ) {
                     items(tags) {
-                        DisplayPill(caption = it.name!!)
+                        DisplayPill(caption = it.type!!.code + it.name!!)
                     }
                 }
             }
