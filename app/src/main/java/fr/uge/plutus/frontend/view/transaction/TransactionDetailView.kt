@@ -122,7 +122,7 @@ fun DisplayTags(tags: List<Tag>) {
     )
     {
         items(tags) {
-            val caption = it.type!!.code + it.name
+            val caption = it.stringRepresentation
             DisplayPill(caption) { /* TODO: Display tag's details */ }
         }
     }
