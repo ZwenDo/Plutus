@@ -19,11 +19,11 @@ enum class Currency {
     )]
 )
 data class Transaction (
-    val description: String?,
-    val date: Date?,
-    val amount: Double?,
-    val bookId: UUID?,
-    val currency: Currency? = Currency.USD,
+    val description: String,
+    val date: Date,
+    val amount: Double,
+    val bookId: UUID,
+    val currency: Currency = Currency.USD,
 
     @PrimaryKey val transactionId: UUID = UUID.randomUUID()
 ) : Serializable

@@ -76,7 +76,7 @@ fun BookSelectionItem(book: Book, onChosen: (Book) -> Unit) {
             .padding(8.dp),
         horizontalArrangement = Arrangement.Center
     ) {
-        Text(book.name!!)
+        Text(book.name)
     }
 }
 
