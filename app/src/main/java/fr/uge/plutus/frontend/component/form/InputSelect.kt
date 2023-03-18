@@ -87,6 +87,70 @@ fun <T : Enum<T>> InputSelectEnum(
     }
 }
 
+@Composable
+fun <T : Any> InputSelectCollection(
+    label: String,
+    options: Collection<T>,
+    initial: T?,
+    mapFromString: (String) -> T,
+    mapToString: (T) -> String = Any::toString,
+    onSelected: (T) -> Unit
+) {
+    var actualWidth by rememberSaveable { mutableStateOf(0f) }
+    var selected by rememberSaveable { mutableStateOf(initial) }
+    var open by rememberSaveable { mutableStateOf(false) }
+    val arrow = if (open) {
+        Icons.Default.KeyboardArrowUp
+    } else {
+        Icons.Default.KeyboardArrowDown
+    }
+
+    Column {
+        OutlinedTextField(
+            selected?.let(mapToString) ?: "None",
+            {
+                selected = try {
+                    mapFromString(it)
+                } catch (e: IllegalArgumentException) {
+                    selected
+                }
+
+            },
+            Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { actualWidth = it.size.toSize().width },
+            label = { Text(label) },
+            trailingIcon = {
+                Icon(
+                    arrow,
+                    contentDescription = null,
+                    modifier = Modifier.clickable { open = !open }
+                )
+            },
+            readOnly = true
+        )
+
+        DropdownMenu(
+            open,
+            { open = false },
+            Modifier.width(with(LocalDensity.current) {
+                actualWidth.toDp()
+            })
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem({
+                    selected = option
+                    onSelected(option)
+                    open = false
+                }) {
+                    Text(mapToString(option))
+                }
+            }
+        }
+    }
+}
+
+
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {

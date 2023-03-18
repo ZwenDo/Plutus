@@ -253,6 +253,21 @@ class TagTest {
         assertEquals(emptyList<Tag>(), tagTransaction2)
     }
 
+    @Test
+    fun deleteTagTransactionJoinDao() = runTest {
+        val tag = tagDao.insert("+1st", book.uuid)
+        val tag2 = tagDao.insert("+2nd", book.uuid)
+        val transaction = Transaction("First", Date(0), 10.0, book.uuid)
+        transactionDao.insert(transaction)
+
+        tagTransactionJoinDao.insert(transaction, tag)
+        tagTransactionJoinDao.insert(transaction, tag2)
+
+        tagTransactionJoinDao.delete(transaction, tag)
+        val tagTransactionJoin = tagTransactionJoinDao.findTagsByTransactionId(transaction.transactionId)
+        assertEquals(tag2, tagTransactionJoin[0])
+    }
+
 
     @After
     fun close() {

@@ -59,7 +59,11 @@ data class Tag(
     val type: TagType,
     val bookId: UUID,
     @PrimaryKey val tagId: UUID = UUID.randomUUID()
-) : Serializable
+) : Serializable {
+    val stringRepresentation: String
+        get() = "${type.code}$name"
+}
+
 
 @Dao
 interface TagDao {

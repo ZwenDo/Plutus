@@ -39,8 +39,14 @@ abstract class TagTransactionJoinDao {
     @Insert
     abstract fun _insert(tagTransactionJoin: TagTransactionJoin)
 
+    fun delete(transaction: Transaction, tag: Tag) {
+        require(transaction.bookId == tag.bookId) { "Transaction and tag must belong to the same book" }
+        val tagTransactionJoin = TagTransactionJoin(transaction.transactionId, tag.tagId)
+        _delete(tagTransactionJoin)
+    }
+
     @Delete
-    abstract fun delete(transaction: Transaction, tag: Tag)
+    abstract fun _delete(tagTransactionJoin: TagTransactionJoin)
 
     @androidx.room.Transaction
     @Query("SELECT * FROM tag JOIN tag_transaction_join ON tag.tagId = tag_transaction_join.tagId WHERE tag_transaction_join.transactionId = :transactionId")
