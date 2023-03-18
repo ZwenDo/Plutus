@@ -19,9 +19,9 @@ import java.io.Serializable
     ]
 )
 data class Book(
-    @ColumnInfo(name = "name") val name: String?,
+    @ColumnInfo(name = "name") val name: String,
 
-    @PrimaryKey val uuid: UUID = UUID.randomUUID(),
+    @PrimaryKey val uuid: UUID = UUID.randomUUID()
 ) : Serializable
 
 @Dao
