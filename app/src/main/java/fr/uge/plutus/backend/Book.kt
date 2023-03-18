@@ -73,7 +73,7 @@ interface BookDao {
                     .findTagsByTransactionId(transaction.transactionId)
                     .forEach {
                         val tagCopy = tagsMap[it.name to it.type]!!
-                        tagsPerTransactionDao. insert(newTransaction, tagCopy)
+                        tagsPerTransactionDao.insert(newTransaction, tagCopy)
                     }
             }
         return newBook
