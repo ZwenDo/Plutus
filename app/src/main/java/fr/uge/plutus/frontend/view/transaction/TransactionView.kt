@@ -70,13 +70,13 @@ fun DisplayTransaction(transaction: Transaction, clickHandler: () -> Unit) {
             ) {
                 // Amount
                 Text(
-                    text = "${transaction.amount!!} ${transaction.currency!!}",
+                    text = "${transaction.amount} ${transaction.currency}",
                     fontSize = 25.sp,
                     fontWeight = FontWeight(900)
                 )
 
                 // Description
-                Text(text = transaction.description!!)
+                Text(text = transaction.description)
 
                 // Pills
                 LazyRow(
@@ -85,7 +85,7 @@ fun DisplayTransaction(transaction: Transaction, clickHandler: () -> Unit) {
                     userScrollEnabled = false
                 ) {
                     items(tags) {
-                        DisplayPill(caption = it.name!!)
+                        DisplayPill(caption = it.name)
                     }
                 }
             }
@@ -111,7 +111,7 @@ fun TransactionList(
             .padding(padding)
     ) {
         items(transactions.sortedByDescending { it.date }) {
-            val currentDate = DateFormatter.format(it.date!!)
+            val currentDate = DateFormatter.format(it.date)
             if (oldDate != currentDate) {
                 Text(
                     text = currentDate,
