@@ -9,7 +9,7 @@ import java.util.UUID
     foreignKeys = [
         ForeignKey(
             entity = Transaction::class,
-            parentColumns = ["uuid"],
+            parentColumns = ["transactionId"],
             childColumns = ["transactionId"],
             onDelete = ForeignKey.CASCADE
         )],

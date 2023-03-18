@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import org.json.JSONObject
+import java.net.URI
 import java.util.*
 
 @androidx.room.Database(
@@ -14,7 +15,8 @@ import java.util.*
         Tag::class,
         Transaction::class,
         TagTransactionJoin::class,
-        Filter::class
+        Filter::class,
+        Attachment::class,
     ],
     version = 1,
     exportSchema = false
@@ -23,7 +25,8 @@ import java.util.*
     UUIDConverter::class,
     DateConverter::class,
     MapConverter::class,
-    SetConverter::class
+    SetConverter::class,
+    URIConverter::class,
 )
 abstract class Database : RoomDatabase() {
 
@@ -152,4 +155,13 @@ private class SetConverter {
             return mutableSetOf<String>()
         }
     }
+}
+
+
+private class URIConverter {
+    @TypeConverter
+    fun fromURI(uri: URI): String = uri.toString()
+
+    @TypeConverter
+    fun toURI(uri: String): URI = URI.create(uri)
 }
