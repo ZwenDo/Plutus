@@ -45,4 +45,26 @@ interface BookDao {
     @Update
     suspend fun update(book: Book)
 
+    suspend fun copy(book: Book, newName: String, database: Database = Database.INSTANCE): Book {
+        val newBook = book.copy(uuid = UUID.randomUUID(), name = newName)
+        insert(newBook) // insert book copy
+
+        val transactionDao = database.transactions()
+        val tagsPerTransactionDao = database.tagTransactionJoin()
+
+        transactionDao
+            .findAllByBookId(book.uuid)
+            .forEach { transaction ->
+                val newTransaction = transaction.copy(
+                    transactionId = UUID.randomUUID(),
+                    bookId = newBook.uuid
+                )
+                transactionDao.insert(newTransaction) // insert transaction copy
+                tagsPerTransactionDao
+                    .findTagsByTransactionId(transaction.transactionId)
+                    .forEach { tagsPerTransactionDao.insert(newTransaction, it) }
+            }
+        return newBook
+    }
+
 }
