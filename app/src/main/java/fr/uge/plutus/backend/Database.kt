@@ -5,20 +5,26 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
-import java.util.Date
-import java.util.UUID
+import org.json.JSONObject
+import java.util.*
 
 @androidx.room.Database(
     entities = [
         Book::class,
         Tag::class,
         Transaction::class,
-        TagTransactionJoin::class
+        TagTransactionJoin::class,
+        Filter::class
     ],
     version = 1,
     exportSchema = false
 )
-@TypeConverters(UUIDConverter::class, DateConverter::class)
+@TypeConverters(
+    UUIDConverter::class,
+    DateConverter::class,
+    MapConverter::class,
+    SetConverter::class
+)
 abstract class Database : RoomDatabase() {
 
     abstract fun books(): BookDao
@@ -27,11 +33,14 @@ abstract class Database : RoomDatabase() {
 
     abstract fun transactions(): TransactionDao
 
-    abstract fun tagTransactionJoin() : TagTransactionJoinDao
+    abstract fun tagTransactionJoin(): TagTransactionJoinDao
+
+    abstract fun filters(): FilterDao
 
     companion object {
 
-        private lateinit var INSTANCE: Database
+        lateinit var INSTANCE: Database
+            private set
 
         fun init(context: Context) {
             require(!::INSTANCE.isInitialized) { "Database already initialized" }
@@ -55,22 +64,28 @@ abstract class Database : RoomDatabase() {
             return INSTANCE.books()
         }
 
-        fun tags() : TagDao {
+        fun tags(): TagDao {
             require(::INSTANCE.isInitialized) { "Database not initialized" }
 
             return INSTANCE.tags()
         }
 
-        fun transactions() : TransactionDao {
+        fun transactions(): TransactionDao {
             require(::INSTANCE.isInitialized) { "Database not initialized" }
 
             return INSTANCE.transactions()
         }
 
-        fun tagTransactionJoin() : TagTransactionJoinDao {
+        fun tagTransactionJoin(): TagTransactionJoinDao {
             require(::INSTANCE.isInitialized) { "Database not initialized" }
 
             return INSTANCE.tagTransactionJoin()
+        }
+
+        fun filters(): FilterDao {
+            require(::INSTANCE.isInitialized) { "Database not initialized" }
+
+            return INSTANCE.filters()
         }
     }
 
@@ -94,4 +109,39 @@ private class DateConverter {
     @TypeConverter
     fun toDate(date: Long): Date = Date(date)
 
+}
+
+private class MapConverter {
+    @TypeConverter
+    fun fromMap(map: Map<String, String>): String {
+        val json = JSONObject()
+        map.forEach { (key, value) ->
+            json.put(key, value)
+        }
+        return json.toString()
+    }
+
+    @TypeConverter
+    fun toMap(map: String): Map<String, String> {
+        val json = JSONObject(map)
+        val map = mutableMapOf<String, String>()
+        json.keys().forEach { key ->
+            map[key] = json.getString(key)
+        }
+        return map
+    }
+}
+
+private class SetConverter {
+    @TypeConverter
+    fun fromSet(set: Set<String>): String = set.toString()
+
+    @TypeConverter
+    fun toSet(set: String): Set<String> {
+        if (set.length > 2) {
+            return set.substring(1, set.length - 1).split(", ").toMutableSet()
+        } else {
+            return mutableSetOf<String>()
+        }
+    }
 }
