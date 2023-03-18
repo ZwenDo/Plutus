@@ -53,6 +53,14 @@ interface BookDao {
         val tagsPerTransactionDao = database.tagTransactionJoin()
         val tagDao = database.tags()
 
+        val tagsMap = mutableMapOf<Pair<String, TagType>, Tag>()
+        tagDao.findByBookId(book.uuid)
+            .forEach { tag ->
+                val tagCopy = tag.copy(bookId = newBook.uuid, tagId = UUID.randomUUID())
+                tagDao._insert(tagCopy)
+                tagsMap[tag.name to tag.type] = tagCopy
+            }
+
         transactionDao
             .findAllByBookId(book.uuid)
             .forEach { transaction ->
@@ -63,9 +71,8 @@ interface BookDao {
                 transactionDao.insert(newTransaction) // insert transaction copy
                 tagsPerTransactionDao
                     .findTagsByTransactionId(transaction.transactionId)
-                    .forEach { tag ->
-                        val tagCopy = tag.copy(bookId = newBook.uuid, tagId = UUID.randomUUID())
-                        tagDao._insert(tagCopy)
+                    .forEach {
+                        val tagCopy = tagsMap[it.name to it.type]!!
                         tagsPerTransactionDao. insert(newTransaction, tagCopy)
                     }
             }
