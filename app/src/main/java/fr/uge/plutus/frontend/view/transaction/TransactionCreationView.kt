@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.backend.Database
+import fr.uge.plutus.backend.TagType
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputSelectEnum
@@ -96,13 +97,12 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
 
             withContext(Dispatchers.IO) {
                 if (transaction.date > Date()) {
-                    val todoTag = Database.tags().findByName("@todo", currentBook.uuid)
-                    if (todoTag.size == 1) {
-                        Database.tagTransactionJoin().insert(transaction, todoTag[0])
-                    } else {
-                        val tag = Database.tags().insert("@todo", currentBook.uuid)
-                        Database.tagTransactionJoin().insert(transaction, tag)
-                    }
+                    val tags = Database.tags()
+                    val todoTag = tags
+                        .findByName("@todo", currentBook.uuid)
+                        .firstOrNull { it.type == TagType.INFO }
+                        ?: tags.insert("@todo", currentBook.uuid)
+                    Database.tagTransactionJoin().insert(transaction, todoTag)
                 }
             }
             Toast.makeText(context, "Transaction created", Toast.LENGTH_SHORT).show()
