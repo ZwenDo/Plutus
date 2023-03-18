@@ -26,7 +26,14 @@ data class Transaction (
     val currency: Currency = Currency.USD,
 
     @PrimaryKey val transactionId: UUID = UUID.randomUUID()
-) : Serializable
+) : Serializable {
+
+    fun attachments(database: Database? = null): List<Attachment> {
+        val dao = database?.attachments() ?: Database.attachments()
+        return dao.findAllByTransactionId(transactionId)
+    }
+
+}
 
 @Dao
 interface TransactionDao {
