@@ -38,6 +38,9 @@ import fr.uge.plutus.frontend.component.form.InputSelectEnum
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.util.toDateOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.*
 
 enum class Field {
     DESCRIPTION,
@@ -82,15 +85,26 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
         }
 
         try {
-            Database.transactions().insert(
-                Transaction(
-                    description = description,
-                    date = actualDate!!,
-                    amount = actualAmount!!,
-                    currency = currency,
-                    bookId = currentBook.uuid
-                )
+            val transaction = Transaction(
+                description = description,
+                date = actualDate!!,
+                amount = actualAmount!!,
+                currency = currency,
+                bookId = currentBook.uuid
             )
+            Database.transactions().insert(transaction)
+
+            withContext(Dispatchers.IO) {
+                if (transaction.date > Date()) {
+                    val todoTag = Database.tags().findByName("@todo", currentBook.uuid)
+                    if (todoTag.size == 1) {
+                        Database.tagTransactionJoin().insert(transaction, todoTag[0])
+                    } else {
+                        val tag = Database.tags().insert("@todo", currentBook.uuid)
+                        Database.tagTransactionJoin().insert(transaction, tag)
+                    }
+                }
+            }
             Toast.makeText(context, "Transaction created", Toast.LENGTH_SHORT).show()
             onExit()
         } catch (e: SQLiteConstraintException) {
