@@ -37,6 +37,8 @@ abstract class Database : RoomDatabase() {
 
     abstract fun filters(): FilterDao
 
+    abstract fun attachments(): AttachmentDao
+
     companion object {
 
         private lateinit var INSTANCE: Database
@@ -86,6 +88,13 @@ abstract class Database : RoomDatabase() {
 
             return INSTANCE.filters()
         }
+
+        fun attachments(): AttachmentDao {
+            require(::INSTANCE.isInitialized) { "Database not initialized" }
+
+            return INSTANCE.attachments()
+        }
+
     }
 
 }
