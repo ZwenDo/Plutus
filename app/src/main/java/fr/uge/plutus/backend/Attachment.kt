@@ -24,8 +24,21 @@ data class Attachment(
     val name: String,
     @PrimaryKey
     val id: UUID = UUID.randomUUID()
-) {
+)
 
+@Dao
+interface AttachmentDao {
+
+    @Insert
+    fun _insert(attachment: Attachment)
+
+    @Delete
+    fun delete(attachment: Attachment)
+
+    fun insert(transaction: Transaction, uri: URI, name: String): Attachment =
+        Attachment(transaction.transactionId, uri, name).also(::_insert)
+
+    @Query("SELECT * FROM attachment WHERE transactionId = :transactionId")
+    fun findAllByTransactionId(transactionId: UUID): List<Attachment>
 
 }
-
