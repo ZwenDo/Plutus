@@ -85,7 +85,7 @@ fun DisplayTransaction(transaction: Transaction, clickHandler: () -> Unit) {
                     userScrollEnabled = false
                 ) {
                     items(tags) {
-                        DisplayPill(caption = it.name)
+                        DisplayPill(caption = it.stringRepresentation)
                     }
                 }
             }
@@ -159,6 +159,7 @@ fun DisplayTransactions(onNewTransactionRequest: () -> Unit) {
                 TransactionView.LIST -> {
                     TransactionList(padding, transactions) {
                         currentTransaction = it
+                        GlobalState.currentTransaction = it
                         transactionView = TransactionView.DETAILS
                     }
                 }

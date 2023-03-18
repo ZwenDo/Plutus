@@ -32,14 +32,14 @@ private suspend fun updateTagMapToAdd(book: Book, transaction: Transaction): Map
         val alreadyExistTag =
             Database.tagTransactionJoin().findTagsByTransactionId(transaction.transactionId)
         val tags = tagsValue.filter { !alreadyExistTag.contains(it) }
-        return@withContext tags.associateBy { it.name!! }
+        return@withContext tags.associateBy { it.name }
     }
 
 private suspend fun updateTagMapToDelete(transaction: Transaction): Map<String, Tag> =
     withContext(Dispatchers.IO) {
         val tagsValue =
             Database.tagTransactionJoin().findTagsByTransactionId(transaction.transactionId)
-        return@withContext tagsValue.associateBy { it.name!! }
+        return@withContext tagsValue.associateBy { it.name }
     }
 
 @Composable
@@ -78,11 +78,12 @@ fun TagCreationView() {
                     withContext(Dispatchers.IO) {
                         Database.tagTransactionJoin().insert(currentTransaction, onSelectAdd!!)
                     }
+                    Toast.makeText(context, "Tag added", Toast.LENGTH_SHORT).show()
                 } catch (e: SQLiteConstraintException) {
                     errorMessage = "Tag is already added"
                 }
             }
-            Toast.makeText(context, "Tag added", Toast.LENGTH_SHORT).show()
+
             creating = false
         }
 
@@ -92,11 +93,11 @@ fun TagCreationView() {
                     withContext(Dispatchers.IO) {
                         Database.tagTransactionJoin().delete(currentTransaction,onSelectDelete!!)
                     }
+                    Toast.makeText(context, "Tag deleted", Toast.LENGTH_SHORT).show()
                 } catch (e: SQLiteConstraintException) {
                     errorMessage = "Tag is already deleted"
                 }
             }
-            Toast.makeText(context, "Tag deleted", Toast.LENGTH_SHORT).show()
             delete = false
         }
         onSelectDelete = null

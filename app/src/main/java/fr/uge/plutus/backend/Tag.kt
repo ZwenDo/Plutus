@@ -61,7 +61,7 @@ data class Tag(
     @PrimaryKey val tagId: UUID = UUID.randomUUID()
 ) : Serializable {
     val stringRepresentation: String
-        get() = "${type!!.code}$name"
+        get() = "${type.code}$name"
 }
 
 
