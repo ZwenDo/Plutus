@@ -39,8 +39,7 @@ abstract class Database : RoomDatabase() {
 
     companion object {
 
-        lateinit var INSTANCE: Database
-            private set
+        private lateinit var INSTANCE: Database
 
         fun init(context: Context) {
             require(!::INSTANCE.isInitialized) { "Database already initialized" }
