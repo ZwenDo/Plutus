@@ -55,9 +55,9 @@ enum class TagType(val code: String) {
         )]
 )
 data class Tag(
-    val name: String?,
-    val type: TagType?,
-    val bookId: UUID?,
+    val name: String,
+    val type: TagType,
+    val bookId: UUID,
     @PrimaryKey val tagId: UUID = UUID.randomUUID()
 ) : Serializable
 

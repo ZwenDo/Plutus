@@ -85,10 +85,10 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
             Database.transactions().insert(
                 Transaction(
                     description = description,
-                    date = actualDate,
-                    amount = actualAmount,
+                    date = actualDate!!,
+                    amount = actualAmount!!,
                     currency = currency,
-                    bookId = currentBook!!.uuid
+                    bookId = currentBook.uuid
                 )
             )
             Toast.makeText(context, "Transaction created", Toast.LENGTH_SHORT).show()

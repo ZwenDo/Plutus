@@ -71,7 +71,7 @@ fun DisplayHeader(
 
         // Amount
         Text(
-            text = "${transaction.amount!!} ${transaction.currency!!}",
+            text = "${transaction.amount} ${transaction.currency}",
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
             color = fontColor,
@@ -80,18 +80,16 @@ fun DisplayHeader(
         )
 
         // Date
-        if (null != transaction.date) {
 
-            val date = DateFormatter.format(transaction.date)
-            Text(
-                text = date,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                color = fontColor,
-                fontSize = 20.sp,
-                fontWeight = FontWeight(500)
-            )
-        }
+        val date = DateFormatter.format(transaction.date)
+        Text(
+            text = date,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            color = fontColor,
+            fontSize = 20.sp,
+            fontWeight = FontWeight(500)
+        )
 
         // Location
     }
@@ -110,7 +108,7 @@ fun DisplayDescriptionSection(transaction: Transaction) {
             color = Color.Gray
         )
         Text(
-            text = transaction.description!!,
+            text = transaction.description,
             fontSize = 20.sp
         )
     }
@@ -126,7 +124,7 @@ fun DisplayTags(tags: List<Tag>) {
     )
     {
         items(tags) {
-            val caption = it.type!!.code + it.name
+            val caption = it.type.code + it.name
             DisplayPill(caption) { /* TODO: Display tag's details */ }
         }
     }
