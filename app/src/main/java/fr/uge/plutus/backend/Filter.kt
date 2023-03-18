@@ -5,11 +5,11 @@ import java.util.*
 import java.io.Serializable
 
 enum class Criteria(val value: String) {
-    MINAMOUNT("minAmount"),
-    MAXAMOUNT("maxAmount"),
+    MIN_AMOUNT("minAmount"),
+    MAX_AMOUNT("maxAmount"),
     CURRENCY("currency"),
-    MINDATE("minDate"),
-    MAXDATE("maxDate"),
+    MIN_DATE("minDate"),
+    MAX_DATE("maxDate"),
 }
 
 @Entity(
@@ -36,15 +36,15 @@ data class Filter(
     }
 
     data class Builder(
-        var name: String,
-        var bookId: UUID,
-        var minAmount: Double? = null,
-        var maxAmount: Double? = null,
-        var currency: Currency? = null,
-        var minDate: Date? = null,
-        var maxDate: Date? = null,
-        var tags: Set<Tag>? = null
+        val name: String,
+        val bookId: UUID
     ) {
+        private var minAmount: Double? = null
+        private var maxAmount: Double? = null
+        private var currency: Currency? = null
+        private var minDate: Date? = null
+        private var maxDate: Date? = null
+        private var tags: Set<Tag>? = null
 
         fun minAmount(minAmount: Double) = apply { this.minAmount = minAmount }
         fun maxAmount(maxAmount: Double) = apply { this.maxAmount = maxAmount }
@@ -75,19 +75,19 @@ data class Filter(
             }
 
             if (vMinAmount != null) {
-                criterias[Criteria.MINAMOUNT.value] = vMinAmount.toString()
+                criterias[Criteria.MIN_AMOUNT.value] = vMinAmount.toString()
             }
             if (vMaxAmount != null) {
-                criterias[Criteria.MAXAMOUNT.value] = vMaxAmount.toString()
+                criterias[Criteria.MAX_AMOUNT.value] = vMaxAmount.toString()
             }
             if (vCurrency != null) {
                 criterias[Criteria.CURRENCY.value] = vCurrency.toString()
             }
             if (vMinDate != null) {
-                criterias[Criteria.MINDATE.value] = vMinDate.time.toString()
+                criterias[Criteria.MIN_DATE.value] = vMinDate.time.toString()
             }
             if (vMaxDate != null) {
-                criterias[Criteria.MAXDATE.value] = vMaxDate.time.toString()
+                criterias[Criteria.MAX_DATE.value] = vMaxDate.time.toString()
             }
 
             val t = tags?.map { it.name!! }?.toSet() ?: emptySet()

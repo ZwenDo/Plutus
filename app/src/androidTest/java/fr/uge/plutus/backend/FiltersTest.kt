@@ -209,21 +209,21 @@ class FiltersTest {
         val filterDb = filterDao.findById(filter.filterId)
 
         assertNotNull(filterDb)
-        assertEquals(minAmount.toString(), filterDb!!.getCriteriaValue(Criteria.MINAMOUNT))
-        assertEquals(maxAmount.toString(), filterDb!!.getCriteriaValue(Criteria.MAXAMOUNT))
+        assertEquals(minAmount.toString(), filterDb!!.getCriteriaValue(Criteria.MIN_AMOUNT))
+        assertEquals(maxAmount.toString(), filterDb!!.getCriteriaValue(Criteria.MAX_AMOUNT))
         assertEquals(currency.name, filterDb!!.getCriteriaValue(Criteria.CURRENCY))
-        assertEquals(minDate.time.toString(), filterDb!!.getCriteriaValue(Criteria.MINDATE))
-        assertEquals(maxDate.time.toString(), filterDb!!.getCriteriaValue(Criteria.MAXDATE))
+        assertEquals(minDate.time.toString(), filterDb!!.getCriteriaValue(Criteria.MIN_DATE))
+        assertEquals(maxDate.time.toString(), filterDb!!.getCriteriaValue(Criteria.MAX_DATE))
     }
 
     @Test
-    fun ShouldNotFailedRetrieveUnknownCriteria() {
+    fun shouldNotFailedRetrieveUnknownCriteria() {
         val filter = Filter.Builder("test", book.uuid)
             .minDate(Date(1000000))
             .build()
 
         assertEquals(1, filter.criterias.size)
 
-        assertEquals("", filter.getCriteriaValue(Criteria.MINAMOUNT))
+        assertEquals("", filter.getCriteriaValue(Criteria.MIN_AMOUNT))
     }
 }
