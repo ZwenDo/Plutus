@@ -1,5 +1,7 @@
 package fr.uge.plutus.frontend.component.scaffold
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +34,7 @@ import fr.uge.plutus.ui.theme.Purple200
 import fr.uge.plutus.ui.theme.Purple500
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Navbar() {
     val globalState = globalState()
@@ -45,38 +48,61 @@ fun Navbar() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        NavbarButton(icon = R.drawable.bullet_list, isActive = globalState.currentView == View.BOOK_SELECTION) {
+        NavbarButton(
+            icon = R.drawable.bullet_list,
+            isActive = globalState.currentView == View.BOOK_SELECTION,
+            disabled = false
+        ) {
             globalState.currentView = View.BOOK_SELECTION
         }
-        NavbarButton(icon = R.drawable.book, isActive = false) {
+
+        NavbarButton(
+            icon = R.drawable.book,
+            isActive = false,
+            disabled = globalState.currentBook == null
+        ) {
             // globalState.currentView = View.BOOK_OVERVIEW
         }
-        NavbarButton(icon = R.drawable.attach_money, isActive = globalState.currentView == View.TRANSACTION_LIST) {
+
+        NavbarButton(
+            icon = R.drawable.attach_money,
+            isActive = globalState.currentView == View.TRANSACTION_LIST,
+            disabled = globalState.currentBook == null
+        ) {
             globalState.currentView = View.TRANSACTION_LIST
         }
     }
 }
 
 @Composable
-fun NavbarButton(icon: Int, isActive: Boolean, onClick: () -> Unit) {
+fun NavbarButton(icon: Int, isActive: Boolean, disabled: Boolean, onClick: () -> Unit) {
     Box(
         Modifier
             .clip(RoundedCornerShape(20))
             .aspectRatio(1f)
             .fillMaxHeight()
-            .background(if (!isActive) Color.White else Purple200)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+            .background(when {
+                disabled -> Color.Gray
+                isActive -> Purple200
+                else -> Color.White
+            })
+            .clickable(onClick = if (disabled) ({}) else onClick),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             painterResource(icon),
             modifier = Modifier.fillMaxSize(),
-            tint = if (!isActive) Purple500 else Color.White,
+            tint = when {
+                disabled -> Color.White.copy(alpha = .5f)
+                isActive -> Color.White
+                else -> Purple500
+            },
             contentDescription = null
         )
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun NavbarPreview() {
