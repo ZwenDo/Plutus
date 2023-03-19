@@ -2,11 +2,16 @@ package fr.uge.plutus.frontend.view.transaction
 
 import android.database.sqlite.SQLiteConstraintException
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -31,7 +36,9 @@ enum class Field {
     DESCRIPTION,
     DATE,
     AMOUNT,
-    CURRENCY
+    CURRENCY,
+    LATITUDE,
+    LONGITUDE
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -79,6 +86,8 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
             }
         }
     }
+    var latitude by rememberSaveable { mutableStateOf("") }
+    var longitude by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(creating) {
         if (!creating) return@LaunchedEffect
@@ -95,6 +104,18 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
         if (actualAmount == null) {
             errors[Field.AMOUNT] = "Amount is invalid"
         }
+        if ((longitude.isBlank()) xor (longitude.isBlank())) {
+            errors[Field.LATITUDE] = "Latitude and longitude must be both set or both unset"
+            errors[Field.LONGITUDE] = "Latitude and longitude must be both set or both unset"
+        }
+        val actualLatitude = latitude.toDoubleOrNull()
+        if (actualLatitude == null && latitude.isNotBlank()) {
+            errors[Field.LATITUDE] = "Latitude is invalid"
+        }
+        val actualLongitude = longitude.toDoubleOrNull()
+        if (actualLongitude == null && longitude.isNotBlank()) {
+            errors[Field.LONGITUDE] = "Longitude is invalid"
+        }
         if (errors.isNotEmpty()) {
             creating = false
             return@LaunchedEffect
@@ -108,7 +129,9 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                 amount = actualAmount!!,
                 currency = currency,
                 bookId = currentBook.uuid,
-                transactionId = transactionId
+                transactionId = transactionId,
+                latitude = actualLatitude,
+                longitude = actualLongitude
             )
             withContext(Dispatchers.IO) {
                 if (initialTransaction != null) {
@@ -194,6 +217,20 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                                 errors.clear()
                             }
                         )
+                    }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(modifier = Modifier.weight(1f / 2f)) {
+                        InputText("Latitude", latitude, errorMessage = errors[Field.LATITUDE]) {
+                            latitude = it
+                            errors.clear()
+                        }
+                    }
+                    Box(modifier = Modifier.weight(1f / 2f)) {
+                        InputText("Longitude", longitude, errorMessage = errors[Field.LONGITUDE]) {
+                            longitude = it
+                            errors.clear()
+                        }
                     }
                 }
 

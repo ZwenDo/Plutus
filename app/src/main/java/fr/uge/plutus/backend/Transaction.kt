@@ -24,6 +24,8 @@ data class Transaction (
     val amount: Double,
     val bookId: UUID,
     val currency: Currency = Currency.USD,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
 
     @PrimaryKey val transactionId: UUID = UUID.randomUUID()
 ) : Serializable {
