@@ -12,6 +12,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,8 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.component.common.Loading
+import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.tag.TagCreationView
 import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
@@ -51,6 +54,7 @@ fun DisplayHeader(
     fontColor: Color = MaterialTheme.colors.onPrimary,
     onBack: () -> Unit
 ) {
+    val globalState = globalState()
     Column(
         Modifier
             .fillMaxWidth()
@@ -58,11 +62,23 @@ fun DisplayHeader(
             .padding(bottom = 20.dp)
     ) {
         // return button
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.Filled.ArrowBack,
-                contentDescription = "Back"
-            )
+        Row {
+
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+            IconButton(onClick = {
+                globalState.currentTransaction = transaction
+                globalState.currentView = View.TRANSACTION_CREATION
+            }) {
+                Icon(
+                    imageVector = Icons.Filled.Edit,
+                    contentDescription = "Edit"
+                )
+            }
         }
 
         // Amount
@@ -87,7 +103,7 @@ fun DisplayHeader(
             fontWeight = FontWeight(500)
         )
 
-        // Location
+        // Edit button
     }
 }
 
