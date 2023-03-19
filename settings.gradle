@@ -10,6 +10,9 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven {
+            url 'https://repo.black-kamelia.com/repository/maven-releases'
+        }
     }
 }
 rootProject.name = "Plutus"
