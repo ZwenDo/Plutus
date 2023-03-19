@@ -38,6 +38,7 @@ import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputSelectEnum
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.GlobalState
+import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.util.toDateOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -53,7 +54,7 @@ enum class Field {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TransactionCreationView(onExit: () -> Unit = {}) {
-    val currentBook = GlobalState.currentBook
+    val currentBook = globalState().currentBook
     require(currentBook != null) { "No book selected" }
 
     val context = LocalContext.current
