@@ -23,6 +23,7 @@ import fr.uge.plutus.frontend.component.common.Loading
 import fr.uge.plutus.frontend.component.form.InputSelectCollection
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.GlobalState
+import fr.uge.plutus.frontend.store.globalState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -44,8 +45,9 @@ private suspend fun updateTagMapToDelete(transaction: Transaction): Map<String, 
 
 @Composable
 fun TagCreationView() {
-    val currentBook = GlobalState.currentBook!!
-    val currentTransaction = GlobalState.currentTransaction!!
+    val globalState = globalState()
+    val currentBook = globalState.currentBook!!
+    val currentTransaction = globalState.currentTransaction!!
     val context = LocalContext.current
     var isOpen by rememberSaveable { mutableStateOf(false) }
     var creatingTag by rememberSaveable { mutableStateOf("") }

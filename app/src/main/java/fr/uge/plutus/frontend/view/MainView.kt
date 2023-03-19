@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import fr.uge.plutus.frontend.store.GlobalState
+import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.store.initGlobalState
 import fr.uge.plutus.frontend.view.book.BookCreationView
 import fr.uge.plutus.frontend.view.book.BookSelectionView
 import fr.uge.plutus.frontend.view.transaction.DisplayTransactions
@@ -24,6 +26,7 @@ private enum class View {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainView() {
+    val globalState = initGlobalState()
     var currentView by remember { mutableStateOf(View.BOOK_CREATION) }
 
     when (currentView) {
@@ -31,7 +34,7 @@ fun MainView() {
             currentView = View.BOOK_SELECTION
         }
         View.BOOK_SELECTION -> BookSelectionView { book ->
-            GlobalState.currentBook = book
+            globalState.currentBook = book
             currentView = View.TRANSACTION_CREATION
         }
 
