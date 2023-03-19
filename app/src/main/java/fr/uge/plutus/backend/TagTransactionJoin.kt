@@ -28,7 +28,7 @@ data class TagTransactionJoin(
 )
 
 @Dao
-interface TagTransactionJoinDao {
+abstract class TagTransactionJoinDao {
 
     fun insert(transaction: Transaction, tag: Tag) {
         require(transaction.bookId == tag.bookId) { "Transaction and tag must belong to the same book" }
@@ -46,16 +46,14 @@ interface TagTransactionJoinDao {
     }
 
     @Delete
-    fun _delete(tagTransactionJoin: TagTransactionJoin)
+    abstract fun _delete(tagTransactionJoin: TagTransactionJoin)
 
-    @androidx.room.Transaction
     @Query("SELECT * FROM tag JOIN tag_transaction_join ON tag.tagId = tag_transaction_join.tagId WHERE tag_transaction_join.transactionId = :transactionId")
-    fun findTagsByTransactionId(transactionId: UUID): List<Tag>
+    abstract fun findTagsByTransactionId(transactionId: UUID): List<Tag>
 
-    @androidx.room.Transaction
     @Query("SELECT * FROM transactions JOIN tag_transaction_join ON transactions.transactionId = tag_transaction_join.transactionId WHERE tag_transaction_join.tagId = :tagId")
-    fun findTransactionByTagId(tagId: UUID): List<Transaction>
+    abstract fun findTransactionByTagId(tagId: UUID): List<Transaction>
 
     @Query("SELECT * FROM tag_transaction_join")
-    fun findAll(): List<TagTransactionJoin>
+    abstract fun findAll(): List<TagTransactionJoin>
 }
