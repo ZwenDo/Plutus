@@ -1,11 +1,13 @@
 package fr.uge.plutus.backend
 
 import android.content.Context
+import android.net.Uri
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import org.json.JSONObject
+import java.net.URI
 import java.util.*
 
 @androidx.room.Database(
@@ -14,7 +16,8 @@ import java.util.*
         Tag::class,
         Transaction::class,
         TagTransactionJoin::class,
-        Filter::class
+        Filter::class,
+        Attachment::class,
     ],
     version = 1,
     exportSchema = false
@@ -23,7 +26,8 @@ import java.util.*
     UUIDConverter::class,
     DateConverter::class,
     MapConverter::class,
-    SetConverter::class
+    SetConverter::class,
+    UriConverter::class,
 )
 abstract class Database : RoomDatabase() {
 
@@ -37,10 +41,11 @@ abstract class Database : RoomDatabase() {
 
     abstract fun filters(): FilterDao
 
+    abstract fun attachments(): AttachmentDao
+
     companion object {
 
-        lateinit var INSTANCE: Database
-            private set
+        private lateinit var INSTANCE: Database
 
         fun init(context: Context) {
             require(!::INSTANCE.isInitialized) { "Database already initialized" }
@@ -87,6 +92,13 @@ abstract class Database : RoomDatabase() {
 
             return INSTANCE.filters()
         }
+
+        fun attachments(): AttachmentDao {
+            require(::INSTANCE.isInitialized) { "Database not initialized" }
+
+            return INSTANCE.attachments()
+        }
+
     }
 
 }
@@ -144,4 +156,13 @@ private class SetConverter {
             return mutableSetOf<String>()
         }
     }
+}
+
+
+private class UriConverter {
+    @TypeConverter
+    fun fromUri(uri: Uri): String = uri.toString()
+
+    @TypeConverter
+    fun toUri(uri: String): Uri = Uri.parse(uri)
 }

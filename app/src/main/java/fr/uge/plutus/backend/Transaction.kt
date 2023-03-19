@@ -28,7 +28,14 @@ data class Transaction (
     val longitude: Double? = null,
 
     @PrimaryKey val transactionId: UUID = UUID.randomUUID()
-) : Serializable
+) : Serializable {
+
+    fun attachments(database: Database? = null): List<Attachment> {
+        val dao = database?.attachments() ?: Database.attachments()
+        return dao.findAllByTransactionId(transactionId)
+    }
+
+}
 
 @Dao
 interface TransactionDao {

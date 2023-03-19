@@ -5,6 +5,9 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -17,14 +20,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
-import fr.uge.plutus.backend.Database
-import fr.uge.plutus.backend.TagType
-import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputSelectEnum
 import fr.uge.plutus.frontend.component.form.InputText
-import fr.uge.plutus.frontend.store.GlobalState
+import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.view.attachment.AttachmentCreationView
 import fr.uge.plutus.util.toDateOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -40,21 +42,52 @@ enum class Field {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
+@Preview(showBackground = true)
+@Composable
+private fun Preview() {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colors.background
+    ) {
+        TransactionCreationView()
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TransactionCreationView(onExit: () -> Unit = {}) {
-    val currentBook = GlobalState.currentBook
+    val currentBook = globalState().currentBook
+    val initialTransaction = globalState().currentTransaction
     require(currentBook != null) { "No book selected" }
 
     val context = LocalContext.current
     var creating by rememberSaveable { mutableStateOf(false) }
     val errors = remember { mutableStateMapOf<Field, String>() }
 
-    var description by rememberSaveable { mutableStateOf("") }
-    var date by rememberSaveable { mutableStateOf("") }
-    var amount by rememberSaveable { mutableStateOf("") }
-    var currency by rememberSaveable { mutableStateOf(Currency.USD) }
-    var latitude by rememberSaveable { mutableStateOf("") }
-    var longitude by rememberSaveable { mutableStateOf("") }
+    var description by rememberSaveable { mutableStateOf(initialTransaction?.description ?: "") }
+    var date by rememberSaveable { mutableStateOf(initialTransaction?.date?.toString() ?: "") }
+    var amount by rememberSaveable { mutableStateOf(initialTransaction?.amount?.toString() ?: "") }
+    var latitude by rememberSaveable { mutableStateOf(initialTransaction?.latitude?.toString() ?: "") }
+    var longitude by rememberSaveable { mutableStateOf(initialTransaction?.longitude?.toString() ?: "") }
+    var currency by rememberSaveable {
+        mutableStateOf(initialTransaction?.currency ?: Currency.USD)
+    }
+
+    val initialAttachments = remember { mutableStateMapOf<UUID, Attachment>() }
+    val attachments = remember { mutableStateMapOf<UUID, Attachment>() }
+
+    LaunchedEffect(Unit) {
+        if (initialTransaction != null) {
+            withContext(Dispatchers.IO) {
+                val loaded = Database
+                    .attachments()
+                    .findAllByTransactionId(initialTransaction.transactionId)
+                    .associateBy { it.id }
+                initialAttachments += loaded
+                attachments += loaded
+            }
+        }
+    }
 
     LaunchedEffect(creating) {
         if (!creating) return@LaunchedEffect
@@ -89,19 +122,38 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
         }
 
         try {
+            val transactionId = initialTransaction?.transactionId ?: UUID.randomUUID()
             val transaction = Transaction(
                 description = description,
                 date = actualDate!!,
                 amount = actualAmount!!,
                 currency = currency,
                 bookId = currentBook.uuid,
+                transactionId = transactionId,
                 latitude = actualLatitude,
                 longitude = actualLongitude
             )
-            Database.transactions().insert(transaction)
-
             withContext(Dispatchers.IO) {
-                if (transaction.date > Date()) {
+                if (initialTransaction != null) {
+                    Database.transactions().update(transaction)
+                } else {
+                    Database.transactions().insert(transaction)
+                }
+                attachments.forEach { (id, new) -> // for each attachment we have to check if it has been added, updated or deleted
+                    initialAttachments.compute(id) { _, old ->
+                        val toUpsert = new.copy(transactionId = transaction.transactionId)
+                        if (old == null) {
+                            Database.attachments()._insert(toUpsert)
+                        } else {
+                            Database.attachments().update(toUpsert)
+                        }
+                        null
+                    }
+                }
+                initialAttachments.forEach { (_, old) -> // delete the rest
+                    Database.attachments().delete(old)
+                }
+                if (initialTransaction != null && transaction.date > Date()) {
                     val tags = Database.tags()
                     val todoTag = tags
                         .findByName("@todo", currentBook.uuid)
@@ -158,7 +210,7 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                         InputSelectEnum(
                             label = "Currency",
                             options = Currency.values().toList(),
-                            initial = Currency.USD,
+                            initial = currency,
                             mapper = { Currency.valueOf(it) },
                             onSelected = {
                                 currency = it
@@ -181,22 +233,21 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                         }
                     }
                 }
+
+                Spacer(
+                    modifier = Modifier
+                        .height(8.dp)
+                        .fillMaxWidth()
+                )
+                AttachmentCreationView(attachments)
+
             }
             Button(modifier = Modifier.fillMaxWidth(), onClick = { creating = true }) {
-                Text(text = "CREATE", fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = if (initialTransaction == null) "CREATE" else "SAVE",
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-private fun Preview() {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colors.background
-    ) {
-        TransactionCreationView()
     }
 }

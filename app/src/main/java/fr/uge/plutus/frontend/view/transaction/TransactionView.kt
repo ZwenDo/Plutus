@@ -26,6 +26,7 @@ import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.component.common.Loading
 import fr.uge.plutus.frontend.store.GlobalState
+import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
 import java.util.*
@@ -129,7 +130,8 @@ fun TransactionList(
 
 @Composable
 fun DisplayTransactions(onNewTransactionRequest: () -> Unit) {
-    val book = GlobalState.currentBook!!
+    val globalState = globalState()
+    val book = globalState.currentBook!!
     var transactions by rememberSaveable { mutableStateOf(emptyList<Transaction>()) }
     var loaded by rememberSaveable { mutableStateOf(false) }
     val scaffoldState = rememberScaffoldState()
@@ -159,7 +161,7 @@ fun DisplayTransactions(onNewTransactionRequest: () -> Unit) {
                 TransactionView.LIST -> {
                     TransactionList(padding, transactions) {
                         currentTransaction = it
-                        GlobalState.currentTransaction = it
+                        globalState.currentTransaction = it
                         transactionView = TransactionView.DETAILS
                     }
                 }
