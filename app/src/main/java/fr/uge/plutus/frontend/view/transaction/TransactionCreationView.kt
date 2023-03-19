@@ -2,28 +2,15 @@ package fr.uge.plutus.frontend.view.transaction
 
 import android.database.sqlite.SQLiteConstraintException
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -47,7 +34,9 @@ enum class Field {
     DESCRIPTION,
     DATE,
     AMOUNT,
-    CURRENCY
+    CURRENCY,
+    LATITUDE,
+    LONGITUDE
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -64,6 +53,8 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
     var date by rememberSaveable { mutableStateOf("") }
     var amount by rememberSaveable { mutableStateOf("") }
     var currency by rememberSaveable { mutableStateOf(Currency.USD) }
+    var latitude by rememberSaveable { mutableStateOf("") }
+    var longitude by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(creating) {
         if (!creating) return@LaunchedEffect
@@ -80,6 +71,18 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
         if (actualAmount == null) {
             errors[Field.AMOUNT] = "Amount is invalid"
         }
+        if ((longitude.isBlank()) xor (longitude.isBlank())) {
+            errors[Field.LATITUDE] = "Latitude and longitude must be both set or both unset"
+            errors[Field.LONGITUDE] = "Latitude and longitude must be both set or both unset"
+        }
+        val actualLatitude = latitude.toDoubleOrNull()
+        if (actualLatitude == null && latitude.isNotBlank()) {
+            errors[Field.LATITUDE] = "Latitude is invalid"
+        }
+        val actualLongitude = longitude.toDoubleOrNull()
+        if (actualLongitude == null && longitude.isNotBlank()) {
+            errors[Field.LONGITUDE] = "Longitude is invalid"
+        }
         if (errors.isNotEmpty()) {
             creating = false
             return@LaunchedEffect
@@ -91,7 +94,9 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                 date = actualDate!!,
                 amount = actualAmount!!,
                 currency = currency,
-                bookId = currentBook.uuid
+                bookId = currentBook.uuid,
+                latitude = actualLatitude,
+                longitude = actualLongitude
             )
             Database.transactions().insert(transaction)
 
@@ -160,6 +165,20 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                                 errors.clear()
                             }
                         )
+                    }
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(modifier = Modifier.weight(1f / 2f)) {
+                        InputText("Latitude", latitude, errorMessage = errors[Field.LATITUDE]) {
+                            latitude = it
+                            errors.clear()
+                        }
+                    }
+                    Box(modifier = Modifier.weight(1f / 2f)) {
+                        InputText("Longitude", longitude, errorMessage = errors[Field.LONGITUDE]) {
+                            longitude = it
+                            errors.clear()
+                        }
                     }
                 }
             }
