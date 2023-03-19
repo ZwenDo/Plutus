@@ -185,12 +185,10 @@ fun DisplayBody(transaction: Transaction) {
 
 @Composable
 fun DisplayTransactionDetail(transaction: Transaction, onBack: () -> Unit) {
-    val scrollableState = rememberScrollState()
-
     Column(
         Modifier
             .fillMaxSize()
-            .scrollable(scrollableState, orientation = Orientation.Vertical)) {
+            .scrollable(rememberScrollState(), orientation = Orientation.Vertical)) {
         DisplayHeader(transaction, onBack = onBack)
         DisplayBody(transaction)
     }
