@@ -32,12 +32,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.backend.Database
+import fr.uge.plutus.backend.TagType
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputSelectEnum
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.util.toDateOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.*
 
 enum class Field {
     DESCRIPTION,
@@ -82,15 +86,25 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
         }
 
         try {
-            Database.transactions().insert(
-                Transaction(
-                    description = description,
-                    date = actualDate!!,
-                    amount = actualAmount!!,
-                    currency = currency,
-                    bookId = currentBook.uuid
-                )
+            val transaction = Transaction(
+                description = description,
+                date = actualDate!!,
+                amount = actualAmount!!,
+                currency = currency,
+                bookId = currentBook.uuid
             )
+            Database.transactions().insert(transaction)
+
+            withContext(Dispatchers.IO) {
+                if (transaction.date > Date()) {
+                    val tags = Database.tags()
+                    val todoTag = tags
+                        .findByName("@todo", currentBook.uuid)
+                        .firstOrNull { it.type == TagType.INFO }
+                        ?: tags.insert("@todo", currentBook.uuid)
+                    Database.tagTransactionJoin().insert(transaction, todoTag)
+                }
+            }
             Toast.makeText(context, "Transaction created", Toast.LENGTH_SHORT).show()
             onExit()
         } catch (e: SQLiteConstraintException) {
