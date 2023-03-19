@@ -36,6 +36,9 @@ interface AttachmentDao {
     @Delete
     fun delete(attachment: Attachment)
 
+    @Update
+    fun update(attachment: Attachment)
+
     fun insert(transaction: Transaction, uri: Uri, name: String): Attachment =
         Attachment(transaction.transactionId, uri, name).also(::_insert)
 
