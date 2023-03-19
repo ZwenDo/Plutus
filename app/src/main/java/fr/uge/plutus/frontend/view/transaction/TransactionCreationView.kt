@@ -1,31 +1,28 @@
 package fr.uge.plutus.frontend.view.transaction
 
+import android.content.Intent
 import android.database.sqlite.SQLiteConstraintException
+import android.net.Uri
 import android.os.Build
-import android.util.Log
+import android.provider.MediaStore
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,7 +34,10 @@ import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputSelectEnum
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.GlobalState
+import fr.uge.plutus.ui.theme.Gray
 import fr.uge.plutus.util.toDateOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 enum class Field {
     DESCRIPTION,
@@ -60,6 +60,14 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
     var date by rememberSaveable { mutableStateOf("") }
     var amount by rememberSaveable { mutableStateOf("") }
     var currency by rememberSaveable { mutableStateOf(Currency.USD) }
+    val attachments = remember { mutableStateMapOf<Uri, String>() }
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        it.data?.data?.let { uri ->
+            attachments[uri] = uri.lastPathSegment ?: uri.toString()
+        }
+    }
 
     LaunchedEffect(creating) {
         if (!creating) return@LaunchedEffect
@@ -82,15 +90,19 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
         }
 
         try {
-            Database.transactions().insert(
-                Transaction(
-                    description = description,
-                    date = actualDate!!,
-                    amount = actualAmount!!,
-                    currency = currency,
-                    bookId = currentBook.uuid
-                )
+            val transaction = Transaction(
+                description = description,
+                date = actualDate!!,
+                amount = actualAmount!!,
+                currency = currency,
+                bookId = currentBook.uuid
             )
+            withContext(Dispatchers.IO) {
+                Database.transactions().insert(transaction)
+                attachments.forEach { (uri, name) ->
+                    Database.attachments().insert(transaction, uri, name)
+                }
+            }
             Toast.makeText(context, "Transaction created", Toast.LENGTH_SHORT).show()
             onExit()
         } catch (e: SQLiteConstraintException) {
@@ -148,6 +160,67 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                         )
                     }
                 }
+
+                Spacer(
+                    modifier = Modifier
+                        .height(8.dp)
+                        .fillMaxWidth()
+                )
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        val intent = Intent(
+                            Intent.ACTION_OPEN_DOCUMENT,
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                        )
+                            .apply {
+                                addCategory(Intent.CATEGORY_OPENABLE)
+                            }
+                        launcher.launch(intent)
+                    },
+                ) {
+                    Text(text = "Add attachment")
+                }
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Gray, MaterialTheme.shapes.small)
+                ) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .scrollable(
+                                rememberScrollState(),
+                                orientation = Orientation.Vertical
+                            )
+                            .fillMaxWidth()
+                            .height(150.dp),
+                        content = {
+                            val iterator = attachments.iterator()
+                            items(attachments.size) { index ->
+                                val actualIndex = attachments.size - index - 1
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    val entry = iterator.next()
+                                    Button(
+                                        onClick = { attachments -= entry.key },
+                                        modifier = Modifier
+                                            .scale(0.5f)
+                                    ) {
+                                        Icon(Icons.Default.Delete, contentDescription = null)
+                                    }
+                                    TextField(
+                                        value = entry.value,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onValueChange = {
+                                            attachments[entry.key] = it.replace("\n", "")
+                                        },
+                                        singleLine = true,
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+
             }
             Button(modifier = Modifier.fillMaxWidth(), onClick = { creating = true }) {
                 Text(text = "CREATE", fontWeight = FontWeight.SemiBold)
