@@ -67,6 +67,8 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
     var description by rememberSaveable { mutableStateOf(initialTransaction?.description ?: "") }
     var date by rememberSaveable { mutableStateOf(initialTransaction?.date?.toString() ?: "") }
     var amount by rememberSaveable { mutableStateOf(initialTransaction?.amount?.toString() ?: "") }
+    var latitude by rememberSaveable { mutableStateOf(initialTransaction?.latitude?.toString() ?: "") }
+    var longitude by rememberSaveable { mutableStateOf(initialTransaction?.longitude?.toString() ?: "") }
     var currency by rememberSaveable {
         mutableStateOf(initialTransaction?.currency ?: Currency.USD)
     }
@@ -86,8 +88,6 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
             }
         }
     }
-    var latitude by rememberSaveable { mutableStateOf("") }
-    var longitude by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(creating) {
         if (!creating) return@LaunchedEffect
