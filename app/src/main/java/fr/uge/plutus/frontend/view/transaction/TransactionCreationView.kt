@@ -210,7 +210,7 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                         InputSelectEnum(
                             label = "Currency",
                             options = Currency.values().toList(),
-                            initial = Currency.USD,
+                            initial = currency,
                             mapper = { Currency.valueOf(it) },
                             onSelected = {
                                 currency = it
