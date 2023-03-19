@@ -1,6 +1,7 @@
 package fr.uge.plutus.backend
 
 import android.content.Context
+import android.net.Uri
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -10,7 +11,6 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.net.URI
 import java.util.*
 
 @RunWith(AndroidJUnit4::class)
@@ -43,7 +43,7 @@ class AttachmentTest {
 
         val attachment = attachmentDao.insert(
             transaction,
-            URI.create("https://www.google.com/"),
+            Uri.parse("https://www.google.com/"),
             "test"
         )
 
@@ -60,7 +60,7 @@ class AttachmentTest {
 
         val attachment = attachmentDao.insert(
             transaction,
-            URI.create("https://www.google.com/"),
+            Uri.parse("https://www.google.com/"),
             "test"
         )
 

@@ -1,5 +1,6 @@
 package fr.uge.plutus.backend
 
+import android.net.Uri
 import androidx.room.*
 import java.net.URI
 import java.util.UUID
@@ -20,7 +21,7 @@ import java.util.UUID
 )
 data class Attachment(
     val transactionId: UUID,
-    val uri: URI,
+    val uri: Uri,
     val name: String,
     @PrimaryKey
     val id: UUID = UUID.randomUUID()
@@ -35,8 +36,11 @@ interface AttachmentDao {
     @Delete
     fun delete(attachment: Attachment)
 
-    fun insert(transaction: Transaction, uri: URI, name: String): Attachment =
+    fun insert(transaction: Transaction, uri: Uri, name: String): Attachment =
         Attachment(transaction.transactionId, uri, name).also(::_insert)
+
+    @Query("SELECT * FROM attachment WHERE id = :id LIMIT 1")
+    fun findById(id: UUID): Attachment?
 
     @Query("SELECT * FROM attachment WHERE transactionId = :transactionId")
     fun findAllByTransactionId(transactionId: UUID): List<Attachment>

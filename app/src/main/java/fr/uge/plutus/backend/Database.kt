@@ -1,6 +1,7 @@
 package fr.uge.plutus.backend
 
 import android.content.Context
+import android.net.Uri
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
@@ -26,7 +27,7 @@ import java.util.*
     DateConverter::class,
     MapConverter::class,
     SetConverter::class,
-    URIConverter::class,
+    UriConverter::class,
 )
 abstract class Database : RoomDatabase() {
 
@@ -158,10 +159,10 @@ private class SetConverter {
 }
 
 
-private class URIConverter {
+private class UriConverter {
     @TypeConverter
-    fun fromURI(uri: URI): String = uri.toString()
+    fun fromUri(uri: Uri): String = uri.toString()
 
     @TypeConverter
-    fun toURI(uri: String): URI = URI.create(uri)
+    fun toUri(uri: String): Uri = Uri.parse(uri)
 }
