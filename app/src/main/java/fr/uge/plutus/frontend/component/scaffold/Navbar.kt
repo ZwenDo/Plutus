@@ -79,7 +79,7 @@ fun NavbarButton(icon: Int, isActive: Boolean, onClick: () -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-fun Preview() {
+fun NavbarPreview() {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colors.background
