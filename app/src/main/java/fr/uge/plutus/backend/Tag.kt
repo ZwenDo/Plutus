@@ -90,4 +90,7 @@ interface TagDao {
     @Query("SELECT * FROM tag")
     suspend fun findAll(): List<Tag>
 
+    @Upsert
+    suspend fun upsert(tag: Tag)
+
 }

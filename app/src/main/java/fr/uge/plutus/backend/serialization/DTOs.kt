@@ -29,7 +29,7 @@ data class TransactionDTO(
         currency,
         location?.first,
         location?.second,
-        UUID.randomUUID(), // transactionId,
+        transactionId,
     )
 
 }
@@ -45,7 +45,7 @@ data class TagDTO(
         name,
         type,
         bookId,
-        UUID.randomUUID(), // tagId,
+        tagId,
     )
 
 }
@@ -61,7 +61,7 @@ data class AttachmentDTO(
         transactionId,
         uri,
         name,
-        UUID.randomUUID(), // attachmentId,
+        attachmentId,
     )
 
 }
@@ -77,7 +77,7 @@ data class FilterDTO(
 
     fun toFilter(): Filter = Filter(
         name,
-        UUID.randomUUID(), // filterId,
+        filterId,
         criteria,
     )
 
@@ -94,7 +94,7 @@ data class BookDTO(
 
     fun toBook(): Book = Book(
         name,
-        UUID.randomUUID(), // uuid,
+        uuid,
     )
 
 }
