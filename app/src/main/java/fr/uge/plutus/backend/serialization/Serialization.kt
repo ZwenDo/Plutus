@@ -22,7 +22,7 @@ private suspend fun Transaction.toDTO(
     )
 }
 
-private fun Tag.toDTO(database: Database? = null): TagDTO = TagDTO(
+private fun Tag.toDTO(): TagDTO = TagDTO(
     tagId,
     name,
     type
@@ -49,7 +49,7 @@ suspend fun Book.toDTO(database: Database? = null): BookDTO {
     val filterDao = database?.filters() ?: Database.filters()
 
     val transactions = transactionDao.findAllByBookId(uuid).map { it.toDTO(database) }
-    val tags = tagDao.findByBookId(uuid).map { it.toDTO(database) }
+    val tags = tagDao.findByBookId(uuid).map { it.toDTO() }
     val filters = filterDao.findAllByBookId(uuid).map { it.toDTO() }
 
     return BookDTO(
@@ -60,3 +60,17 @@ suspend fun Book.toDTO(database: Database? = null): BookDTO {
         filters
     )
 }
+
+suspend fun BookDTO.loadToDB(database: Database? = null) {
+    val bookDao = database?.books() ?: Database.books()
+    val tagDao = database?.tags() ?: Database.tags()
+    val transactionDao = database?.transactions() ?: Database.transactions()
+
+    val book = toBook()
+    bookDao.upsert(book)
+
+    tags.forEach {
+        tagDao.upsert(it.toTag(book.uuid))
+    }
+}
+
