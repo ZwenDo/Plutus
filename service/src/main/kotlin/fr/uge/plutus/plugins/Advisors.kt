@@ -2,6 +2,7 @@ package fr.uge.plutus.plugins
 
 import fr.uge.plutus.core.ExpiredOrInvalidTokenException
 import fr.uge.plutus.core.MissingHeaderException
+import fr.uge.plutus.core.MultipartParseException
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
@@ -14,7 +15,8 @@ fun Application.configureExceptionAdvisors() {
 }
 
 private suspend fun handleException(call: ApplicationCall, cause: Throwable) = when (cause) {
-    is MissingHeaderException -> call.badRequestMessage(cause)
+    is MissingHeaderException,
+    is MultipartParseException -> call.badRequestMessage(cause)
 
     is ExpiredOrInvalidTokenException -> call.unauthorizedMessage(cause)
 
