@@ -1,18 +1,24 @@
 package fr.uge.plutus.backend.serialization
 
-import com.kamelia.sprinkler.binary.encoder.EncoderBuilder
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.util.*
 
+@Serializer(forClass = UUID::class)
+@OptIn(ExperimentalSerializationApi::class)
+object UUIDSerializer : KSerializer<UUID> {
 
-val uuidEncoder = EncoderBuilder<UUID>()
-    .encode(UUID::getMostSignificantBits)
-    .encode(UUID::getLeastSignificantBits)
-    .build()
+    override val descriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
 
-val dateEncoder = EncoderBuilder<Date>()
-    .encode(Date::getTime)
-    .build()
+    override fun deserialize(decoder: Decoder): UUID =
+        UUID.fromString(decoder.decodeString())
 
-val enumEncoder = EncoderBuilder<Enum<*>>()
-    .encode { ordinal }
-    .build()
+    override fun serialize(encoder: Encoder, value: UUID): Unit =
+        encoder.encodeString(value.toString())
+
+}
