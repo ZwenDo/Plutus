@@ -169,6 +169,7 @@ fun TransactionCreationView() {
             Toast.makeText(context, "Transaction created", Toast.LENGTH_SHORT).show()
 
             globalState.currentView = View.TRANSACTION_LIST
+            globalState.currentTransaction = null
         } catch (e: SQLiteConstraintException) {
             Toast.makeText(context, "Error while creating transaction", Toast.LENGTH_SHORT).show()
         }

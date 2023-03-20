@@ -94,14 +94,19 @@ enum class View(
             val globalState = globalState()
             Column {
                 TopAppBar(title = { Text("Details") })
-                DisplayHeader(globalState.currentTransaction!!) {
-                    globalState.currentView = TRANSACTION_LIST
+                if (globalState.currentTransaction != null) {
+                    DisplayHeader(globalState.currentTransaction!!) {
+                        globalState.currentView = TRANSACTION_LIST
+                        globalState.currentTransaction = null
+                    }
                 }
             }
         },
         contentComponent = {
             val globalState = globalState()
-            DisplayTransactionDetails(globalState.currentTransaction!!)
+            if (globalState.currentTransaction != null) {
+                DisplayTransactionDetails(globalState.currentTransaction!!)
+            }
         }
     )
 }
