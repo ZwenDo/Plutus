@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -28,9 +29,9 @@ import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
-import java.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.*
 
 
 private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
@@ -135,9 +136,15 @@ fun DisplayTransactions() {
             loaded = true
         }
     } else {
-        TransactionList(transactions) {
-            globalState.currentTransaction = it
-            globalState.currentView = View.TRANSACTION_DETAILS
+        if (transactions.isEmpty()) {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "No transactions yet", Modifier.padding(10.dp))
+            }
+        } else {
+            TransactionList(transactions) {
+                globalState.currentTransaction = it
+                globalState.currentView = View.TRANSACTION_DETAILS
+            }
         }
     }
 }
