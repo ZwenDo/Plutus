@@ -2,6 +2,7 @@ package fr.uge.plutus.frontend.view.transaction
 
 import android.database.sqlite.SQLiteConstraintException
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
@@ -108,7 +109,7 @@ fun TransactionCreationView() {
         if (actualAmount == null) {
             errors[Field.AMOUNT] = "Amount is invalid"
         }
-        if ((longitude.isBlank()) xor (longitude.isBlank())) {
+        if ((longitude.isBlank()) xor (latitude.isBlank())) {
             errors[Field.LATITUDE] = "Latitude and longitude must be both set or both unset"
             errors[Field.LONGITUDE] = "Latitude and longitude must be both set or both unset"
         }
