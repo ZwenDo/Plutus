@@ -1,16 +1,14 @@
 package fr.uge.plutus.plugins
 
-import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import fr.uge.plutus.core.Environment
 import fr.uge.plutus.core.ExpiredOrInvalidTokenException
 import fr.uge.plutus.util.Constants
 import fr.uge.plutus.util.getHeader
-import io.ktor.http.parsing.*
 import io.ktor.server.application.*
-import java.lang.IllegalArgumentException
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 
 fun Application.configureSecurity() {
     authentication {
