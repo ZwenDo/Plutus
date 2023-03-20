@@ -30,4 +30,19 @@ dependencies {
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("io.ktor:ktor-server-config-yaml:$ktor_version")
+    implementation("io.ktor:ktor-server-cors:$ktor_version")
+    implementation("io.ktor:ktor-server-cors-jvm:2.2.4")
+}
+
+tasks {
+    register<JavaExec>("runDev") {
+        group = "application"
+        description = "Runs the application in development mode"
+        environment = mapOf(
+            "development" to "true",
+            "PLUTUS_JWT_SECRET" to "secret"
+        )
+        classpath = sourceSets["main"].runtimeClasspath
+        mainClass.set("io.ktor.server.netty.EngineMain")
+    }
 }
