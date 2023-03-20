@@ -40,6 +40,18 @@ enum class TagType(val code: String) {
     }
 }
 
+enum class TimePeriod {
+    DAILY,
+    WEEKLY,
+    MONTHLY,
+    YEARLY,
+}
+
+data class BudgetTarget(
+    @ColumnInfo(name = "value") val value: Double,
+    @ColumnInfo(name = "time_period") val timePeriod: TimePeriod,
+)
+
 @Entity(
     tableName = "tag",
     foreignKeys = [
@@ -48,7 +60,8 @@ enum class TagType(val code: String) {
             parentColumns = ["uuid"],
             childColumns = ["bookId"],
             onDelete = ForeignKey.CASCADE
-        )],
+        )
+    ],
     indices = [
         Index(
             value = ["name", "bookId", "type"], unique = true
@@ -58,6 +71,7 @@ data class Tag(
     val name: String,
     val type: TagType,
     val bookId: UUID,
+    @Embedded val budgetTarget: BudgetTarget? = null,
     @PrimaryKey val tagId: UUID = UUID.randomUUID()
 ) : Serializable {
     val stringRepresentation: String
