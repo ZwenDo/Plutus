@@ -30,7 +30,7 @@ data class Transaction (
     @PrimaryKey val transactionId: UUID = UUID.randomUUID()
 ) : Serializable {
 
-    fun attachments(database: Database? = null): List<Attachment> {
+    suspend fun attachments(database: Database? = null): List<Attachment> {
         val dao = database?.attachments() ?: Database.attachments()
         return dao.findAllByTransactionId(transactionId)
     }

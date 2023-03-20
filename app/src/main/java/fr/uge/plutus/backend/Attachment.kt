@@ -31,21 +31,21 @@ data class Attachment(
 interface AttachmentDao {
 
     @Insert
-    fun _insert(attachment: Attachment)
+    suspend fun _insert(attachment: Attachment)
 
     @Delete
-    fun delete(attachment: Attachment)
+    suspend fun delete(attachment: Attachment)
 
     @Update
-    fun update(attachment: Attachment)
+    suspend fun update(attachment: Attachment)
 
-    fun insert(transaction: Transaction, uri: Uri, name: String): Attachment =
-        Attachment(transaction.transactionId, uri, name).also(::_insert)
+    suspend fun insert(transaction: Transaction, uri: Uri, name: String): Attachment =
+        Attachment(transaction.transactionId, uri, name).also { _insert(it) }
 
     @Query("SELECT * FROM attachment WHERE id = :id LIMIT 1")
-    fun findById(id: UUID): Attachment?
+    suspend fun findById(id: UUID): Attachment?
 
     @Query("SELECT * FROM attachment WHERE transactionId = :transactionId")
-    fun findAllByTransactionId(transactionId: UUID): List<Attachment>
+    suspend fun findAllByTransactionId(transactionId: UUID): List<Attachment>
 
 }

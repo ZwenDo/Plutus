@@ -69,18 +69,18 @@ data class Tag(
 interface TagDao {
 
     @Insert
-    fun _insert(tag: Tag)
+    suspend fun _insert(tag: Tag)
 
     @Delete
-    fun delete(tag: Tag)
+    suspend fun delete(tag: Tag)
 
     @Query("SELECT * FROM tag WHERE name = :name AND bookId = :bookId")
-    fun findByName(name: String, bookId: UUID): List<Tag>
+    suspend fun findByName(name: String, bookId: UUID): List<Tag>
 
     @Query("SELECT * FROM tag WHERE bookId = :bookId")
-    fun findByBookId(bookId: UUID): List<Tag>
+    suspend fun findByBookId(bookId: UUID): List<Tag>
 
-    fun insert(tag: String, bookId: UUID): Tag {
+    suspend fun insert(tag: String, bookId: UUID): Tag {
         val (type, name) = TagType.tagFromString(tag)
         val tagEntity = Tag(name, type, bookId)
         _insert(tagEntity)
@@ -88,5 +88,6 @@ interface TagDao {
     }
 
     @Query("SELECT * FROM tag")
-    fun findAll(): List<Tag>
+    suspend fun findAll(): List<Tag>
+
 }
