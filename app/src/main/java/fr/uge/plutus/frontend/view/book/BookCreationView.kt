@@ -1,15 +1,15 @@
 package fr.uge.plutus.frontend.view.book
 
 import android.database.sqlite.SQLiteConstraintException
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,15 +26,20 @@ import androidx.compose.ui.unit.dp
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.frontend.component.form.InputText
+import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.view.View
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun BookCreatorPreview() {
     BookCreationView()
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun BookCreationView(onExit: () -> Unit = {}) {
+fun BookCreationView() {
+    val globalState = globalState()
     val context = LocalContext.current
 
     var bookName by rememberSaveable { mutableStateOf("") }
@@ -54,7 +59,8 @@ fun BookCreationView(onExit: () -> Unit = {}) {
         try {
             Database.books().insert(book)
             Toast.makeText(context, "Book “${book.name}” created", Toast.LENGTH_SHORT).show()
-            onExit()
+            globalState.currentBook = book
+            globalState.currentView = View.TRANSACTION_LIST
         } catch (e: SQLiteConstraintException) {
             errorMessage = "Book already exists"
         }
@@ -67,9 +73,8 @@ fun BookCreationView(onExit: () -> Unit = {}) {
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "Create a book", style = MaterialTheme.typography.h5)
         InputText(label = "Book name", value = bookName, errorMessage = errorMessage) {
             bookName = it
             errorMessage = null

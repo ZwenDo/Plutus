@@ -1,5 +1,7 @@
 package fr.uge.plutus.frontend.store
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,10 +11,7 @@ import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.view.View
 
-
-private object GlobalContext {
-    lateinit var globalState: GlobalState
-}
+private lateinit var globalState: GlobalState
 
 interface GlobalState {
     var currentBook: Book?
@@ -22,14 +21,15 @@ interface GlobalState {
 
 @Composable
 fun initGlobalState(): GlobalState {
-    GlobalContext.globalState = object : GlobalState {
+    @RequiresApi(Build.VERSION_CODES.O)
+    globalState = object : GlobalState {
         override var currentBook: Book? by rememberSaveable { mutableStateOf(null) }
         override var currentTransaction: Transaction? by rememberSaveable { mutableStateOf(null) }
-        override var currentView: View by rememberSaveable { mutableStateOf(View.BOOK_CREATION) }
+        override var currentView: View by rememberSaveable { mutableStateOf(View.BOOK_SELECTION) }
     }
 
-    return GlobalContext.globalState
+    return globalState
 }
 
 @Composable
-fun globalState(): GlobalState = GlobalContext.globalState
+fun globalState(): GlobalState = globalState

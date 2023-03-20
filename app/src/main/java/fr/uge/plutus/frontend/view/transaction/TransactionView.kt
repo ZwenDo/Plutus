@@ -1,6 +1,7 @@
 package fr.uge.plutus.frontend.view.transaction
 
-import android.util.Log
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,8 +9,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -25,8 +24,8 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.component.common.Loading
-import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
 import java.util.*
@@ -94,13 +93,8 @@ fun DisplayTransaction(transaction: Transaction, clickHandler: () -> Unit) {
     }
 }
 
-enum class TransactionView {
-    LIST, DETAILS
-}
-
 @Composable
 fun TransactionList(
-    padding: PaddingValues,
     transactions: List<Transaction>,
     onTransactionClick: (Transaction) -> Unit
 ) {
@@ -109,7 +103,6 @@ fun TransactionList(
     LazyColumn(
         Modifier
             .fillMaxWidth()
-            .padding(padding)
     ) {
         items(transactions.sortedByDescending { it.date }) {
             val currentDate = DateFormatter.format(it.date)
@@ -128,16 +121,13 @@ fun TransactionList(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DisplayTransactions(onNewTransactionRequest: () -> Unit) {
+fun DisplayTransactions() {
     val globalState = globalState()
     val book = globalState.currentBook!!
     var transactions by rememberSaveable { mutableStateOf(emptyList<Transaction>()) }
     var loaded by rememberSaveable { mutableStateOf(false) }
-    val scaffoldState = rememberScaffoldState()
-
-    var transactionView by rememberSaveable { mutableStateOf(TransactionView.LIST) }
-    var currentTransaction by rememberSaveable { mutableStateOf<Transaction?>(null) }
 
     if (!loaded) {
         Loading {
@@ -145,36 +135,14 @@ fun DisplayTransactions(onNewTransactionRequest: () -> Unit) {
             loaded = true
         }
     } else {
-        Scaffold(
-            scaffoldState = scaffoldState,
-            topBar = {
-                TopAppBar(title = { Text("Transactions") })
-            },
-            floatingActionButton =
-            {
-                FloatingActionButton(onClick = onNewTransactionRequest) {
-                    Icon(Icons.Filled.Add, "New transaction")
-                }
-            }
-        ) { padding ->
-            when (transactionView) {
-                TransactionView.LIST -> {
-                    TransactionList(padding, transactions) {
-                        currentTransaction = it
-                        globalState.currentTransaction = it
-                        transactionView = TransactionView.DETAILS
-                    }
-                }
-                TransactionView.DETAILS -> {
-                    DisplayTransactionDetail(currentTransaction!!) {
-                        transactionView = TransactionView.LIST
-                    }
-                }
-            }
+        TransactionList(transactions) {
+            globalState.currentTransaction = it
+            globalState.currentView = View.TRANSACTION_DETAILS
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun TransactionListPreview() {
@@ -195,9 +163,7 @@ fun TransactionListPreview() {
 
     if (loaded) {
         PlutusTheme {
-            DisplayTransactions {
-                Log.d("TransactionView", "New transaction request")
-            }
+            DisplayTransactions()
         }
     }
 }

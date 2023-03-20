@@ -1,6 +1,7 @@
 package fr.uge.plutus.frontend.view.book
 
-import android.util.Log
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -14,10 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,11 +29,13 @@ import androidx.compose.ui.unit.dp
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.frontend.component.common.Loading
+import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.ui.theme.PlutusTheme
-import fr.uge.plutus.util.plus
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun BookSelectionView(onChosen: (Book) -> Unit) {
+fun BookSelectionView() {
     var loaded by rememberSaveable { mutableStateOf(false) }
     var books by rememberSaveable { mutableStateOf(emptyList<Book>()) }
 
@@ -46,32 +46,32 @@ fun BookSelectionView(onChosen: (Book) -> Unit) {
         }
         return
     }
-
-    Scaffold(
-        scaffoldState = rememberScaffoldState(),
-        topBar = { TopAppBar(title = { Text("Books") }) }
-    ) { padding ->
-        LazyColumn(
-            Modifier
-                .fillMaxSize()
-                .padding(padding + 8.dp)
-                .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            userScrollEnabled = true
-        ) {
-            items(books) { book ->
-                BookSelectionItem(book, onChosen)
-            }
+    LazyColumn(
+        Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+            .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        userScrollEnabled = true
+    ) {
+        items(books) { book ->
+            BookSelectionItem(book)
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun BookSelectionItem(book: Book, onChosen: (Book) -> Unit) {
+fun BookSelectionItem(book: Book) {
+    val globalState = globalState()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onChosen(book) }
+            .clickable {
+                globalState.currentBook = book
+                globalState.currentView = View.TRANSACTION_LIST
+            }
             .border(1.dp, Color.Black, RoundedCornerShape(8.dp))
             .padding(8.dp),
         horizontalArrangement = Arrangement.Center
@@ -80,13 +80,12 @@ fun BookSelectionItem(book: Book, onChosen: (Book) -> Unit) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 @Preview(showBackground = true)
 fun BookSelectionViewPreview() {
     Database.init(LocalContext.current)
     PlutusTheme {
-        BookSelectionView {
-            Log.d("BookSelectionView", "Chosen: $it")
-        }
+        BookSelectionView()
     }
 }

@@ -3,7 +3,9 @@ package fr.uge.plutus.frontend.view.transaction
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -52,6 +54,7 @@ private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
     }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayHeader(
     transaction: Transaction,
@@ -66,13 +69,15 @@ fun DisplayHeader(
             .background(backgroundColor)
             .padding(bottom = 20.dp)
     ) {
-        // return button
-        Row {
-
+        Row(Modifier
+            .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = "Back"
+                    contentDescription = "Back",
+                    tint = Color.White
                 )
             }
             IconButton(onClick = {
@@ -81,12 +86,12 @@ fun DisplayHeader(
             }) {
                 Icon(
                     imageVector = Icons.Filled.Edit,
-                    contentDescription = "Edit"
+                    contentDescription = "Edit",
+                    tint = Color.White
                 )
             }
         }
 
-        // Amount
         Text(
             text = "${transaction.amount} ${transaction.currency}",
             modifier = Modifier.fillMaxWidth(),
@@ -95,8 +100,6 @@ fun DisplayHeader(
             fontSize = 40.sp,
             fontWeight = FontWeight.Bold
         )
-
-        // Date
 
         val date = DateFormatter.format(transaction.date)
         Text(
@@ -107,8 +110,6 @@ fun DisplayHeader(
             fontSize = 20.sp,
             fontWeight = FontWeight(500)
         )
-
-        // Edit button
     }
 }
 
@@ -174,9 +175,10 @@ fun DisplayTagsSection(transaction: Transaction) {
 }
 
 @Composable
-fun DisplayBody(transaction: Transaction) {
+fun DisplayTransactionDetails(transaction: Transaction) {
     Column(
         Modifier
+            .padding(16.dp)
             .fillMaxSize()
     ) {
         DisplayDescriptionSection(transaction = transaction)
@@ -196,17 +198,6 @@ fun DisplayBody(transaction: Transaction) {
             )
             DisplayLocation(latitude = transaction.latitude, longitude = transaction.longitude)
         }
-    }
-}
-
-@Composable
-fun DisplayTransactionDetail(transaction: Transaction, onBack: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .scrollable(rememberScrollState(), orientation = Orientation.Vertical)) {
-        DisplayHeader(transaction, onBack = onBack)
-        DisplayBody(transaction)
     }
 }
 
@@ -241,27 +232,4 @@ fun createMapWithLocation(latitude: Double, longitude: Double): ImageBitmap {
         radius,
         Paint().apply { color = Color.Red.toArgb() })
     return mapBitmap.asImageBitmap()
-}
-
-@Preview(showBackground = true)
-@Composable
-fun TransactionDetailsPreview() {
-    val context = LocalContext.current
-    var loaded by rememberSaveable { mutableStateOf(false) }
-    var transaction by rememberSaveable { mutableStateOf<Transaction?>(null) }
-
-    if (!loaded) {
-        Database.init(context)
-        Loading {
-            val books = Database.books().getAll()
-            transaction = Database.transactions().findAllByBookId(books[0].uuid)[0]
-            loaded = true
-        }
-    } else {
-        PlutusTheme {
-            DisplayTransactionDetail(transaction!!) {
-                Log.d("TransactionDetails", "Back")
-            }
-        }
-    }
 }

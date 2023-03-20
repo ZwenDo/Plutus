@@ -10,7 +10,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
 import fr.uge.plutus.backend.Database
-import fr.uge.plutus.frontend.view.MainView
+import fr.uge.plutus.frontend.component.scaffold.PlutusScaffold
 import fr.uge.plutus.ui.theme.PlutusTheme
 
 class MainActivity : ComponentActivity() {
@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    MainView()
+                    PlutusScaffold()
                 }
             }
         }
