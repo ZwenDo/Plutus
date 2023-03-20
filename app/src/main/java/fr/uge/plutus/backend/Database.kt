@@ -18,7 +18,6 @@ import java.util.*
         TagTransactionJoin::class,
         Filter::class,
         Attachment::class,
-        BudgetTarget::class,
     ],
     version = 1,
     exportSchema = false
@@ -43,8 +42,6 @@ abstract class Database : RoomDatabase() {
     abstract fun filters(): FilterDao
 
     abstract fun attachments(): AttachmentDao
-
-    abstract fun budgetTargets(): BudgetTargetDao
 
     companion object {
 

@@ -163,7 +163,7 @@ fun TransactionCreationView() {
                     val todoTag = tags
                         .findByName("@todo", currentBook.uuid)
                         .firstOrNull { it.type == TagType.INFO }
-                        ?: tags.insert("@todo", currentBook.uuid)
+                        ?: tags.insert("@todo", currentBook.uuid, null)
                     Database.tagTransactionJoin().insert(transaction, todoTag)
                 }
             }

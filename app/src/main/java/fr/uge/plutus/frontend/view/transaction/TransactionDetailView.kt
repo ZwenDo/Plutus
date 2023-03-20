@@ -142,7 +142,8 @@ fun DisplayTags(tags: List<Tag>) {
     )
     {
         items(tags) {
-            val caption = it.stringRepresentation
+            var caption = it.stringRepresentation
+            it.budgetTarget?.let { target -> caption += " (${target.value} ${target.timePeriod})" }
             DisplayPill(caption) { /* TODO: Display tag's details */ }
         }
     }

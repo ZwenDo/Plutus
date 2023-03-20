@@ -40,11 +40,13 @@ enum class TagType(val code: String) {
     }
 }
 
-enum class TimePeriod {
-    DAILY,
-    WEEKLY,
-    MONTHLY,
-    YEARLY,
+enum class TimePeriod(
+    val displayName: String
+) {
+    DAILY("Daily"),
+    WEEKLY("Weekly"),
+    MONTHLY("Monthly"),
+    YEARLY("Yearly"),
 }
 
 data class BudgetTarget(
@@ -94,9 +96,9 @@ interface TagDao {
     @Query("SELECT * FROM tag WHERE bookId = :bookId")
     fun findByBookId(bookId: UUID): List<Tag>
 
-    fun insert(tag: String, bookId: UUID): Tag {
+    fun insert(tag: String, bookId: UUID, budgetTarget: BudgetTarget?): Tag {
         val (type, name) = TagType.tagFromString(tag)
-        val tagEntity = Tag(name, type, bookId)
+        val tagEntity = Tag(name, type, bookId, budgetTarget)
         _insert(tagEntity)
         return tagEntity
     }
