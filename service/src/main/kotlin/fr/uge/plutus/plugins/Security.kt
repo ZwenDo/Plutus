@@ -6,13 +6,15 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import fr.uge.plutus.core.Environment
 import fr.uge.plutus.core.ExpiredOrInvalidTokenException
+import fr.uge.plutus.util.Constants
 import fr.uge.plutus.util.getHeader
+import io.ktor.http.parsing.*
 import io.ktor.server.application.*
 import java.lang.IllegalArgumentException
 
 fun Application.configureSecurity() {
     authentication {
-        configureJWT("auth-jwt", Environment.jwtSecret) { call, _ ->
+        configureJWT(Constants.AUTH_JWT, Environment.jwtSecret) { call, _ ->
             val token = call.getHeader("Authorization").replace("Bearer ", "")
             val id = JWT.decode(token).subject ?: throw ExpiredOrInvalidTokenException()
             BookFilePrincipal(id)
@@ -31,7 +33,7 @@ private fun AuthenticationConfig.configureJWT(
     verifier(jwtVerifier)
 
     validate { credential ->
-        kotlin.runCatching {
+        runCatching {
             block(this, credential)
         }.onFailure {
             if (it !is IllegalArgumentException) throw it
