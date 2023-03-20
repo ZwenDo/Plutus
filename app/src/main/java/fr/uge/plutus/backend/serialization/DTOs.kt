@@ -1,6 +1,7 @@
-@file:UseSerializers(UUIDSerializer::class)
+@file:UseSerializers(UUIDSerializer::class, UriSerializer::class)
 package fr.uge.plutus.backend.serialization
 
+import android.net.Uri
 import fr.uge.plutus.backend.*
 import java.util.UUID
 import kotlinx.serialization.Serializable
@@ -13,8 +14,9 @@ data class TransactionDTO(
     val date: Long,
     val amount: Double,
     val currency: Currency,
-    val latitude: Double?,
-    val longitude: Double?
+    val location: Pair<Double, Double>?,
+    val tags: List<UUID>,
+    val attachments: List<AttachmentDTO>
 )
 @Serializable
 data class TagDTO(
@@ -24,8 +26,16 @@ data class TagDTO(
 )
 
 @Serializable
+data class AttachmentDTO(
+    val attachmentId: UUID,
+    val name: String,
+    val uri: Uri,
+)
+
+@Serializable
 data class BookDTO(
     val uuid: UUID,
     val name: String,
-    val transactions: List<TransactionDTO>
+    val transactions: List<TransactionDTO>,
+    val tags: List<TagDTO>,
 )
