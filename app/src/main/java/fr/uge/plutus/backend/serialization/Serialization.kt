@@ -34,17 +34,29 @@ private fun Attachment.toDTO(): AttachmentDTO = AttachmentDTO(
     uri
 )
 
+private fun Filter.toDTO(): FilterDTO {
+    return FilterDTO(
+        filterId,
+        name,
+        criterias,
+//        tags,
+    )
+}
+
 suspend fun Book.toDTO(database: Database? = null): BookDTO {
     val transactionDao = database?.transactions() ?: Database.transactions()
     val tagDao = database?.tags() ?: Database.tags()
+    val filterDao = database?.filters() ?: Database.filters()
 
     val transactions = transactionDao.findAllByBookId(uuid).map { it.toDTO(database) }
     val tags = tagDao.findByBookId(uuid).map { it.toDTO(database) }
+    val filters = filterDao.findAllByBookId(uuid).map { it.toDTO() }
 
     return BookDTO(
         uuid,
         name,
         transactions,
-        tags
+        tags,
+        filters
     )
 }

@@ -16,7 +16,7 @@ data class TransactionDTO(
     val currency: Currency,
     val location: Pair<Double, Double>?,
     val tags: List<UUID>,
-    val attachments: List<AttachmentDTO>
+    val attachments: List<AttachmentDTO>,
 )
 @Serializable
 data class TagDTO(
@@ -33,9 +33,18 @@ data class AttachmentDTO(
 )
 
 @Serializable
+data class FilterDTO(
+    val filterId: UUID,
+    val name: String,
+    val criteria: Map<String, String>,
+//    val tags: List<UUID>,
+)
+
+@Serializable
 data class BookDTO(
     val uuid: UUID,
     val name: String,
     val transactions: List<TransactionDTO>,
     val tags: List<TagDTO>,
+    val filters: List<FilterDTO>,
 )
