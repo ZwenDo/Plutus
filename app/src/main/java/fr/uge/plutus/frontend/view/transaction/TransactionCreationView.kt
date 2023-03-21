@@ -7,12 +7,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,7 +22,9 @@ import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.attachment.AttachmentCreationView
 import fr.uge.plutus.util.toDateOrNull
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 
@@ -139,14 +135,17 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                 } else {
                     Database.transactions().insert(transaction)
                 }
+                val scope = coroutineContext
                 attachments.forEach { (id, new) -> // for each attachment we have to check if it has been added, updated or deleted
                     initialAttachments.compute(id) { _, old ->
                         val toUpsert = new.copy(transactionId = transaction.transactionId)
-                        if (old == null) {
-                            Database.attachments()._insert(toUpsert)
-                        } else {
-                            Database.attachments().update(toUpsert)
-                        }
+                        CoroutineScope(scope).launch {
+                            if (old == null) {
+                                Database.attachments()._insert(toUpsert)
+                            } else {
+                                Database.attachments().update(toUpsert)
+                            }
+                        }.start()
                         null
                     }
                 }
