@@ -26,7 +26,6 @@ data class Filter(
     val name: String,
     val bookId: UUID,
     val criterias: Map<String, String> = emptyMap(),
-    val tags: Set<String> = emptySet(),
 
     @PrimaryKey val filterId: UUID = UUID.randomUUID()
 ) : Serializable {
@@ -44,14 +43,12 @@ data class Filter(
         private var currency: Currency? = null
         private var minDate: Date? = null
         private var maxDate: Date? = null
-        private var tags: Set<Tag>? = null
 
         fun minAmount(minAmount: Double) = apply { this.minAmount = minAmount }
         fun maxAmount(maxAmount: Double) = apply { this.maxAmount = maxAmount }
         fun currency(currency: Currency) = apply { this.currency = currency }
         fun minDate(minDate: Date) = apply { this.minDate = minDate }
         fun maxDate(maxDate: Date) = apply { this.maxDate = maxDate }
-        fun tags(tags: Set<Tag>) = apply { this.tags = tags }
 
         fun build(): Filter {
             val vMinAmount = minAmount
@@ -90,13 +87,11 @@ data class Filter(
                 criterias[Criteria.MAX_DATE.value] = vMaxDate.time.toString()
             }
 
-            val t = tags?.map { it.name!! }?.toSet() ?: emptySet()
-
-            if (t.isEmpty() && criterias.isEmpty()) {
-                throw IllegalArgumentException("Filter must have at least one criteria or one tag")
+            if (criterias.isEmpty()) {
+                throw IllegalArgumentException("Filter must have at least one criteria")
             }
 
-            return Filter(name, bookId, criterias, t)
+            return Filter(name, bookId, criterias)
         }
     }
 }
