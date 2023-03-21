@@ -1,8 +1,14 @@
 package fr.uge.plutus.backend
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.room.*
+import fr.uge.plutus.util.toDate
+import fr.uge.plutus.util.toLocalDate
 import java.io.Serializable
+import java.time.temporal.ChronoField
+import java.time.temporal.ChronoUnit.*
 import java.util.*
 
 enum class TagType(val code: String) {
@@ -46,7 +52,36 @@ enum class TimePeriod(
     DAILY("Daily"),
     WEEKLY("Weekly"),
     MONTHLY("Monthly"),
-    YEARLY("Yearly"),
+    YEARLY("Yearly");
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun toDateRange(date: Date): Pair<Date, Date> {
+        val localDate = date.toLocalDate()
+        return when (this) {
+            DAILY -> {
+                val start = localDate.atStartOfDay()
+                val end = start.plus(1, DAYS).minusNanos(1)
+                start to end
+            }
+            WEEKLY -> {
+                val start = localDate.with(ChronoField.DAY_OF_WEEK, 1).atStartOfDay()
+                val end = start.plus(1, WEEKS).minusNanos(1)
+                start to end
+            }
+            MONTHLY -> {
+                val start = localDate.with(ChronoField.DAY_OF_MONTH, 1).atStartOfDay()
+                val end = start.plus(1, MONTHS).minusNanos(1)
+                start to end
+            }
+            YEARLY -> {
+                val start = localDate.with(ChronoField.DAY_OF_YEAR, 1).atStartOfDay()
+                val end = start.plus(1, YEARS).minusNanos(1)
+                start to end
+            }
+        }.let { (start, end) ->
+            start.toDate() to end.toDate()
+        }
+    }
 }
 
 data class BudgetTarget(

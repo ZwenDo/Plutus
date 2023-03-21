@@ -1,7 +1,9 @@
 package fr.uge.plutus.frontend.view.tag
 
 import android.database.sqlite.SQLiteConstraintException
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -39,6 +41,24 @@ private suspend fun updateTagMapToDelete(transaction: Transaction): Map<String, 
         return@withContext tagsValue.associateBy { it.name }
     }
 
+@RequiresApi(Build.VERSION_CODES.O)
+private suspend fun checkTagTarget(tag: Tag, transaction: Transaction) =
+    withContext(Dispatchers.Main) {
+        if (tag.budgetTarget == null) {
+            return@withContext
+        }
+
+        val (from, to) = tag.budgetTarget.timePeriod.toDateRange(transaction.date)
+        val bookId = transaction.bookId
+        val transactions = Database.transactions()
+            .findByBookIdAndDateRangeAndTagId(bookId, from, to, tag.tagId)
+        val total = transactions.sumOf { it.amount }
+        if (total > tag.budgetTarget.value) {
+            // TODO: Send notification
+        }
+    }
+
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TagCreationView(onClose: () -> Unit = {}) {
     val globalState = globalState()
@@ -87,6 +107,7 @@ fun TagCreationView(onClose: () -> Unit = {}) {
                 try {
                     withContext(Dispatchers.IO) {
                         Database.tagTransactionJoin().insert(currentTransaction, onSelectAdd!!)
+                        checkTagTarget(onSelectAdd!!, currentTransaction)
                     }
                     Toast.makeText(context, "Tag added", Toast.LENGTH_SHORT).show()
                 } catch (e: SQLiteConstraintException) {

@@ -1,8 +1,8 @@
 package fr.uge.plutus.backend
 
 import androidx.room.*
-import java.util.*
 import java.io.Serializable
+import java.util.*
 
 enum class Currency {
     EUR,
@@ -18,7 +18,7 @@ enum class Currency {
         onDelete = ForeignKey.CASCADE
     )]
 )
-data class Transaction (
+data class Transaction(
     val description: String,
     val date: Date,
     val amount: Double,
@@ -53,4 +53,13 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE transactionId = :id LIMIT 1")
     suspend fun findById(id: UUID): Transaction?
+
+    //@Query("SELECT * FROM transactions WHERE date BETWEEN :start AND :end AND bookId = :bookId")
+    @Query("SELECT * FROM transactions NATURAL JOIN tag_transaction_join WHERE date BETWEEN :start AND :end AND bookId = :bookId AND tagId = :tagId")
+    suspend fun findByBookIdAndDateRangeAndTagId(
+        bookId: UUID,
+        start: Date,
+        end: Date,
+        tagId: UUID
+    ): List<Transaction>
 }

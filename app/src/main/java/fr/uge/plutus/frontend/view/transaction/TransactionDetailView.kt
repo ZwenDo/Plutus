@@ -113,6 +113,7 @@ fun DisplayTags(tags: List<Tag>) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayTagsSection(transaction: Transaction) {
     var loaded by rememberSaveable { mutableStateOf(false) }
@@ -146,6 +147,7 @@ fun DisplayTagsSection(transaction: Transaction) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayTransactionDetails(transaction: Transaction) {
     Column(
