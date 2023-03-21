@@ -1,6 +1,7 @@
 package fr.uge.plutus.backend.serialization
 
 import fr.uge.plutus.backend.*
+import java.util.*
 
 private suspend fun Transaction.toDTO(
     database: Database? = null,
@@ -61,16 +62,34 @@ suspend fun Book.toDTO(database: Database? = null): BookDTO {
     )
 }
 
-suspend fun BookDTO.loadToDB(database: Database? = null) {
+suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID? = null) {
     val bookDao = database?.books() ?: Database.books()
     val tagDao = database?.tags() ?: Database.tags()
     val transactionDao = database?.transactions() ?: Database.transactions()
+    val tagTransactionJoinDao = database?.tagTransactionJoin() ?: Database.tagTransactionJoin()
+    val attachmentDao = database?.attachments() ?: Database.attachments()
 
-    val book = toBook()
+    val book = toBook(bookId ?: uuid)
     bookDao.upsert(book)
 
+    val tagMap = mutableMapOf<UUID, Tag>()
     tags.forEach {
-        tagDao.upsert(it.toTag(book.uuid))
+        val tag = it.toTag(book.uuid)
+        tagDao.upsert(tag)
+        tagMap[tag.tagId] = tag
+    }
+
+    transactions.forEach {
+        val transaction = it.toTransaction(book.uuid)
+        transactionDao.upsert(transaction)
+        it.tags.forEach { tagId ->
+            tagTransactionJoinDao.upsert(TagTransactionJoin(tagId, transaction.transactionId))
+        }
+
+        it.attachments.forEach { attachmentDTO ->
+            val attachment = attachmentDTO.toAttachment(transaction.transactionId)
+            attachmentDao.upsert(attachment)
+        }
     }
 }
 
