@@ -47,6 +47,9 @@ abstract class Database : RoomDatabase() {
 
         private lateinit var INSTANCE: Database
 
+        val isInitialized: Boolean
+            get() = ::INSTANCE.isInitialized
+
         fun init(context: Context) {
             require(!::INSTANCE.isInitialized) { "Database already initialized" }
 
