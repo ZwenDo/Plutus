@@ -4,16 +4,12 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -29,7 +25,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.uge.plutus.R
@@ -41,7 +36,6 @@ import fr.uge.plutus.frontend.component.common.Loading
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.tag.TagCreationView
-import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -69,8 +63,9 @@ fun DisplayHeader(
             .background(backgroundColor)
             .padding(bottom = 20.dp)
     ) {
-        Row(Modifier
-            .fillMaxWidth(),
+        Row(
+            Modifier
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = onBack) {
@@ -143,7 +138,7 @@ fun DisplayTags(tags: List<Tag>) {
     {
         items(tags) {
             var caption = it.stringRepresentation
-            it.budgetTarget?.let { target -> caption += " (${target.value} ${target.timePeriod})" }
+            it.budgetTarget?.let { target -> caption += " (${target.value} ${target.currency} ${target.timePeriod.displayName})" }
             DisplayPill(caption) { /* TODO: Display tag's details */ }
         }
     }
@@ -153,6 +148,11 @@ fun DisplayTags(tags: List<Tag>) {
 fun DisplayTagsSection(transaction: Transaction) {
     var loaded by rememberSaveable { mutableStateOf(false) }
     var tags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
+    var viewId by rememberSaveable { mutableStateOf(0) }
+
+    LaunchedEffect(viewId) {
+        tags = getTransactionsTags(transaction)
+    }
 
     if (!loaded) {
         Loading {
@@ -170,7 +170,9 @@ fun DisplayTagsSection(transaction: Transaction) {
             DisplayTags(tags = tags)
         }
         Row {
-            TagCreationView()
+            TagCreationView() {
+                viewId++
+            }
         }
     }
 }

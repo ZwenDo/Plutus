@@ -2,8 +2,8 @@ package fr.uge.plutus.backend
 
 import androidx.compose.ui.graphics.Color
 import androidx.room.*
-import java.util.*
 import java.io.Serializable
+import java.util.*
 
 enum class TagType(val code: String) {
     INFO(""),
@@ -51,6 +51,7 @@ enum class TimePeriod(
 
 data class BudgetTarget(
     @ColumnInfo(name = "value") val value: Double,
+    @ColumnInfo(name = "currency") val currency: Currency,
     @ColumnInfo(name = "time_period") val timePeriod: TimePeriod,
 )
 

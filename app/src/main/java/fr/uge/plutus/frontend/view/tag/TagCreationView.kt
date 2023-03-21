@@ -4,13 +4,8 @@ import android.database.sqlite.SQLiteConstraintException
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,6 +17,7 @@ import androidx.compose.ui.window.PopupProperties
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.frontend.component.common.Loading
 import fr.uge.plutus.frontend.component.form.InputSelectCollection
+import fr.uge.plutus.frontend.component.form.InputSelectEnum
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.globalState
 import kotlinx.coroutines.Dispatchers
@@ -44,14 +40,16 @@ private suspend fun updateTagMapToDelete(transaction: Transaction): Map<String, 
     }
 
 @Composable
-fun TagCreationView() {
+fun TagCreationView(onClose: () -> Unit = {}) {
     val globalState = globalState()
     val currentBook = globalState.currentBook!!
     val currentTransaction = globalState.currentTransaction!!
     val context = LocalContext.current
     var isOpen by rememberSaveable { mutableStateOf(false) }
     var creatingTag by rememberSaveable { mutableStateOf("") }
+    var addTarget by rememberSaveable { mutableStateOf(false) }
     var budgetTargetValue by rememberSaveable { mutableStateOf<Double?>(null) }
+    var budgetTargetCurrency by rememberSaveable { mutableStateOf(Currency.USD) }
     var budgetTargetPeriod by rememberSaveable { mutableStateOf<TimePeriod?>(null) }
     var creating by rememberSaveable { mutableStateOf(false) }
     var delete by rememberSaveable { mutableStateOf(false) }
@@ -68,9 +66,11 @@ fun TagCreationView() {
             if (creatingTag.isNotBlank()) {
                 try {
                     withContext(Dispatchers.IO) {
-                        val (value, period) = budgetTargetValue to budgetTargetPeriod
-                        val tag = if (value != null && period != null) {
-                            val budgetTarget = BudgetTarget(value, period)
+                        val value = budgetTargetValue
+                        val currency = budgetTargetCurrency
+                        val period = budgetTargetPeriod
+                        val tag = if (addTarget && value != null && period != null) {
+                            val budgetTarget = BudgetTarget(value, currency, period)
                             Database.tags().insert(creatingTag, currentBook.uuid, budgetTarget)
                         } else {
                             Database.tags().insert(creatingTag, currentBook.uuid, null)
@@ -120,6 +120,7 @@ fun TagCreationView() {
             alignment = Alignment.CenterStart,
             onDismissRequest = {
                 isOpen = false
+                onClose()
             },
             properties = PopupProperties(focusable = true)
         ) {
@@ -142,10 +143,6 @@ fun TagCreationView() {
                     Column(
                         modifier = Modifier.padding(16.dp)
                     ) {
-                        InputText(
-                            label = "Create a new tag",
-                            value = creatingTag
-                        ) { creatingTag = it }
                         Box(modifier = Modifier.wrapContentSize()) {
                             InputSelectCollection(
                                 label = "Select an existing tag to add",
@@ -158,7 +155,7 @@ fun TagCreationView() {
                         }
                         Box(modifier = Modifier.wrapContentSize()) {
                             InputSelectCollection(
-                                label = "Select an existing tag to delete",
+                                label = "Select an existing tag to remove",
                                 options = tagMapDelete.values,
                                 initial = null,
                                 mapFromString = { tagMapDelete[it]!! },
@@ -172,8 +169,18 @@ fun TagCreationView() {
                                 .padding(10.dp)
                                 .width(1.dp)
                         )
+                        InputText(
+                            label = "Create a new tag",
+                            value = creatingTag
+                        ) { creatingTag = it }
                         Column(Modifier.fillMaxWidth()) {
-                            Text(text = "Budget target", style = MaterialTheme.typography.caption)
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(checked = addTarget, onCheckedChange = { addTarget = it })
+                                Text(text = "Set a budget target")
+                            }
                             Row(
                                 Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -182,23 +189,33 @@ fun TagCreationView() {
                                     InputText(
                                         label = "Amount",
                                         value = budgetTargetValue?.toString() ?: "",
+                                        enabled = addTarget,
                                     ) {
                                         budgetTargetValue = it.toDoubleOrNull()
                                     }
                                 }
                                 Box(modifier = Modifier.weight(1f / 2f)) {
-                                    InputSelectCollection(
-                                        label = "Period",
-                                        options = TimePeriod.values().toList(),
-                                        initial = null,
-                                        mapFromString = { TimePeriod.valueOf(it) },
-                                        mapToString = TimePeriod::displayName,
-                                        onSelected = {
-                                            budgetTargetPeriod = it
-                                        }
+                                    InputSelectEnum(
+                                        label = "Currency",
+                                        options = Currency.values().toList(),
+                                        initial = budgetTargetCurrency,
+                                        mapper = { Currency.valueOf(it) },
+                                        onSelected = { budgetTargetCurrency = it },
+                                        enabled = addTarget,
                                     )
                                 }
                             }
+                            InputSelectCollection(
+                                label = "Period",
+                                options = TimePeriod.values().toList(),
+                                initial = null,
+                                mapFromString = { TimePeriod.valueOf(it) },
+                                mapToString = TimePeriod::displayName,
+                                onSelected = {
+                                    budgetTargetPeriod = it
+                                },
+                                enabled = addTarget,
+                            )
                         }
                         Row(
                             modifier = Modifier
@@ -225,6 +242,7 @@ fun TagCreationView() {
                                 onClick = {
                                     isOpen = false
                                     loaded = false
+                                    onClose()
                                 }) {
                                 Text(text = "CLOSE", fontWeight = FontWeight.SemiBold)
                             }
@@ -235,7 +253,7 @@ fun TagCreationView() {
         }
     } else {
         Button(onClick = { isOpen = true }) {
-            Text(text = "Create a tag")
+            Text(text = "Manage tags")
         }
     }
 }
