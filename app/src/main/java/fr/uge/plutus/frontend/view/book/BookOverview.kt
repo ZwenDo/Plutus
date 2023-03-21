@@ -108,14 +108,19 @@ fun TransactionsMonthChart(transactionsOfThisMonth: List<Transaction>) {
 
         mutableStateOf(m.toMap())
     }
+    val amountByDay by rememberSaveable {
+        mutableStateOf(transactionsByDay.mapValues { (_, transactions) ->
+            transactions.sumOf { it.amount }
+        })
+    }
 
     val biggestIncome by rememberSaveable {
-        mutableStateOf(transactionsOfThisMonth
-            .filter { it.amount > 0 }.maxOfOrNull { it.amount } ?: 0.0)
+        mutableStateOf(amountByDay
+            .filter { it.value > 0 }.maxOfOrNull { it.value } ?: 0.0)
     }
     val biggestExpense by rememberSaveable {
-        mutableStateOf(transactionsOfThisMonth
-            .filter { it.amount < 0 }.minOfOrNull { it.amount } ?: 0.0)
+        mutableStateOf(amountByDay
+            .filter { it.value < 0 }.minOfOrNull { it.value } ?: 0.0)
     }
     val biggestTransaction by rememberSaveable {
         mutableStateOf(abs(biggestExpense).coerceAtLeast(biggestIncome))
@@ -123,7 +128,7 @@ fun TransactionsMonthChart(transactionsOfThisMonth: List<Transaction>) {
 
     val barHeight = 200
     val heightMultiplier by rememberSaveable {
-        mutableStateOf((barHeight - 35.0) / biggestTransaction)
+        mutableStateOf(barHeight / biggestTransaction)
     }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -147,7 +152,7 @@ fun TransactionsMonthChart(transactionsOfThisMonth: List<Transaction>) {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .width(20.dp)
-                            .height(barHeight.dp)
+                            .height((barHeight + 35).dp)
                     ) {
                         Spacer(modifier = Modifier.weight(1f))
                         Box(
