@@ -2,7 +2,6 @@ package fr.uge.plutus.frontend.view.transaction
 
 import android.database.sqlite.SQLiteConstraintException
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
