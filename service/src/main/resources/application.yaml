@@ -1,0 +1,13 @@
+ktor:
+  application:
+    modules:
+      - fr.uge.plutus.ApplicationKt.module
+  deployment:
+    port: "$PLUTUS_PORT:8080"
+
+plutus:
+  upload:
+    folder: "$PLUTUS_UPLOAD_FOLDER:uploads"
+  jwt:
+    secret: "$PLUTUS_JWT_SECRET:secret"
+    realm: plutus-service
