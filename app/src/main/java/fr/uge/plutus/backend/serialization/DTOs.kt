@@ -16,9 +16,9 @@ data class TransactionDTO(
     val date: Long,
     val amount: Double,
     val currency: Currency,
-    val location: Pair<Double, Double>?,
-    val tags: List<UUID>,
-    val attachments: List<AttachmentDTO>,
+    val location: Pair<Double, Double>? = null,
+    val tags: List<UUID> = emptyList(),
+    val attachments: List<AttachmentDTO> = emptyList(),
 ) {
 
     fun toTransaction(bookId: UUID): Transaction = Transaction(
@@ -87,14 +87,14 @@ data class FilterDTO(
 data class BookDTO(
     val uuid: UUID,
     val name: String,
-    val transactions: List<TransactionDTO>,
-    val tags: List<TagDTO>,
-    val filters: List<FilterDTO>,
+    val transactions: List<TransactionDTO> = emptyList(),
+    val tags: List<TagDTO> = emptyList(),
+    val filters: List<FilterDTO> = emptyList()
 ) {
 
-    fun toBook(): Book = Book(
+    fun toBook(uuid: UUID? = null): Book = Book(
         name,
-        uuid,
+        uuid ?: this.uuid,
     )
 
 }
