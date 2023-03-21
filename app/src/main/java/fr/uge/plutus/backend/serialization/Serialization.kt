@@ -1,7 +1,13 @@
 package fr.uge.plutus.backend.serialization
 
+import android.content.Context
+import android.net.Uri
+import android.os.Environment
 import fr.uge.plutus.backend.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.util.*
+import kotlin.collections.HashMap
 
 private suspend fun Transaction.toDTO(
     database: Database? = null,
@@ -44,12 +50,16 @@ private fun Filter.toDTO(): FilterDTO {
     )
 }
 
-suspend fun Book.toDTO(database: Database? = null): BookDTO {
+private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null): BookDTO {
     val transactionDao = database?.transactions() ?: Database.transactions()
     val tagDao = database?.tags() ?: Database.tags()
     val filterDao = database?.filters() ?: Database.filters()
 
-    val transactions = transactionDao.findAllByBookId(uuid).map { it.toDTO(database) }
+    val tagIds = exportTags.mapTo(HashSet(), Tag::tagId)
+
+    val transactions = transactionDao
+        .findAllByBookIdWithTags(uuid, tagIds)
+        .map { it.toDTO(database) }
     val tags = tagDao.findByBookId(uuid).map { it.toDTO() }
     val filters = filterDao.findAllByBookId(uuid).map { it.toDTO() }
 
@@ -62,7 +72,7 @@ suspend fun Book.toDTO(database: Database? = null): BookDTO {
     )
 }
 
-suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID? = null) {
+private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID? = null) {
     val bookDao = database?.books() ?: Database.books()
     val tagDao = database?.tags() ?: Database.tags()
     val transactionDao = database?.transactions() ?: Database.transactions()
@@ -74,22 +84,75 @@ suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID? = null) {
 
     val tagMap = mutableMapOf<UUID, Tag>()
     tags.forEach {
-        val tag = it.toTag(book.uuid)
+        // if the book is imported as a new book, we need to generate new ids for the tags
+        val newId = if (bookId != null) UUID.randomUUID() else null
+        val tag = it.toTag(book.uuid, newId)
         tagDao.upsert(tag)
         tagMap[tag.tagId] = tag
     }
 
     transactions.forEach {
-        val transaction = it.toTransaction(book.uuid)
+        // if the book is imported as a new book, we need to generate new ids for the transactions
+        val newId = if (bookId != null) UUID.randomUUID() else null
+        val transaction = it.toTransaction(book.uuid, newId)
         transactionDao.upsert(transaction)
         it.tags.forEach { tagId ->
             tagTransactionJoinDao.upsert(TagTransactionJoin(tagId, transaction.transactionId))
         }
 
         it.attachments.forEach { attachmentDTO ->
-            val attachment = attachmentDTO.toAttachment(transaction.transactionId)
+            // if the book is imported as a new book, we need to generate new ids for the attachments
+            val newAttachmentId = if (bookId != null) UUID.randomUUID() else null
+            val attachment = attachmentDTO.toAttachment(transaction.transactionId, newAttachmentId)
             attachmentDao.upsert(attachment)
         }
     }
+}
+
+suspend fun exportBook(book: Book, name: String, exportTags: Set<Tag> = emptySet()) {
+    require("/" !in name && "\\" !in name) { "Invalid name: $name" }
+    val json = Json.encodeToString(book.toDTO(exportTags))
+    val outputFile = Environment
+        .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        .resolve("$name.book.plutus")
+    outputFile.writeText(json)
+}
+
+suspend fun importBook(
+    fileUri: Uri,
+    context: Context,
+    database: Database? = null
+) = bookImporting(fileUri, context, null, database)
+
+suspend fun mergeBook(
+    fileUri: Uri,
+    context: Context,
+    mergeDestinationBook: UUID,
+    database: Database? = null
+) = bookImporting(fileUri, context, mergeDestinationBook, database)
+
+private suspend fun bookImporting(
+    fileUri: Uri,
+    context: Context,
+    mergeDestinationBook: UUID?,
+    database: Database? = null
+) {
+    require(
+        fileUri.scheme == "content" &&
+                fileUri.lastPathSegment?.endsWith(".book.plutus") == true
+    ) {
+        "Invalid file: $fileUri"
+    }
+
+    val content = context
+        .contentResolver
+        .openInputStream(fileUri)!!
+        .use {
+            it.bufferedReader().use { b ->
+                b.readText()
+            }
+        }
+    val bookDTO = Json.decodeFromString(BookDTO.serializer(), content)
+    bookDTO.loadToDB(database, mergeDestinationBook)
 }
 

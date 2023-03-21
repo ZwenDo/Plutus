@@ -2,8 +2,8 @@ package fr.uge.plutus.backend
 
 import android.database.sqlite.SQLiteConstraintException
 import androidx.room.*
-import java.util.*
 import java.io.Serializable
+import java.util.*
 
 enum class Currency {
     EUR,
@@ -19,7 +19,7 @@ enum class Currency {
         onDelete = ForeignKey.CASCADE
     )]
 )
-data class Transaction (
+data class Transaction(
     val description: String,
     val date: Date,
     val amount: Double,
@@ -51,6 +51,18 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE bookId = :bookId")
     suspend fun findAllByBookId(bookId: UUID): List<Transaction>
+
+    @Query(
+        """
+        SELECT * 
+        FROM transactions
+        JOIN tag_transaction_join 
+        ON transactions.transactionId = tag_transaction_join.transactionId
+        WHERE bookId = :bookId
+        AND tagId IN (:tags)
+        """
+    )
+    suspend fun findAllByBookIdWithTags(bookId: UUID, tags: Set<UUID>): List<Transaction>
 
     @Query("SELECT * FROM transactions WHERE transactionId = :id LIMIT 1")
     suspend fun findById(id: UUID): Transaction?
