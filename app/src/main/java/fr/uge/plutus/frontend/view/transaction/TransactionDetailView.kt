@@ -11,9 +11,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -33,8 +30,6 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.component.common.Loading
-import fr.uge.plutus.frontend.store.globalState
-import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.tag.TagCreationView
 import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
@@ -54,39 +49,13 @@ fun DisplayHeader(
     transaction: Transaction,
     backgroundColor: Color = MaterialTheme.colors.primary,
     fontColor: Color = MaterialTheme.colors.onPrimary,
-    onBack: () -> Unit
 ) {
-    val globalState = globalState()
     Column(
         Modifier
             .fillMaxWidth()
             .background(backgroundColor)
             .padding(bottom = 20.dp)
     ) {
-        Row(
-            Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
-                )
-            }
-            IconButton(onClick = {
-                globalState.currentTransaction = transaction
-                globalState.currentView = View.TRANSACTION_CREATION
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Edit,
-                    contentDescription = "Edit",
-                    tint = Color.White
-                )
-            }
-        }
-
         Text(
             text = "${transaction.amount} ${transaction.currency}",
             modifier = Modifier.fillMaxWidth(),
