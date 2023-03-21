@@ -1,12 +1,9 @@
 package fr.uge.plutus.frontend.view.book
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -16,20 +13,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.backend.Transaction
+import fr.uge.plutus.frontend.component.BarChart
 import fr.uge.plutus.frontend.component.common.Card
 import fr.uge.plutus.frontend.component.common.Loading
 import fr.uge.plutus.frontend.store.globalState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
-import kotlin.math.abs
 
 
 @Composable
@@ -114,60 +110,8 @@ fun TransactionsMonthChart(transactionsOfThisMonth: List<Transaction>) {
         })
     }
 
-    val biggestIncome by rememberSaveable {
-        mutableStateOf(amountByDay
-            .filter { it.value > 0 }.maxOfOrNull { it.value } ?: 0.0)
-    }
-    val biggestExpense by rememberSaveable {
-        mutableStateOf(amountByDay
-            .filter { it.value < 0 }.minOfOrNull { it.value } ?: 0.0)
-    }
-    val biggestTransaction by rememberSaveable {
-        mutableStateOf(abs(biggestExpense).coerceAtLeast(biggestIncome))
-    }
-
-    val barHeight = 200
-    val heightMultiplier by rememberSaveable {
-        mutableStateOf(barHeight / biggestTransaction)
-    }
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        val scrollState = rememberScrollState()
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .scrollable(scrollState, Orientation.Horizontal)
-        ) {
-            LazyRow(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                items(transactionsByDay.entries.sortedBy { it.key }
-                    .toList()) { (day, transactions) ->
-                    val sum = transactions.sumOf { it.amount }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .width(20.dp)
-                            .height((barHeight + 35).dp)
-                    ) {
-                        Spacer(modifier = Modifier.weight(1f))
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height((abs(sum) * heightMultiplier).dp)
-                                .background(if (sum > 0) Color.Green else Color.Red)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text(text = "$day")
-                    }
-                }
-            }
-        }
-
+    Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        BarChart(values = amountByDay)
         Text("(Scroll horizontally)")
         Text(
             text = "Summary of ${
