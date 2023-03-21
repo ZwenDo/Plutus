@@ -1,5 +1,6 @@
 package fr.uge.plutus.backend
 
+import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
 import androidx.room.*
 import java.net.URI
@@ -47,5 +48,11 @@ interface AttachmentDao {
 
     @Query("SELECT * FROM attachment WHERE transactionId = :transactionId")
     suspend fun findAllByTransactionId(transactionId: UUID): List<Attachment>
+
+    suspend fun upsert(attachment: Attachment) = try {
+        _insert(attachment)
+    } catch (e: SQLiteConstraintException) {
+        update(attachment)
+    }
 
 }

@@ -1,5 +1,6 @@
 package fr.uge.plutus.backend
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.room.*
 import java.util.UUID
 import java.io.Serializable
@@ -37,8 +38,11 @@ interface BookDao {
     @Update
     suspend fun update(book: Book)
 
-    @Upsert
-    suspend fun upsert(book: Book)
+    suspend fun upsert(book: Book) = try {
+        insert(book)
+    } catch (e: SQLiteConstraintException) {
+        update(book)
+    }
 
     suspend fun copy(book: Book, newName: String, database: Database? = null): Book {
         val newBook = book.copy(uuid = UUID.randomUUID(), name = newName)

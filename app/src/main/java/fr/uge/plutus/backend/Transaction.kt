@@ -1,5 +1,6 @@
 package fr.uge.plutus.backend
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.room.*
 import java.util.*
 import java.io.Serializable
@@ -53,4 +54,11 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE transactionId = :id LIMIT 1")
     suspend fun findById(id: UUID): Transaction?
+
+    suspend fun upsert(transaction: Transaction) = try {
+        insert(transaction)
+    } catch (e: SQLiteConstraintException) {
+        update(transaction)
+    }
+
 }

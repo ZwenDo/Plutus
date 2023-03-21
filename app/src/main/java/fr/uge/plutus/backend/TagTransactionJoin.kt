@@ -1,5 +1,6 @@
 package fr.uge.plutus.backend
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.room.*
 import java.util.*
 
@@ -39,6 +40,9 @@ abstract class TagTransactionJoinDao {
     @Insert
     abstract suspend fun _insert(tagTransactionJoin: TagTransactionJoin)
 
+    @Update
+    abstract suspend fun update(tagTransactionJoin: TagTransactionJoin)
+
     suspend fun delete(transaction: Transaction, tag: Tag) {
         require(transaction.bookId == tag.bookId) { "Transaction and tag must belong to the same book" }
         val tagTransactionJoin = TagTransactionJoin(transaction.transactionId, tag.tagId)
@@ -60,4 +64,11 @@ abstract class TagTransactionJoinDao {
 
     @Query("SELECT * FROM tag_transaction_join")
     abstract suspend fun findAll(): List<TagTransactionJoin>
+
+    suspend fun upsert(tagTransactionJoin: TagTransactionJoin) = try {
+        _insert(tagTransactionJoin)
+    } catch (e: SQLiteConstraintException) {
+        update(tagTransactionJoin)
+    }
+
 }

@@ -1,5 +1,6 @@
 package fr.uge.plutus.backend
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.compose.ui.graphics.Color
 import androidx.room.*
 import java.util.*
@@ -90,7 +91,15 @@ interface TagDao {
     @Query("SELECT * FROM tag")
     suspend fun findAll(): List<Tag>
 
-    @Upsert
-    suspend fun upsert(tag: Tag)
+    @Update
+    suspend fun update(tag: Tag)
+
+    suspend fun upsert(tag: Tag) { // this shit doesn't work natively
+        try {
+            _insert(tag)
+        } catch (e: SQLiteConstraintException) {
+            update(tag)
+        }
+    }
 
 }
