@@ -21,7 +21,7 @@ data class TransactionDTO(
     val attachments: List<AttachmentDTO> = emptyList(),
 ) {
 
-    fun toTransaction(bookId: UUID, overriddenId: UUID?): Transaction = Transaction(
+    fun toTransaction(bookId: UUID): Transaction = Transaction(
         description,
         Date(date),
         amount,
@@ -29,7 +29,7 @@ data class TransactionDTO(
         currency,
         location?.first,
         location?.second,
-        overriddenId ?: transactionId,
+        transactionId,
     )
 
 }
@@ -41,11 +41,11 @@ data class TagDTO(
     val type: TagType,
 ) {
 
-    fun toTag(bookId: UUID, overriddenId: UUID?): Tag = Tag(
+    fun toTag(bookId: UUID): Tag = Tag(
         name,
         type,
         bookId,
-        overriddenId ?: tagId,
+        tagId,
     )
 
 }
@@ -57,11 +57,11 @@ data class AttachmentDTO(
     val uri: Uri,
 ) {
 
-    fun toAttachment(transactionId: UUID, overriddenId: UUID?): Attachment = Attachment(
+    fun toAttachment(transactionId: UUID): Attachment = Attachment(
         transactionId,
         uri,
         name,
-        overriddenId ?: attachmentId,
+        attachmentId,
     )
 
 }
@@ -90,11 +90,4 @@ data class BookDTO(
     val transactions: List<TransactionDTO> = emptyList(),
     val tags: List<TagDTO> = emptyList(),
     val filters: List<FilterDTO> = emptyList()
-) {
-
-    fun toBook(uuid: UUID? = null): Book = Book(
-        name,
-        uuid ?: this.uuid,
-    )
-
-}
+)

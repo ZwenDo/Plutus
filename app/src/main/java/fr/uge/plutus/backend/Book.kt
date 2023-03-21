@@ -1,6 +1,7 @@
 package fr.uge.plutus.backend
 
 import android.database.sqlite.SQLiteConstraintException
+import android.util.Log
 import androidx.room.*
 import java.util.UUID
 import java.io.Serializable
@@ -18,29 +19,31 @@ data class Book(
 ) : Serializable
 
 @Dao
-interface BookDao {
+abstract class BookDao {
 
     @Query("SELECT * FROM books")
-    suspend fun getAll(): List<Book>
+    abstract suspend fun findAll(): List<Book>
 
     @Query("SELECT * FROM books WHERE uuid = :bookId LIMIT 1")
-    suspend fun findById(bookId: UUID): Book?
+    abstract suspend fun findById(bookId: UUID): Book?
 
     @Query("SELECT * FROM books WHERE name LIKE :name LIMIT 1")
-    suspend fun findByName(name: String): Book?
+    abstract suspend fun findByName(name: String): Book?
 
     @Insert
-    suspend fun insert(vararg books: Book)
+    abstract suspend fun insert(vararg books: Book)
 
     @Delete
-    suspend fun delete(vararg book: Book)
+    abstract suspend fun delete(vararg book: Book)
 
     @Update
-    suspend fun update(book: Book)
+    abstract suspend fun update(book: Book)
 
     suspend fun upsert(book: Book) = try {
         insert(book)
+        Log.d("YEP", "inserted: $book")
     } catch (e: SQLiteConstraintException) {
+        Log.d("YEP", "updated: $book")
         update(book)
     }
 

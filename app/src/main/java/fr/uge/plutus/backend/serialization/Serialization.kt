@@ -3,11 +3,17 @@ package fr.uge.plutus.backend.serialization
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import fr.uge.plutus.MainActivity
 import fr.uge.plutus.backend.*
+import fr.uge.plutus.frontend.store.globalState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.io.File
 import java.util.*
-import kotlin.collections.HashMap
 
 private suspend fun Transaction.toDTO(
     database: Database? = null,
@@ -55,10 +61,16 @@ private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null)
     val tagDao = database?.tags() ?: Database.tags()
     val filterDao = database?.filters() ?: Database.filters()
 
-    val tagIds = exportTags.mapTo(HashSet(), Tag::tagId)
 
     val transactions = transactionDao
-        .findAllByBookIdWithTags(uuid, tagIds)
+        .run {
+            if (exportTags.isNotEmpty()) { // filter transactions by tags if there is at least one tag selected
+                val tagIds = exportTags.mapTo(HashSet(), Tag::tagId)
+                findAllByBookIdWithTags(uuid, tagIds)
+            } else {
+                findAllByBookId(uuid)
+            }
+        }
         .map { it.toDTO(database) }
     val tags = tagDao.findByBookId(uuid).map { it.toDTO() }
     val filters = filterDao.findAllByBookId(uuid).map { it.toDTO() }
@@ -72,29 +84,24 @@ private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null)
     )
 }
 
-private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID? = null) {
+private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID) {
     val bookDao = database?.books() ?: Database.books()
     val tagDao = database?.tags() ?: Database.tags()
     val transactionDao = database?.transactions() ?: Database.transactions()
     val tagTransactionJoinDao = database?.tagTransactionJoin() ?: Database.tagTransactionJoin()
     val attachmentDao = database?.attachments() ?: Database.attachments()
 
-    val book = toBook(bookId ?: uuid)
-    bookDao.upsert(book)
-
     val tagMap = mutableMapOf<UUID, Tag>()
     tags.forEach {
         // if the book is imported as a new book, we need to generate new ids for the tags
-        val newId = if (bookId != null) UUID.randomUUID() else null
-        val tag = it.toTag(book.uuid, newId)
+        val tag = it.toTag(bookId)
         tagDao.upsert(tag)
         tagMap[tag.tagId] = tag
     }
 
     transactions.forEach {
         // if the book is imported as a new book, we need to generate new ids for the transactions
-        val newId = if (bookId != null) UUID.randomUUID() else null
-        val transaction = it.toTransaction(book.uuid, newId)
+        val transaction = it.toTransaction(bookId)
         transactionDao.upsert(transaction)
         it.tags.forEach { tagId ->
             tagTransactionJoinDao.upsert(TagTransactionJoin(tagId, transaction.transactionId))
@@ -102,39 +109,62 @@ private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID? =
 
         it.attachments.forEach { attachmentDTO ->
             // if the book is imported as a new book, we need to generate new ids for the attachments
-            val newAttachmentId = if (bookId != null) UUID.randomUUID() else null
-            val attachment = attachmentDTO.toAttachment(transaction.transactionId, newAttachmentId)
+            val attachment = attachmentDTO.toAttachment(transaction.transactionId)
             attachmentDao.upsert(attachment)
         }
     }
 }
 
-suspend fun exportBook(book: Book, name: String, exportTags: Set<Tag> = emptySet()) {
+
+@Composable
+fun ExportBook(
+    book: Book,
+    name: String,
+    exportTags: Set<Tag> = emptySet()
+) {
+    val globalState = globalState()
+
+    LaunchedEffect(globalState.writeExternalStoragePermission) {
+        if (!globalState.writeExternalStoragePermission) {
+            MainActivity.requestWriteExternalStoragePermission()
+            return@LaunchedEffect
+        }
+        export(book, name, exportTags)
+    }
+}
+
+private suspend fun export(
+    book: Book,
+    name: String,
+    exportTags: Set<Tag>
+) {
     require("/" !in name && "\\" !in name) { "Invalid name: $name" }
     val json = Json.encodeToString(book.toDTO(exportTags))
-    val outputFile = Environment
+
+    val folder = Environment
         .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        .resolve("$name.book.plutus")
+
+    // create a file with a unique name
+    lateinit var outputFile: File
+    var index = 0
+    do {
+        val fileName = if (index == 0) name else "$name ($index)"
+        outputFile = folder.resolve("$fileName.book.plutus")
+        index++
+    } while (outputFile.exists())
+
+    val didCreate = withContext(Dispatchers.IO) {
+        outputFile.createNewFile()
+    }
+    if (!didCreate) throw IllegalStateException("Cannot create file: $outputFile")
+
     outputFile.writeText(json)
 }
 
 suspend fun importBook(
     fileUri: Uri,
     context: Context,
-    database: Database? = null
-) = bookImporting(fileUri, context, null, database)
-
-suspend fun mergeBook(
-    fileUri: Uri,
-    context: Context,
     mergeDestinationBook: UUID,
-    database: Database? = null
-) = bookImporting(fileUri, context, mergeDestinationBook, database)
-
-private suspend fun bookImporting(
-    fileUri: Uri,
-    context: Context,
-    mergeDestinationBook: UUID?,
     database: Database? = null
 ) {
     require(

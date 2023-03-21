@@ -253,7 +253,7 @@ fun TransactionDetailsPreview() {
     if (!loaded) {
         Database.init(context)
         Loading {
-            val books = Database.books().getAll()
+            val books = Database.books().findAll()
             transaction = Database.transactions().findAllByBookId(books[0].uuid)[0]
             loaded = true
         }
