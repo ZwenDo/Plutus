@@ -32,6 +32,7 @@ fun <T : Enum<T>> InputSelectEnum(
     label: String,
     options: List<T>,
     initial: T,
+    enabled: Boolean = true,
     mapper: (String) -> T,
     onSelected: (T) -> Unit
 ) {
@@ -58,11 +59,12 @@ fun <T : Enum<T>> InputSelectEnum(
                 .fillMaxWidth()
                 .onGloballyPositioned { actualWidth = it.size.toSize().width },
             label = { Text(label) },
+            enabled = enabled,
             trailingIcon = {
                 Icon(
                     arrow,
                     contentDescription = null,
-                    modifier = Modifier.clickable { open = !open }
+                    modifier = Modifier.clickable { if (enabled) open = !open }
                 )
             },
         )
@@ -93,6 +95,7 @@ fun <T : Any> InputSelectCollection(
     options: Collection<T>,
     initial: T?,
     mapFromString: (String) -> T,
+    enabled: Boolean = true,
     mapToString: (T) -> String = Any::toString,
     onSelected: (T) -> Unit
 ) {
@@ -120,6 +123,7 @@ fun <T : Any> InputSelectCollection(
                 .fillMaxWidth()
                 .onGloballyPositioned { actualWidth = it.size.toSize().width },
             label = { Text(label) },
+            enabled = enabled,
             trailingIcon = {
                 Icon(
                     arrow,
@@ -135,7 +139,7 @@ fun <T : Any> InputSelectCollection(
             { open = false },
             Modifier.width(with(LocalDensity.current) {
                 actualWidth.toDp()
-            })
+            }),
         ) {
             options.forEach { option ->
                 DropdownMenuItem({
