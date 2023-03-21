@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
-import kotlin.math.sin
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -34,7 +33,7 @@ fun InputText(
                     it.replace("\n", "")
                 } else {
                     it
-                }.trim()
+                }
                 onValueChange(actual)
             },
             modifier = Modifier.fillMaxWidth().focusRequester(focusRequester = focusRequester),

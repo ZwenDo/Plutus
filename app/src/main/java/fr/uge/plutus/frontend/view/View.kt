@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.book.BookCreationView
+import fr.uge.plutus.frontend.view.book.BookOverviewLoader
 import fr.uge.plutus.frontend.view.book.BookSelectionView
 import fr.uge.plutus.frontend.view.transaction.DisplayHeader
 import fr.uge.plutus.frontend.view.transaction.DisplayTransactionDetails
@@ -51,6 +52,14 @@ enum class View(
         contentComponent = { BookCreationView() }
     ),
 
+    BOOK_OVERVIEW(
+        headerComponent = {
+            val globalState = globalState()
+            TopAppBar(title = { Text("Overview: ${globalState.currentBook!!.name}") })
+        },
+        contentComponent = { BookOverviewLoader() }
+    ),
+
     @RequiresApi(Build.VERSION_CODES.O)
     TRANSACTION_CREATION(
         headerComponent = {
@@ -85,15 +94,19 @@ enum class View(
             val globalState = globalState()
             Column {
                 TopAppBar(title = { Text("Details") })
-                DisplayHeader(globalState.currentTransaction!!) {
-                    globalState.currentView = TRANSACTION_LIST
-                    globalState.currentTransaction = null
+                if (globalState.currentTransaction != null) {
+                    DisplayHeader(globalState.currentTransaction!!) {
+                        globalState.currentView = TRANSACTION_LIST
+                        globalState.currentTransaction = null
+                    }
                 }
             }
         },
         contentComponent = {
             val globalState = globalState()
-            DisplayTransactionDetails(globalState.currentTransaction!!)
+            if (globalState.currentTransaction != null) {
+                DisplayTransactionDetails(globalState.currentTransaction!!)
+            }
         }
     )
 }

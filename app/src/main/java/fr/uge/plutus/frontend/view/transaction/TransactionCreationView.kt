@@ -23,9 +23,9 @@ import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.attachment.AttachmentCreationView
 import fr.uge.plutus.util.toDateOrNull
-import java.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.*
 
 enum class Field {
     DESCRIPTION,
@@ -167,8 +167,9 @@ fun TransactionCreationView() {
                 }
             }
             Toast.makeText(context, "Transaction created", Toast.LENGTH_SHORT).show()
-            globalState.currentTransaction = null
+
             globalState.currentView = View.TRANSACTION_LIST
+            globalState.currentTransaction = null
         } catch (e: SQLiteConstraintException) {
             Toast.makeText(context, "Error while creating transaction", Toast.LENGTH_SHORT).show()
         }
