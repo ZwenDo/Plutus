@@ -7,7 +7,6 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import org.json.JSONObject
-import java.net.URI
 import java.util.*
 
 @androidx.room.Database(
@@ -17,6 +16,7 @@ import java.util.*
         Transaction::class,
         TagTransactionJoin::class,
         Filter::class,
+        TagFilterJoin::class,
         Attachment::class,
     ],
     version = 1,
@@ -40,6 +40,8 @@ abstract class Database : RoomDatabase() {
     abstract fun tagTransactionJoin(): TagTransactionJoinDao
 
     abstract fun filters(): FilterDao
+
+    abstract fun tagFilterJoin(): TagFilterJoinDao
 
     abstract fun attachments(): AttachmentDao
 
@@ -91,6 +93,12 @@ abstract class Database : RoomDatabase() {
             require(::INSTANCE.isInitialized) { "Database not initialized" }
 
             return INSTANCE.filters()
+        }
+
+        fun tagFilterJoin(): TagFilterJoinDao {
+            require(::INSTANCE.isInitialized) { "Database not initialized" }
+
+            return INSTANCE.tagFilterJoin()
         }
 
         fun attachments(): AttachmentDao {
@@ -157,7 +165,6 @@ private class SetConverter {
         }
     }
 }
-
 
 private class UriConverter {
     @TypeConverter

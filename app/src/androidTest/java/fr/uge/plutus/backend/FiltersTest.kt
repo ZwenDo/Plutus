@@ -16,11 +16,12 @@ import java.util.*
 class FiltersTest {
     private lateinit var db: Database
     private lateinit var filterDao: FilterDao
+    private lateinit var tagFilterJoinDao: TagFilterJoinDao
     private lateinit var bookDao: BookDao
     private lateinit var tagDao: TagDao
     private lateinit var book: Book
     private lateinit var book2: Book
-    private lateinit var tag: Tag
+    private lateinit var tag1: Tag
     private lateinit var tag2: Tag
     private lateinit var tag3: Tag
 
@@ -34,6 +35,7 @@ class FiltersTest {
         ).build()
 
         filterDao = db.filters()
+        tagFilterJoinDao = db.tagFilterJoin()
         bookDao = db.books()
         tagDao = db.tags()
 
@@ -44,18 +46,16 @@ class FiltersTest {
         bookDao.insert(b2)
         book2 = b2
 
-        tag = tagDao.insert("+First Tag", book.uuid)
-        tag2 = tagDao.insert("-test", book.uuid)
-        tag3 = tagDao.insert("=testTag", book.uuid)
+        tag1 = tagDao.insert("+Tag1", book.uuid)
+        tag2 = tagDao.insert("-Tag2", book.uuid)
+        tag3 = tagDao.insert("=Tag3", book.uuid)
     }
 
 
     @Test
     @OptIn(ExperimentalCoroutinesApi::class)
     fun shouldCreateFiltersWithoutFailing() = runTest {
-        val tags = setOf(tag, tag2, tag3)
         val filter1 = Filter.Builder("test", book.uuid)
-            .tags(tags)
             .minAmount(10.0)
             .maxAmount(100.0)
             .currency(Currency.EUR)
@@ -64,7 +64,7 @@ class FiltersTest {
             .build()
 
         val filter2 = Filter.Builder("test2", book.uuid)
-            .tags(tags)
+            .minDate(Date(1000000))
             .build()
 
         val filter3 = Filter.Builder("test3", book.uuid)
@@ -85,10 +85,8 @@ class FiltersTest {
 
     @Test
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun shouldDeleteFilter() = runTest {
-        val tags = setOf(tag, tag2, tag3)
+    fun shouldCreateFiltersWithTags() = runTest {
         val filter1 = Filter.Builder("test", book.uuid)
-            .tags(tags)
             .minAmount(10.0)
             .maxAmount(100.0)
             .currency(Currency.EUR)
@@ -97,7 +95,7 @@ class FiltersTest {
             .build()
 
         val filter2 = Filter.Builder("test2", book.uuid)
-            .tags(tags)
+            .maxDate(Date(1000000))
             .build()
 
         val filter3 = Filter.Builder("test3", book.uuid)
@@ -109,14 +107,104 @@ class FiltersTest {
         filterDao.insert(filter2)
         filterDao.insert(filter3)
 
+        tagFilterJoinDao.insert(filter1, tag1)
+        tagFilterJoinDao.insert(filter1, tag3)
+        tagFilterJoinDao.insert(filter2, tag1)
+
+        val filtersDb = filterDao.findAllByBookId(book.uuid)
+        assertEquals(3, filtersDb.size)
+        assertTrue(filter1 in filtersDb)
+        assertTrue(filter2 in filtersDb)
+        assertTrue(filter3 in filtersDb)
+
+        val tags1 = tagFilterJoinDao.findTagsByFilter(filter1.filterId)
+        assertEquals(2, tags1.size)
+        assertTrue(tag1 in tags1)
+        assertTrue(tag3 in tags1)
+
+        val tags2 = tagFilterJoinDao.findTagsByFilter(filter2.filterId)
+        assertEquals(1, tags2.size)
+        assertTrue(tag1 in tags2)
+
+        val tags3 = tagFilterJoinDao.findTagsByFilter(filter3.filterId)
+        assertEquals(0, tags3.size)
+    }
+
+    @Test
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun shouldDeleteFilter() = runTest {
+        val filter1 = Filter.Builder("test", book.uuid)
+            .minAmount(10.0)
+            .maxAmount(100.0)
+            .currency(Currency.EUR)
+            .minDate(Date(1000000))
+            .maxDate(Date(99999999999))
+            .build()
+
+        val filter2 = Filter.Builder("test2", book.uuid)
+            .maxDate(Date(1000000))
+            .build()
+
+        val filter3 = Filter.Builder("test3", book.uuid)
+            .minAmount(10.0)
+            .currency(Currency.EUR)
+            .build()
+
+        filterDao.insert(filter1)
+        filterDao.insert(filter2)
+        filterDao.insert(filter3)
+
+        tagFilterJoinDao.insert(filter1, tag1)
+        tagFilterJoinDao.insert(filter1, tag3)
+        tagFilterJoinDao.insert(filter2, tag1)
+
         val filtersDb = filterDao.findAllByBookId(book.uuid)
         assertEquals(3, filtersDb.size)
         assertTrue(filter2 in filtersDb)
 
-        filterDao.delete(filter2)
+        val tags1 = tagFilterJoinDao.findTagsByFilter(filter1.filterId)
+        assertEquals(2, tags1.size)
+
+        filterDao.delete(filter1)
         val filtersDb2 = filterDao.findAllByBookId(book.uuid)
         assertEquals(2, filtersDb2.size)
-        assertFalse(filter2 in filtersDb2)
+        assertFalse(filter1 in filtersDb2)
+
+        val tags2 = tagFilterJoinDao.findTagsByFilter(filter1.filterId)
+        assertEquals(0, tags2.size)
+
+        val tags = tagDao.findAll()
+        assertEquals(3, tags.size)
+        assertTrue(tag1 in tags)
+        assertTrue(tag2 in tags)
+        assertTrue(tag3 in tags)
+    }
+
+    @Test
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun shouldDeleteFilterTag() = runTest {
+        val filter = Filter.Builder("test", book.uuid)
+            .minDate(Date(1000000))
+            .build()
+
+        filterDao.insert(filter)
+        tagFilterJoinDao.insert(filter, tag1)
+        tagFilterJoinDao.insert(filter, tag2)
+        tagFilterJoinDao.insert(filter, tag3)
+
+        val tags = tagFilterJoinDao.findTagsByFilter(filter.filterId)
+        assertEquals(3, tags.size)
+
+        tagFilterJoinDao.delete(filter, tag2)
+
+        val tags2 = tagFilterJoinDao.findTagsByFilter(filter.filterId)
+        assertEquals(2, tags2.size)
+        assertTrue(tag1 in tags2)
+        assertTrue(tag3 in tags2)
+
+        val tagsDB = tagDao.findAll()
+        assertEquals(3, tagsDB.size)
+        assertTrue(tag2 in tagsDB)
     }
 
     @Test
@@ -187,8 +275,27 @@ class FiltersTest {
 
     @Test
     @OptIn(ExperimentalCoroutinesApi::class)
+    fun shouldFailedCreateFilterWithDifferentBooksTag() = runTest {
+        val filter = Filter.Builder("test", book.uuid)
+            .minDate(Date(1000000))
+            .build()
+
+        val tag = tagDao.insert("Tag4", book2.uuid)
+
+        filterDao.insert(filter)
+
+        runCatching {
+            tagFilterJoinDao.insert(filter, tag)
+        }.onSuccess {
+            error("Should have failed")
+        }.onFailure {
+            assertTrue(it is IllegalArgumentException)
+        }
+    }
+
+    @Test
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun shouldRetrieveFilterCriteria() = runTest {
-        val tags = setOf(tag, tag2, tag3)
         val minAmount = 10.0
         val maxAmount = 100.0
         val currency = Currency.EUR
@@ -196,7 +303,6 @@ class FiltersTest {
         val maxDate = Date(99999999999)
 
         val filter = Filter.Builder("test", book.uuid)
-            .tags(tags)
             .minAmount(minAmount)
             .maxAmount(maxAmount)
             .currency(currency)
@@ -205,6 +311,8 @@ class FiltersTest {
             .build()
 
         filterDao.insert(filter)
+        tagFilterJoinDao.insert(filter, tag1)
+        tagFilterJoinDao.insert(filter, tag3)
 
         val filterDb = filterDao.findById(filter.filterId)
 
@@ -214,6 +322,11 @@ class FiltersTest {
         assertEquals(currency.name, filterDb!!.getCriteriaValue(Criteria.CURRENCY))
         assertEquals(minDate.time.toString(), filterDb!!.getCriteriaValue(Criteria.MIN_DATE))
         assertEquals(maxDate.time.toString(), filterDb!!.getCriteriaValue(Criteria.MAX_DATE))
+
+        val tags = tagFilterJoinDao.findTagsByFilter(filterDb.filterId)
+        assertEquals(2, tags.size)
+        assertTrue(tag1 in tags)
+        assertTrue(tag3 in tags)
     }
 
     @Test
