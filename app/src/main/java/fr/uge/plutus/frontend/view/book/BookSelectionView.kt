@@ -83,10 +83,15 @@ fun BookSelectionItem(book: Book, onChosen: (Book) -> Unit) {
     }
 
     if (exporting) {
-        ExportBook("baba", book, book.name) {
-            Toast.makeText(currentContext, "Export Completed", Toast.LENGTH_SHORT).show()
+        ImportExportModal(
+            isImport = true
+        ) {
             exporting = false
         }
+//        ExportBook("baba", book, book.name) {
+//            Toast.makeText(currentContext, "Export Completed", Toast.LENGTH_SHORT).show()
+//            exporting = false
+//        }
     }
 
     LaunchedEffect(importing) {

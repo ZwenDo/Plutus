@@ -13,7 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
-import kotlin.math.sin
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -23,6 +25,7 @@ fun InputText(
     placeholder: String = label,
     singleLine: Boolean = true,
     errorMessage: String? = null,
+    isPassword: Boolean = false,
     onValueChange: (String) -> Unit
 ) {
     val (focusRequester) = FocusRequester.createRefs()
@@ -37,12 +40,19 @@ fun InputText(
                 }.trim()
                 onValueChange(actual)
             },
-            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester = focusRequester),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester = focusRequester),
             label = { Text(label) },
+            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
             placeholder = { Text(placeholder) },
             singleLine = singleLine,
             isError = errorMessage != null,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next,
+                autoCorrect = !isPassword,
+                keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text
+            ),
             keyboardActions = KeyboardActions(
                 onDone = { focusRequester.requestFocus() }
             )
