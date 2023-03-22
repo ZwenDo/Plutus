@@ -29,14 +29,12 @@ import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun BookCreatorPreview() {
     BookCreationView()
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BookCreationView() {
     val globalState = globalState()

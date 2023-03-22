@@ -15,7 +15,7 @@ fun String.isValidDate(): Boolean {
     return day in 1..31 && month in 1..12 && year in 0..9999
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 fun String.toDateOrNull(): Date? {
     if (!isValidDate()) return null
     val parts = split("/").map(String::toInt)

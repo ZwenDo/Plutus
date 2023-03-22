@@ -101,10 +101,10 @@ class TagTest {
     @Test
     fun shouldFailBecauseOfInvalidTagName() = runTest {
 
-        assertThrows(IllegalArgumentException::class.java) {
+        inlinedAssertThrows(IllegalArgumentException::class.java) {
             tagDao.insert("=", book.uuid)
         }
-        assertThrows(IllegalArgumentException::class.java) {
+        inlinedAssertThrows(IllegalArgumentException::class.java) {
             tagDao.insert(" ", book.uuid)
         }
     }
@@ -118,7 +118,7 @@ class TagTest {
 
         val tag = tagDao.insert("4th", book.uuid)
         tagTransactionJoinDao.insert(transaction, tag)
-        assertThrows(IllegalArgumentException::class.java) {
+        inlinedAssertThrows(IllegalArgumentException::class.java) {
             tagTransactionJoinDao.insert(transaction2, tag)
         }
     }
@@ -128,7 +128,7 @@ class TagTest {
         val transaction = Transaction("First", Date(0), 10.0, book.uuid)
 
         val tag = tagDao.insert("4th", book.uuid)
-        assertThrows(SQLiteConstraintException::class.java) {
+        inlinedAssertThrows(SQLiteConstraintException::class.java) {
             tagTransactionJoinDao.insert(transaction, tag)
         }
     }
