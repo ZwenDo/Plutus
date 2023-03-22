@@ -31,7 +31,9 @@ fun PlutusScaffold() {
             Column(Modifier.fillMaxSize().padding(bottom = 60.dp)) {
                 globalState.currentView.contentComponent(padding)
             }
-        }
+        },
+        drawerContent = globalState.currentView.drawerComponent,
+        drawerGesturesEnabled = true,
     )
 }
 

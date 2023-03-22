@@ -3,6 +3,7 @@ package fr.uge.plutus.frontend.view
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
@@ -15,15 +16,14 @@ import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.book.BookCreationView
 import fr.uge.plutus.frontend.view.book.BookOverviewLoader
 import fr.uge.plutus.frontend.view.book.BookSelectionView
-import fr.uge.plutus.frontend.view.transaction.DisplayHeader
-import fr.uge.plutus.frontend.view.transaction.DisplayTransactionDetails
-import fr.uge.plutus.frontend.view.transaction.DisplayTransactions
-import fr.uge.plutus.frontend.view.transaction.TransactionCreationView
+import fr.uge.plutus.frontend.view.search.*
+import fr.uge.plutus.frontend.view.transaction.*
 
 enum class View(
     val headerComponent: @Composable () -> Unit,
     val contentComponent: @Composable (PaddingValues) -> Unit,
-    val fabComponent: @Composable (() -> Unit) = {}
+    val fabComponent: @Composable (() -> Unit) = {},
+    val drawerComponent: @Composable ColumnScope.() -> Unit = {}
 ) {
     @RequiresApi(Build.VERSION_CODES.O)
     BOOK_SELECTION(
@@ -85,6 +85,21 @@ enum class View(
                     "New transaction"
                 )
             }
+        }
+    ),
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    TRANSACTION_SEARCH(
+        headerComponent = {
+            TopAppBar(
+                title = { Text("Search transaction") },
+            )
+        },
+        contentComponent = {
+            TransactionSearchView()
+        },
+        drawerComponent = {
+            SearchFiltersView()
         }
     ),
 
