@@ -157,7 +157,7 @@ fun TransactionCreationView() {
                 initialAttachments.forEach { (_, old) -> // delete the rest
                     Database.attachments().delete(old)
                 }
-                if (initialTransaction != null && transaction.date > Date()) {
+                if (transaction.date > Date()) {
                     val tags = Database.tags()
                     val todoTag = tags
                         .findByName("@todo", currentBook.uuid)
