@@ -18,11 +18,16 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.TagType
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
+import fr.uge.plutus.frontend.store.globalState
+import kotlinx.coroutines.launch
 import java.util.*
 
 
 @Composable
 fun TransactionSearchView() {
+    val globalState = globalState()
+    val drawerState = globalState.scaffoldState.drawerState
+    val coroutineScope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
 
     // TODO : Replace with actual data
@@ -50,7 +55,11 @@ fun TransactionSearchView() {
                 leadingIcon = {
                     IconButton(
                         modifier = Modifier.padding(horizontal = 8.dp),
-                        onClick = { /*TODO*/ }
+                        onClick = {
+                            coroutineScope.launch {
+                                drawerState.open()
+                            }
+                        }
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.filter),

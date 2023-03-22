@@ -2,11 +2,10 @@ package fr.uge.plutus.frontend.store
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material.ScaffoldState
+import androidx.compose.material.rememberScaffoldState
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.view.View
@@ -17,15 +16,18 @@ interface GlobalState {
     var currentBook: Book?
     var currentTransaction: Transaction?
     var currentView: View
+    var scaffoldState: ScaffoldState
 }
 
 @Composable
 fun initGlobalState(): GlobalState {
+    val scaffoldState = rememberScaffoldState()
     @RequiresApi(Build.VERSION_CODES.O)
     globalState = object : GlobalState {
         override var currentBook: Book? by rememberSaveable { mutableStateOf(null) }
         override var currentTransaction: Transaction? by rememberSaveable { mutableStateOf(null) }
-        override var currentView: View by rememberSaveable { mutableStateOf(View.BOOK_SELECTION) }
+        override var currentView: View by rememberSaveable { mutableStateOf(View.TRANSACTION_SEARCH) }
+        override var scaffoldState: ScaffoldState by remember { mutableStateOf(scaffoldState) }
     }
 
     return globalState
