@@ -13,10 +13,7 @@ import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.view.View
 
-
-private object GlobalContext {
-    lateinit var globalState: GlobalState
-}
+private lateinit var globalState: GlobalState
 
 interface GlobalState {
     var currentBook: Book?
@@ -28,7 +25,7 @@ interface GlobalState {
 @Composable
 fun initGlobalState(): GlobalState {
     val context = LocalContext.current
-    GlobalContext.globalState = object : GlobalState {
+    globalState = object : GlobalState {
         override var currentBook: Book? by rememberSaveable { mutableStateOf(null) }
         override var currentTransaction: Transaction? by rememberSaveable { mutableStateOf(null) }
         override var currentView: View by rememberSaveable { mutableStateOf(View.BOOK_SELECTION) }
@@ -41,8 +38,8 @@ fun initGlobalState(): GlobalState {
         }
     }
 
-    return GlobalContext.globalState
+    return globalState
 }
 
 @Composable
-fun globalState(): GlobalState = GlobalContext.globalState
+fun globalState(): GlobalState = globalState

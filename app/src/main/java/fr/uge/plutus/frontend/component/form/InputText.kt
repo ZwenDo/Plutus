@@ -25,6 +25,7 @@ fun InputText(
     placeholder: String = label,
     singleLine: Boolean = true,
     errorMessage: String? = null,
+    enabled: Boolean = true,
     isPassword: Boolean = false,
     onValueChange: (String) -> Unit
 ) {
@@ -37,7 +38,7 @@ fun InputText(
                     it.replace("\n", "")
                 } else {
                     it
-                }.trim()
+                }
                 onValueChange(actual)
             },
             modifier = Modifier
@@ -48,6 +49,7 @@ fun InputText(
             placeholder = { Text(placeholder) },
             singleLine = singleLine,
             isError = errorMessage != null,
+            enabled = enabled,
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Next,
                 autoCorrect = !isPassword,

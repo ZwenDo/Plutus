@@ -10,21 +10,40 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
-import androidx.core.app.ActivityCompat
 import fr.uge.plutus.backend.Database
+import fr.uge.plutus.frontend.component.scaffold.PlutusScaffold
 import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.frontend.store.initGlobalState
-import fr.uge.plutus.frontend.view.MainView
 import fr.uge.plutus.ui.theme.PlutusTheme
 
-class MainActivity : ComponentActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
+class MainActivity : ComponentActivity() {
 
     private lateinit var globalState: GlobalState
-
+    private var isInitialized = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (!isInitialized) {
+            init()
+        }
+        setContent {
+            PlutusTheme {
+                // A surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colors.background
+                ) {
+                    if (!isInitialized) {
+                        globalState = initGlobalState()
+                    }
+                    PlutusScaffold()
+                }
+            }
+        }
+    }
+
+    private fun init() {
         if (!Database.isInitialized) {
             Database.init(this)
         }
@@ -35,19 +54,6 @@ class MainActivity : ComponentActivity(), ActivityCompat.OnRequestPermissionsRes
                     globalState.writeExternalStoragePermission = true
                 }
             }
-
-        setContent {
-            PlutusTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
-                ) {
-                    globalState = initGlobalState()
-                    MainView()
-                }
-            }
-        }
     }
 
     companion object {

@@ -73,4 +73,11 @@ interface TransactionDao {
         update(transaction)
     }
 
+    @Query("SELECT * FROM transactions NATURAL JOIN tag_transaction_join WHERE date BETWEEN :start AND :end AND bookId = :bookId AND tagId = :tagId")
+    suspend fun findByBookIdAndDateRangeAndTagId(
+        bookId: UUID,
+        start: Date,
+        end: Date,
+        tagId: UUID
+    ): List<Transaction>
 }

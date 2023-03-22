@@ -3,19 +3,14 @@ package fr.uge.plutus.frontend.view.transaction
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.util.Log
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -36,10 +31,7 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.component.common.Loading
-import fr.uge.plutus.frontend.store.globalState
-import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.tag.TagCreationView
-import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -52,41 +44,19 @@ private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
     }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayHeader(
     transaction: Transaction,
     backgroundColor: Color = MaterialTheme.colors.primary,
     fontColor: Color = MaterialTheme.colors.onPrimary,
-    onBack: () -> Unit
 ) {
-    val globalState = globalState()
     Column(
         Modifier
             .fillMaxWidth()
             .background(backgroundColor)
             .padding(bottom = 20.dp)
     ) {
-        // return button
-        Row {
-
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = "Back"
-                )
-            }
-            IconButton(onClick = {
-                globalState.currentTransaction = transaction
-                globalState.currentView = View.TRANSACTION_CREATION
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Edit,
-                    contentDescription = "Edit"
-                )
-            }
-        }
-
-        // Amount
         Text(
             text = "${transaction.amount} ${transaction.currency}",
             modifier = Modifier.fillMaxWidth(),
@@ -95,8 +65,6 @@ fun DisplayHeader(
             fontSize = 40.sp,
             fontWeight = FontWeight.Bold
         )
-
-        // Date
 
         val date = DateFormatter.format(transaction.date)
         Text(
@@ -107,8 +75,6 @@ fun DisplayHeader(
             fontSize = 20.sp,
             fontWeight = FontWeight(500)
         )
-
-        // Edit button
     }
 }
 
@@ -141,16 +107,23 @@ fun DisplayTags(tags: List<Tag>) {
     )
     {
         items(tags) {
-            val caption = it.stringRepresentation
+            var caption = it.stringRepresentation
+            it.budgetTarget?.let { target -> caption += " (${target.value} ${target.currency} ${target.timePeriod.displayName})" }
             DisplayPill(caption) { /* TODO: Display tag's details */ }
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayTagsSection(transaction: Transaction) {
     var loaded by rememberSaveable { mutableStateOf(false) }
     var tags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
+    var viewId by rememberSaveable { mutableStateOf(0) }
+
+    LaunchedEffect(viewId) {
+        tags = getTransactionsTags(transaction)
+    }
 
     if (!loaded) {
         Loading {
@@ -168,15 +141,19 @@ fun DisplayTagsSection(transaction: Transaction) {
             DisplayTags(tags = tags)
         }
         Row {
-            TagCreationView()
+            TagCreationView() {
+                viewId++
+            }
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DisplayBody(transaction: Transaction) {
+fun DisplayTransactionDetails(transaction: Transaction) {
     Column(
         Modifier
+            .padding(16.dp)
             .fillMaxSize()
     ) {
         DisplayDescriptionSection(transaction = transaction)
@@ -196,17 +173,6 @@ fun DisplayBody(transaction: Transaction) {
             )
             DisplayLocation(latitude = transaction.latitude, longitude = transaction.longitude)
         }
-    }
-}
-
-@Composable
-fun DisplayTransactionDetail(transaction: Transaction, onBack: () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .scrollable(rememberScrollState(), orientation = Orientation.Vertical)) {
-        DisplayHeader(transaction, onBack = onBack)
-        DisplayBody(transaction)
     }
 }
 
@@ -241,27 +207,4 @@ fun createMapWithLocation(latitude: Double, longitude: Double): ImageBitmap {
         radius,
         Paint().apply { color = Color.Red.toArgb() })
     return mapBitmap.asImageBitmap()
-}
-
-@Preview(showBackground = true)
-@Composable
-fun TransactionDetailsPreview() {
-    val context = LocalContext.current
-    var loaded by rememberSaveable { mutableStateOf(false) }
-    var transaction by rememberSaveable { mutableStateOf<Transaction?>(null) }
-
-    if (!loaded) {
-        Database.init(context)
-        Loading {
-            val books = Database.books().findAll()
-            transaction = Database.transactions().findAllByBookId(books[0].uuid)[0]
-            loaded = true
-        }
-    } else {
-        PlutusTheme {
-            DisplayTransactionDetail(transaction!!) {
-                Log.d("TransactionDetails", "Back")
-            }
-        }
-    }
 }

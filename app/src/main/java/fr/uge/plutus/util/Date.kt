@@ -2,8 +2,11 @@ package fr.uge.plutus.util
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import java.util.Calendar
-import java.util.Date
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.util.*
 
 fun String.isValidDate(): Boolean {
     val parts = split("/")
@@ -30,3 +33,11 @@ fun Date.toStringFormatted(): String {
     val year = calendar.get(Calendar.YEAR)
     return "$day/$month/$year"
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun Date.toLocalDate(): LocalDate = Instant.ofEpochMilli(time)
+    .atZone(ZoneId.systemDefault())
+    .toLocalDate()
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun LocalDateTime.toDate(): Date = Date.from(atZone(ZoneId.systemDefault()).toInstant())

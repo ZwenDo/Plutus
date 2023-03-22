@@ -21,6 +21,7 @@ import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputSelectEnum
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.attachment.AttachmentCreationView
 import fr.uge.plutus.util.toDateOrNull
 import kotlinx.coroutines.CoroutineScope
@@ -52,9 +53,10 @@ private fun Preview() {
 
 
 @Composable
-fun TransactionCreationView(onExit: () -> Unit = {}) {
-    val currentBook = globalState().currentBook
-    val initialTransaction = globalState().currentTransaction
+fun TransactionCreationView() {
+    val globalState = globalState()
+    val currentBook = globalState.currentBook
+    val initialTransaction = globalState.currentTransaction
     require(currentBook != null) { "No book selected" }
 
     val context = LocalContext.current
@@ -109,7 +111,7 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
         if (actualAmount == null) {
             errors[Field.AMOUNT] = "Amount is invalid"
         }
-        if ((longitude.isBlank()) xor (longitude.isBlank())) {
+        if ((longitude.isBlank()) xor (latitude.isBlank())) {
             errors[Field.LATITUDE] = "Latitude and longitude must be both set or both unset"
             errors[Field.LONGITUDE] = "Latitude and longitude must be both set or both unset"
         }
@@ -166,96 +168,92 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
                     val todoTag = tags
                         .findByName("@todo", currentBook.uuid)
                         .firstOrNull { it.type == TagType.INFO }
-                        ?: tags.insert("@todo", currentBook.uuid)
+                        ?: tags.insert("@todo", currentBook.uuid, null)
                     Database.tagTransactionJoin().insert(transaction, todoTag)
                 }
             }
             Toast.makeText(context, "Transaction created", Toast.LENGTH_SHORT).show()
-            onExit()
+
+            globalState.currentView = View.TRANSACTION_LIST
+            globalState.currentTransaction = null
         } catch (e: SQLiteConstraintException) {
             Toast.makeText(context, "Error while creating transaction", Toast.LENGTH_SHORT).show()
         }
         creating = false
     }
 
-    Box(
-        modifier = Modifier
+    Column(
+        Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+        InputText(
+            "Description",
+            description,
+            singleLine = false,
+            errorMessage = errors[Field.DESCRIPTION]
         ) {
-            Text(text = "Create a transaction", style = MaterialTheme.typography.h5)
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                InputText(
-                    "Description",
-                    description,
-                    singleLine = false,
-                    errorMessage = errors[Field.DESCRIPTION]
-                ) {
-                    description = it
+            description = it
+            errors.clear()
+        }
+        InputDate("Date", errors[Field.DATE]) {
+            date = it
+            errors.clear()
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(Modifier.weight(3f / 5f)) {
+                InputText("Amount", amount, errorMessage = errors[Field.AMOUNT]) {
+                    amount = it
                     errors.clear()
                 }
-                InputDate("Date", errors[Field.DATE]) {
-                    date = it
+            }
+            Box(Modifier.weight(2f / 5f)) {
+                InputSelectEnum(
+                    label = "Currency",
+                    options = Currency.values().toList(),
+                    initial = currency,
+                    mapper = { Currency.valueOf(it) },
+                    onSelected = {
+                        currency = it
+                        errors.clear()
+                    }
+                )
+            }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(modifier = Modifier.weight(1f / 2f)) {
+                InputText("Latitude", latitude, errorMessage = errors[Field.LATITUDE]) {
+                    latitude = it
                     errors.clear()
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(Modifier.weight(3f / 5f)) {
-                        InputText("Amount", amount, errorMessage = errors[Field.AMOUNT]) {
-                            amount = it
-                            errors.clear()
-                        }
-                    }
-                    Box(Modifier.weight(2f / 5f)) {
-                        InputSelectEnum(
-                            label = "Currency",
-                            options = Currency.values().toList(),
-                            initial = currency,
-                            mapper = { Currency.valueOf(it) },
-                            onSelected = {
-                                currency = it
-                                errors.clear()
-                            }
-                        )
-                    }
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(modifier = Modifier.weight(1f / 2f)) {
-                        InputText("Latitude", latitude, errorMessage = errors[Field.LATITUDE]) {
-                            latitude = it
-                            errors.clear()
-                        }
-                    }
-                    Box(modifier = Modifier.weight(1f / 2f)) {
-                        InputText("Longitude", longitude, errorMessage = errors[Field.LONGITUDE]) {
-                            longitude = it
-                            errors.clear()
-                        }
-                    }
-                }
-
-                Spacer(
-                    modifier = Modifier
-                        .height(8.dp)
-                        .fillMaxWidth()
-                )
-                AttachmentCreationView(attachments)
-
             }
-            Button(modifier = Modifier.fillMaxWidth(), onClick = { creating = true }) {
-                Text(
-                    text = if (initialTransaction == null) "CREATE" else "SAVE",
-                    fontWeight = FontWeight.SemiBold
-                )
+            Box(modifier = Modifier.weight(1f / 2f)) {
+                InputText("Longitude", longitude, errorMessage = errors[Field.LONGITUDE]) {
+                    longitude = it
+                    errors.clear()
+                }
             }
+        }
+
+        Spacer(
+            modifier = Modifier
+                .height(8.dp)
+                .fillMaxWidth()
+        )
+        AttachmentCreationView(attachments)
+
+        Spacer(
+            modifier = Modifier
+                .height(16.dp)
+                .fillMaxWidth()
+        )
+        Button(modifier = Modifier.fillMaxWidth(), onClick = { creating = true }) {
+            Text(
+                text = if (initialTransaction == null) "CREATE" else "SAVE",
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
