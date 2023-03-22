@@ -1,11 +1,5 @@
 package fr.uge.plutus.frontend.view.book
 
-import android.content.Intent
-import android.net.Uri
-import android.provider.MediaStore
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -25,13 +19,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import fr.uge.plutus.R
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
-import fr.uge.plutus.backend.serialization.importBook
 import fr.uge.plutus.frontend.component.common.Loading
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
@@ -65,37 +57,25 @@ fun BookSelectionView() {
 @Composable
 fun BookSelectionItem(book: Book) {
     val globalState = globalState()
-    var exporting by rememberSaveable { mutableStateOf(false) }
-    var importing: Uri? by rememberSaveable { mutableStateOf(null) }
-    val currentContext = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        it.data?.data?.let { uri ->
-            importing = uri
-        }
-    }
+    var exporting by rememberSaveable { mutableStateOf(ImportExportState.NONE) }
 
-    if (exporting) {
+    if (exporting.isNotNone) {
         ImportExportModal(
-            isImport = true
+            book,
+            isImport = exporting.isImport
         ) {
-            exporting = false
+            exporting = ImportExportState.NONE
         }
-//        ExportBook("baba", book, book.name) {
-//            Toast.makeText(currentContext, "Export Completed", Toast.LENGTH_SHORT).show()
-//            exporting = false
+    }
+//
+//    LaunchedEffect(importing) {
+//        if (importing == null) return@LaunchedEffect
+//
+//        if (!importBook("baba", importing!!, currentContext, book.uuid)) {
+//            Toast.makeText(currentContext, "Invalid password", Toast.LENGTH_SHORT).show()
 //        }
-    }
-
-    LaunchedEffect(importing) {
-        if (importing == null) return@LaunchedEffect
-
-        if (!importBook("baba", importing!!, currentContext, book.uuid)) {
-            Toast.makeText(currentContext, "Invalid password", Toast.LENGTH_SHORT).show()
-        }
-        importing = null
-    }
+//        importing = null
+//    }
 
     Row(
         modifier = Modifier
@@ -108,7 +88,7 @@ fun BookSelectionItem(book: Book) {
                 .scale(0.8f)
                 .border(1.dp, Color.Black, CircleShape),
             onClick = {
-                exporting = true
+                exporting = ImportExportState.EXPORT
             }
         ) {
             Icon(
@@ -121,32 +101,37 @@ fun BookSelectionItem(book: Book) {
                 .scale(0.8f)
                 .border(1.dp, Color.Black, CircleShape),
             onClick = {
-                val intent = Intent(
-                    Intent.ACTION_OPEN_DOCUMENT,
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                )
-                    .apply {
-                        addCategory(Intent.CATEGORY_OPENABLE)
-                    }
-                launcher.launch(intent)
+                exporting = ImportExportState.IMPORT
             }) {
             Icon(
                 painter = painterResource(id = R.drawable.file_download),
                 contentDescription = "Import"
             )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        globalState.currentBook = book
-                        globalState.currentView = View.TRANSACTION_LIST
-                    }
-                    .border(1.dp, Color.Black, RoundedCornerShape(8.dp))
-                    .padding(8.dp),
-            ) {
-                Text(book.name)
-            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    globalState.currentBook = book
+                    globalState.currentView = View.TRANSACTION_LIST
+                }
+                .border(1.dp, Color.Black, RoundedCornerShape(8.dp))
+                .padding(8.dp),
+        ) {
+            Text(book.name)
         }
     }
+}
 
+private enum class ImportExportState {
+    NONE,
+    IMPORT,
+    EXPORT,
+    ;
+
+    val isImport
+        get() = this === IMPORT
+    val isNotNone
+        get() = this !== NONE
+}

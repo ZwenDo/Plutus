@@ -21,7 +21,7 @@ data class TransactionDTO(
     val attachments: List<AttachmentDTO> = emptyList(),
 ) {
 
-    fun toTransaction(bookId: UUID): Transaction = Transaction(
+    fun toTransaction(originalBookId: UUID, bookId: UUID): Transaction = Transaction(
         description,
         Date(date),
         amount,
@@ -29,7 +29,8 @@ data class TransactionDTO(
         currency,
         location?.first,
         location?.second,
-        transactionId,
+        // if the book is imported, we need to generate a new id
+        if (bookId != originalBookId) UUID.randomUUID() else transactionId,
     )
 
 }
@@ -41,11 +42,13 @@ data class TagDTO(
     val type: TagType,
 ) {
 
-    fun toTag(bookId: UUID): Tag = Tag(
+    fun toTag(originalBookId: UUID, bookId: UUID): Tag = Tag(
         name,
         type,
         bookId,
-        tagId,
+        null,
+        // if the book is imported, we need to generate a new id
+        if (bookId != originalBookId) UUID.randomUUID() else tagId,
     )
 
 }
@@ -57,11 +60,12 @@ data class AttachmentDTO(
     val uri: Uri,
 ) {
 
-    fun toAttachment(transactionId: UUID): Attachment = Attachment(
+    fun toAttachment(originalTransactionId: UUID, transactionId: UUID): Attachment = Attachment(
         transactionId,
         uri,
         name,
-        attachmentId,
+        // if the transaction is imported, we need to generate a new id
+        if (transactionId != originalTransactionId) UUID.randomUUID() else attachmentId,
     )
 
 }

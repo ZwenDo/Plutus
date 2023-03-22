@@ -1,7 +1,5 @@
 package fr.uge.plutus.frontend.view
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.*
@@ -24,7 +22,7 @@ enum class View(
     val contentComponent: @Composable (PaddingValues) -> Unit,
     val fabComponent: @Composable (() -> Unit) = {}
 ) {
-    @RequiresApi(Build.VERSION_CODES.O)
+
     BOOK_SELECTION(
         headerComponent = {
             TopAppBar(title = { Text("Books") })
@@ -43,7 +41,6 @@ enum class View(
         }
     ),
 
-    @RequiresApi(Build.VERSION_CODES.O)
     BOOK_CREATION(
         headerComponent = {
             TopAppBar(title = { Text("New book") })
@@ -59,7 +56,6 @@ enum class View(
         contentComponent = { BookOverviewLoader() }
     ),
 
-    @RequiresApi(Build.VERSION_CODES.O)
     TRANSACTION_CREATION(
         headerComponent = {
             TopAppBar(title = { Text("New transaction") })
@@ -67,7 +63,13 @@ enum class View(
         contentComponent = { TransactionCreationView() }
     ),
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    TRANSACTION_EDIT(
+        headerComponent = {
+            TopAppBar(title = { Text("Edit transaction") })
+        },
+        contentComponent = { TransactionCreationView() }
+    ),
+
     TRANSACTION_LIST(
         headerComponent = {
             val globalState = globalState()
@@ -87,7 +89,6 @@ enum class View(
         }
     ),
 
-    @RequiresApi(Build.VERSION_CODES.O)
     TRANSACTION_DETAILS(
         headerComponent = {
             val globalState = globalState()
@@ -117,7 +118,7 @@ enum class View(
         fabComponent = {
             val globalState = globalState()
             FloatingActionButton(onClick = {
-                globalState.currentView = TRANSACTION_CREATION
+                globalState.currentView = TRANSACTION_EDIT
             }) {
                 Icon(
                     Icons.Default.Edit,

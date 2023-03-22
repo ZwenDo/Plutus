@@ -11,11 +11,14 @@ import fr.uge.plutus.backend.*
 import fr.uge.plutus.frontend.store.globalState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.io.IOException
 import java.util.*
 import javax.crypto.BadPaddingException
+import javax.crypto.IllegalBlockSizeException
 
 @Composable
 fun ExportBook(
@@ -27,8 +30,7 @@ fun ExportBook(
 ) {
     val globalState = globalState()
 
-    Log.d("ExportBook", "HERE")
-    LaunchedEffect(globalState.writeExternalStoragePermission) {
+    LaunchedEffect(true) {
         if (!globalState.writeExternalStoragePermission) {
             MainActivity.requestWriteExternalStoragePermission()
             return@LaunchedEffect
@@ -62,13 +64,19 @@ suspend fun importBook(
                     decrypt(password, it)
                 } catch (e: BadPaddingException) {
                     return false
+                } catch (e: IllegalBlockSizeException) {
+                    return false
                 }
             } else {
                 it
             }
         }
 
-    val bookDTO = Json.decodeFromString(BookDTO.serializer(), String(content))
+    val bookDTO = try {
+        Json.decodeFromString(BookDTO.serializer(), String(content))
+    } catch (e: SerializationException) {
+        return false
+    }
     bookDTO.loadToDB(database, mergeDestinationBook)
     return true
 }
@@ -81,6 +89,7 @@ private suspend fun Transaction.toDTO(
     val attachmentDao = database?.attachments() ?: Database.attachments()
 
     val tags = tagDao.findTagIdsByTransactionId(transactionId)
+    Log.d("Export", tags.toString())
     val attachments = attachmentDao.findAllByTransactionId(transactionId).map { it.toDTO() }
     return TransactionDTO(
         transactionId,
@@ -120,8 +129,6 @@ private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null)
     val tagDao = database?.tags() ?: Database.tags()
     val filterDao = database?.filters() ?: Database.filters()
 
-
-    Log.d("Export", "a")
     val transactions = transactionDao
         .run {
             if (exportTags.isNotEmpty()) { // filter transactions by tags if there is at least one tag selected
@@ -132,11 +139,8 @@ private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null)
             }
         }
         .map { it.toDTO(database) }
-    Log.d("Export", "b")
     val tags = tagDao.findByBookId(uuid).map { it.toDTO() }
-    Log.d("Export", "c")
     val filters = filterDao.findAllByBookId(uuid).map { it.toDTO() }
-    Log.d("Export", "d")
     return BookDTO(
         uuid,
         name,
@@ -147,31 +151,38 @@ private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null)
 }
 
 private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID) {
-    val bookDao = database?.books() ?: Database.books()
     val tagDao = database?.tags() ?: Database.tags()
     val transactionDao = database?.transactions() ?: Database.transactions()
     val tagTransactionJoinDao = database?.tagTransactionJoin() ?: Database.tagTransactionJoin()
     val attachmentDao = database?.attachments() ?: Database.attachments()
 
-    val tagMap = mutableMapOf<UUID, Tag>()
+    val tagMap = mutableMapOf<UUID, UUID>()
     tags.forEach {
         // if the book is imported as a new book, we need to generate new ids for the tags
-        val tag = it.toTag(bookId)
+        val tag = it.toTag(uuid, bookId)
         tagDao.upsert(tag)
-        tagMap[tag.tagId] = tag
+        tagMap[it.tagId] = tag.tagId
     }
 
     transactions.forEach {
         // if the book is imported as a new book, we need to generate new ids for the transactions
-        val transaction = it.toTransaction(bookId)
+        val transaction = it.toTransaction(uuid, bookId)
         transactionDao.upsert(transaction)
         it.tags.forEach { tagId ->
-            tagTransactionJoinDao.upsert(TagTransactionJoin(tagId, transaction.transactionId))
+            tagTransactionJoinDao.upsert(
+                TagTransactionJoin(
+                    tagMap[tagId]!!,
+                    transaction.transactionId
+                )
+            )
         }
 
         it.attachments.forEach { attachmentDTO ->
             // if the book is imported as a new book, we need to generate new ids for the attachments
-            val attachment = attachmentDTO.toAttachment(transaction.transactionId)
+            val attachment = attachmentDTO.toAttachment(
+                it.transactionId,
+                transaction.transactionId
+            )
             attachmentDao.upsert(attachment)
         }
     }
@@ -186,10 +197,9 @@ private suspend fun export(
     name: String,
     password: String?,
     exportTags: Set<Tag>
-) {
+): Boolean {
     require("/" !in name && "\\" !in name) { "Invalid name: $name" }
     val json = json.encodeToString(book.toDTO(exportTags))
-    Log.d("Export", json)
 
     val folder = Environment
         .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
@@ -203,15 +213,22 @@ private suspend fun export(
         index++
     } while (outputFile.exists())
 
-    val didCreate = withContext(Dispatchers.IO) {
-        outputFile.createNewFile()
-    }
-    if (!didCreate) throw IllegalStateException("Cannot create file: $outputFile")
+    try {
+        val didCreate =
+            withContext(Dispatchers.IO) {
+                outputFile.createNewFile()
+            }
 
-    val bytes = if (password != null) {
-        encrypt(password, json.toByteArray())
-    } else {
-        json.toByteArray()
+        if (!didCreate) throw IllegalStateException("Cannot create file: $outputFile")
+
+        val bytes = if (password != null) {
+            encrypt(password, json.toByteArray())
+        } else {
+            json.toByteArray()
+        }
+        outputFile.writeBytes(bytes)
+    } catch (e: IOException) {
+        return false
     }
-    outputFile.writeBytes(bytes)
+    return true
 }

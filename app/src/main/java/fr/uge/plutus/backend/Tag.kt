@@ -146,7 +146,7 @@ interface TagDao {
     @Update
     suspend fun update(tag: Tag)
 
-    suspend fun upsert(tag: Tag) { // this shit doesn't work natively
+    suspend fun upsert(tag: Tag) {
         try {
             _insert(tag)
         } catch (e: SQLiteConstraintException) {
