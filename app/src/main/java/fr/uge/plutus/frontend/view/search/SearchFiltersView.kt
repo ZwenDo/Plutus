@@ -1,5 +1,7 @@
 package fr.uge.plutus.frontend.view.search
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
@@ -159,6 +161,7 @@ fun TagSelectorPreview() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SearchFilters(
     globalFilters: GlobalFilters,
@@ -168,6 +171,12 @@ fun SearchFilters(
     onOpenTagSelector: () -> Unit = {},
     onFilterUpdate: (GlobalFilters) -> Unit = {},
 ) {
+    var filterDetails by remember { mutableStateOf(false) }
+    var filterDates by remember { mutableStateOf(false) }
+    var filterAmount by remember { mutableStateOf(false) }
+    var filterTags by remember { mutableStateOf(false) }
+    var filterArea by remember { mutableStateOf(false) }
+
     Column(Modifier.fillMaxSize()) {
         LazyColumn(
             Modifier
@@ -191,10 +200,18 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Transaction details", style = MaterialTheme.typography.h6)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(checked = filterDetails, onCheckedChange = {
+                                filterDetails = it
+                            })
+                            Text("Transaction details", style = MaterialTheme.typography.h6)
+                        }
                         InputText(
                             label = "Description",
-                            value = globalFilters.description,
+                            value = globalFilters.description ?: "",
                             onValueChange = {
                                 onFilterUpdate(globalFilters.copy(description = it))
                             }
@@ -209,9 +226,52 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Date range", style = MaterialTheme.typography.h6)
-                        InputDate(label = "From", onValueChange = { })
-                        InputDate(label = "To", onValueChange = { })
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(checked = filterDates, onCheckedChange = {
+                                filterDates = it
+                            })
+                            Text("Date range", style = MaterialTheme.typography.h6)
+                        }
+                        InputDate(label = "From", onValueChange = {
+                            //onFilterUpdate(globalFilters.copy(fromDate = it.toDateOrNull()))
+                        })
+                        InputDate(label = "To", onValueChange = {
+                            //onFilterUpdate(globalFilters.copy(toDate = it.toDateOrNull()))
+                        })
+                    }
+                    Divider()
+                }
+            }
+            item {
+                Column {
+                    Column(
+                        Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(checked = filterAmount, onCheckedChange = {
+                                filterAmount = it
+                            })
+                            Text("Amount range", style = MaterialTheme.typography.h6)
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Box(Modifier.weight(1f / 2f)) {
+                                InputText(label = "Minimum", value = "0.0", onValueChange = {
+                                    onFilterUpdate(globalFilters.copy(fromAmount = it.toDouble()))
+                                })
+                            }
+                            Box(Modifier.weight(1f / 2f)) {
+                                InputText(label = "Maximum", value = "0.0", onValueChange = {
+                                    onFilterUpdate(globalFilters.copy(toAmount = it.toDouble()))
+                                })
+                            }
+                        }
                     }
                     Divider()
                 }
@@ -225,10 +285,52 @@ fun SearchFilters(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Tags", style = MaterialTheme.typography.h6)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(checked = filterTags, onCheckedChange = {
+                                filterTags = it
+                            })
+                            Text("Tags", style = MaterialTheme.typography.h6)
+                        }
                         TextButton(onClick = { onOpenTagSelector() }) {
                             Text(text = "${globalFilters.tags.size} selected ")
                         }
+                    }
+                    Divider()
+                }
+            }
+            item {
+                Column {
+                    Column(
+                        Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(checked = filterArea, onCheckedChange = {
+                                filterArea = it
+                            })
+                            Text("Area range", style = MaterialTheme.typography.h6)
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Box(Modifier.weight(1f / 2f)) {
+                                InputText(label = "Latitude", value = "0.0", onValueChange = {
+                                    onFilterUpdate(globalFilters.copy(latitude = it.toDouble()))
+                                })
+                            }
+                            Box(Modifier.weight(1f / 2f)) {
+                                InputText(label = "Longitude", value = "0.0", onValueChange = {
+                                    onFilterUpdate(globalFilters.copy(longitude = it.toDouble()))
+                                })
+                            }
+                        }
+                        InputText(label = "Radius", value = "0.0", onValueChange = {
+
+                        })
                     }
                     Divider()
                 }
@@ -291,6 +393,7 @@ fun SearchFilters(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun SearchFiltersPreview() {
@@ -298,6 +401,7 @@ fun SearchFiltersPreview() {
     SearchFilters(globalFilters)
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SearchFiltersView() {
     var openTagSelector by remember { mutableStateOf(false) }
