@@ -25,9 +25,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
+import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
@@ -35,6 +38,16 @@ import fr.uge.plutus.frontend.view.View
 fun BookCreatorPreview() {
     BookCreationView()
 }
+
+private suspend fun defaultTags(book: Book) =
+    withContext(Dispatchers.IO) {
+        val tag = Database.tags()
+        tag.insert("-Food", book.uuid, null)
+        tag.insert("-Transport", book.uuid, null)
+        tag.insert("+Wages", book.uuid, null)
+        tag.insert("+Interest", book.uuid, null)
+        tag.insert("=Standard", book.uuid, null)
+    }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -61,6 +74,7 @@ fun BookCreationView() {
             Toast.makeText(context, "Book “${book.name}” created", Toast.LENGTH_SHORT).show()
             globalState.currentBook = book
             globalState.currentView = View.TRANSACTION_LIST
+            defaultTags(book)
         } catch (e: SQLiteConstraintException) {
             errorMessage = "Book already exists"
         }
