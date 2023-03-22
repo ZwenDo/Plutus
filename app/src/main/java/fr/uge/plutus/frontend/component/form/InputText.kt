@@ -22,7 +22,8 @@ fun InputText(
     placeholder: String = label,
     singleLine: Boolean = true,
     errorMessage: String? = null,
-    onValueChange: (String) -> Unit
+    leadingIcon: @Composable (() -> Unit)? = null,
+    onValueChange: (String) -> Unit,
 ) {
     val (focusRequester) = FocusRequester.createRefs()
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -44,7 +45,8 @@ fun InputText(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             keyboardActions = KeyboardActions(
                 onDone = { focusRequester.requestFocus() }
-            )
+            ),
+            leadingIcon = leadingIcon
         )
         if (errorMessage != null) {
             Text(
