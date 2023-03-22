@@ -24,6 +24,7 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.TagType
 import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputText
+import fr.uge.plutus.frontend.store.GlobalFilters
 import fr.uge.plutus.frontend.store.GlobalFiltersWrapper
 import fr.uge.plutus.frontend.store.globalState
 import kotlinx.coroutines.Dispatchers
@@ -164,12 +165,12 @@ fun TagSelectorPreview() {
 
 @Composable
 fun SearchFilters(
-    globalFilters: GlobalFiltersWrapper,
+    globalFilters: GlobalFilters,
     onResetFilter: () -> Unit = {},
     onSaveFilter: () -> Unit = {},
     onLoadFilter: () -> Unit = {},
     onOpenTagSelector: () -> Unit = {},
-    onFilterUpdate: (GlobalFiltersWrapper) -> Unit = {},
+    onFilterUpdate: (GlobalFilters) -> Unit = {},
 ) {
     var filterDetails by rememberSaveable { mutableStateOf(false) }
     var filterDates by rememberSaveable { mutableStateOf(false) }
@@ -232,7 +233,7 @@ fun SearchFilters(
                         }
                         InputText(
                             label = "Description",
-                            value = globalFilters.filters.description ?: "",
+                            value = globalFilters.description,
                             enabled = filterDetails
                         ) {
                             onFilterUpdate(globalFilters.copy { description = it })
@@ -285,7 +286,7 @@ fun SearchFilters(
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Minimum",
-                                    value = globalFilters.filters.fromAmount.toString(),
+                                    value = globalFilters.fromAmount,
                                     keyboardType = KeyboardType.Number,
                                     enabled = filterAmount
                                 ) {
@@ -295,7 +296,7 @@ fun SearchFilters(
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Maximum",
-                                    value = globalFilters.filters.toAmount.toString(),
+                                    value = globalFilters.toAmount,
                                     keyboardType = KeyboardType.Number,
                                     enabled = filterAmount
                                 ) {
@@ -326,7 +327,7 @@ fun SearchFilters(
                             Text("Tags", style = MaterialTheme.typography.h6)
                         }
                         TextButton(onClick = { onOpenTagSelector() }, enabled = filterTags) {
-                            Text(text = "${globalFilters.filters.tags.size} selected ")
+                            Text(text = "${globalFilters.tags.size} selected ")
                         }
                     }
                     Divider()
@@ -351,7 +352,7 @@ fun SearchFilters(
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Latitude",
-                                    value = globalFilters.filters.latitude ?: "0.0",
+                                    value = globalFilters.latitude,
                                     keyboardType = KeyboardType.Number,
                                     enabled = filterArea
                                 ) {
@@ -361,7 +362,7 @@ fun SearchFilters(
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Longitude",
-                                    value = globalFilters.filters.longitude ?: "0.0",
+                                    value = globalFilters.longitude,
                                     keyboardType = KeyboardType.Number,
                                     enabled = filterArea
                                 ) {
@@ -371,7 +372,7 @@ fun SearchFilters(
                         }
                         InputText(
                             label = "Radius",
-                            value = globalFilters.filters.radius ?: "0.0",
+                            value = globalFilters.radius,
                             keyboardType = KeyboardType.Number,
                             enabled = filterArea
                         ) {
@@ -421,7 +422,10 @@ fun SearchFilters(
                 }
                 Button(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { /* APPLY */ }
+                    onClick = {
+
+                        onFilterUpdate(globalFilters.copy { mustApply = true })
+                    }
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -465,7 +469,7 @@ fun SearchFiltersView() {
     TagSelector(
         open = openTagSelector,
         tags = availableTags,
-        selectedTags = globalState.globalFilters.filters.tags
+        selectedTags = globalState.globalFilters.tags,
     ) { tags ->
         openTagSelector = false
         globalState.globalFilters = globalState.globalFilters.copy {

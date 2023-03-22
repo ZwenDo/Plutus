@@ -13,9 +13,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.sqlite.db.SimpleSQLiteQuery
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.Transaction
+import fr.uge.plutus.backend.findWithGlobalFilters
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
@@ -23,27 +25,33 @@ import fr.uge.plutus.util.toStringFormatted
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
+import javax.sql.DataSource
 
 
 @Composable
 fun TransactionSearchView() {
     val globalState = globalState()
+    val tagTransactionJoinDao = Database.tagTransactionJoin()
+    val transactionDao = Database.transactions()
+    val tagDao = Database.tags()
 
     var transactions by rememberSaveable {
-        mutableStateOf(emptyMap<Transaction, Set<UUID>>())
+        mutableStateOf(listOf<Pair<Transaction, Set<UUID>>>())
     }
     var tags by rememberSaveable { mutableStateOf(emptyList<Tag>()) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(globalState.globalFilters) {
+        if (!globalState.globalFilters.mustApply) return@LaunchedEffect
         withContext(Dispatchers.IO) {
-            tags = Database.tags().findByBookId(globalState.currentBook!!.uuid)
-            val bookTransactionsAndTags = Database.transactions()
-                .findAllByBookId(globalState.currentBook!!.uuid)
+            tags = tagDao.findByBookId(globalState.currentBook!!.uuid)
+            transactions = transactionDao
+                .findWithGlobalFilters(globalState.currentBook!!.uuid, globalState.globalFilters)
                 .map {
-                    it to Database.tagTransactionJoin().findTagsByTransactionId(it.transactionId)
-                        .map { tag -> tag.tagId }.toSet()
+                    it to tagTransactionJoinDao
+                        .findTagsByTransactionId(it.transactionId)
+                        .mapTo(mutableSetOf()) { tag -> tag.tagId }
                 }
-            transactions = mapOf(*bookTransactionsAndTags.toTypedArray())
+            globalState.globalFilters = globalState.globalFilters.copy { mustApply = false }
         }
     }
 
@@ -53,41 +61,13 @@ fun TransactionSearchView() {
 
 @Composable
 fun TransactionList(
-    transactions: Map<Transaction, Set<UUID>>,
+    transactions: List<Pair<Transaction, Set<UUID>>>,
     tags: List<Tag>,
 ) {
-    //var searchQuery by remember { mutableStateOf("") }
-
     Surface(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            /*
-            //TextField(
-            //    modifier = Modifier.fillMaxWidth(),
-            //    singleLine = true,
-            //    placeholder = { Text("Search query") },
-            //    value = searchQuery,
-            //    onValueChange = { searchQuery = it },
-            //    //leadingIcon = {
-            //    //    IconButton(
-            //    //        modifier = Modifier.padding(horizontal = 8.dp),
-            //    //        onClick = {
-            //    //            coroutineScope.launch {
-            //    //                drawerState.open()
-            //    //            }
-            //    //        }
-            //    //    ) {
-            //    //        Icon(
-            //    //            painter = painterResource(id = R.drawable.filter),
-            //    //            contentDescription = "Filter",
-            //    //        )
-            //    //    }
-            //    //}
-            //)
-             */
-            LazyColumn {
-                items(transactions.entries.toList()) { (transaction, tagIds) ->
-                    TransactionSearchResult(transaction, tags.filter { tagIds.contains(it.tagId) })
-                }
+        LazyColumn {
+            items(transactions) { (transaction, tagIds) ->
+                TransactionSearchResult(transaction, tags.filter { tagIds.contains(it.tagId) })
             }
         }
     }
