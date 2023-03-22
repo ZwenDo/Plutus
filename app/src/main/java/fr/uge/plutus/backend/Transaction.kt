@@ -6,6 +6,7 @@ import androidx.room.*
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 import fr.uge.plutus.frontend.store.GlobalFilters
+import fr.uge.plutus.util.toDateOrNull
 import java.io.Serializable
 import java.util.*
 
@@ -110,14 +111,12 @@ suspend fun TransactionDao.findWithGlobalFilters(
 
         filters.fromDate.ifNotBlank {
             append(" AND date >= ?")
-            args += it.toLong()
+            args += it.toDateOrNull()!!.time
         }
-
-
 
         filters.toDate.ifNotBlank {
             append(" AND date <= ?")
-            args += it.toLong()
+            args += it.toDateOrNull()!!.time
         }
 
         filters.latitude.ifNotBlank {
