@@ -1,11 +1,13 @@
 package fr.uge.plutus.frontend.store
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.ActivityCompat
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.view.View
@@ -16,6 +18,7 @@ interface GlobalState {
     var currentBook: Book?
     var currentTransaction: Transaction?
     var currentView: View
+    var writeExternalStoragePermission: Boolean
     var scaffoldState: ScaffoldState
     var globalFilters: GlobalFilters
 }
@@ -23,13 +26,20 @@ interface GlobalState {
 @Composable
 fun initGlobalState(): GlobalState {
     val scaffoldState = rememberScaffoldState()
-    @RequiresApi(Build.VERSION_CODES.O)
+    val context = LocalContext.current
     globalState = object : GlobalState {
         override var currentBook: Book? by rememberSaveable { mutableStateOf(null) }
         override var currentTransaction: Transaction? by rememberSaveable { mutableStateOf(null) }
         override var currentView: View by rememberSaveable { mutableStateOf(View.BOOK_SELECTION) }
         override var scaffoldState: ScaffoldState by remember { mutableStateOf(scaffoldState) }
         override var globalFilters: GlobalFilters by remember { mutableStateOf(GlobalFilters()) }
+        override var writeExternalStoragePermission: Boolean by rememberSaveable {
+            val permission = ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            )
+            mutableStateOf(permission == PackageManager.PERMISSION_GRANTED)
+        }
     }
 
     return globalState
