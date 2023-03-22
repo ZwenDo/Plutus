@@ -27,83 +27,66 @@ fun SearchFiltersView(
     var fromFilter by remember { mutableStateOf("") }
     var toFilter by remember { mutableStateOf("") }
 
-    LazyColumn(
-        Modifier
-            .fillMaxSize()
-            .scrollable(rememberScrollState(), orientation = Orientation.Vertical)
-    ) {
-        item {
-            Column {
-                Text(
-                    text = "Filters",
-                    style = MaterialTheme.typography.h5,
-                    modifier = Modifier.padding(16.dp)
-                )
-                Divider()
-            }
-        }
-        item {
-            Column {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Transaction details", style = MaterialTheme.typography.h6)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    InputText(
-                        label = "Description",
-                        value = descriptionFilter,
-                        onValueChange = { descriptionFilter = it }
+    Column(Modifier.fillMaxSize()) {
+        LazyColumn(
+            Modifier
+                .fillMaxSize()
+                .weight(1f)
+                .scrollable(rememberScrollState(), orientation = Orientation.Vertical)
+        ) {
+            item {
+                Column {
+                    Text(
+                        text = "Filters",
+                        style = MaterialTheme.typography.h5,
+                        modifier = Modifier.padding(16.dp)
                     )
+                    Divider()
                 }
-                Divider()
             }
-        }
-        item {
-            Column {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Date range", style = MaterialTheme.typography.h6)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    InputDate(label = "From", onValueChange = { fromFilter = it })
-                    InputDate(label = "To", onValueChange = { toFilter = it })
-                }
-                Divider()
-            }
-        }
-        item {
-            Column {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Tags", style = MaterialTheme.typography.h6)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Coming soon...", style = MaterialTheme.typography.caption)
-                }
-                Divider()
-            }
-        }
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-        item {
-            Column(
-                Modifier.padding(16.dp)
-            ) {
-                TextButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { onResetFilter() }
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.refresh),
-                            contentDescription = null
+            item {
+                Column {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Transaction details", style = MaterialTheme.typography.h6)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        InputText(
+                            label = "Description",
+                            value = descriptionFilter,
+                            onValueChange = { descriptionFilter = it }
                         )
-                        Text(text = "Reset filters")
                     }
+                    Divider()
                 }
+            }
+            item {
+                Column {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Date range", style = MaterialTheme.typography.h6)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        InputDate(label = "From", onValueChange = { fromFilter = it })
+                        InputDate(label = "To", onValueChange = { toFilter = it })
+                    }
+                    Divider()
+                }
+            }
+            item {
+                Column {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Tags", style = MaterialTheme.typography.h6)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Coming soon...", style = MaterialTheme.typography.caption)
+                    }
+                    Divider()
+                }
+            }
+        }
+        Surface(elevation = 12.dp) {
+            Column(Modifier.padding(16.dp)) {
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Button(
+                    TextButton(
                         modifier = Modifier.weight(1f),
                         onClick = { onSaveFilter() }
                     ) {
@@ -118,7 +101,7 @@ fun SearchFiltersView(
                             Text(text = "Save filters")
                         }
                     }
-                    Button(
+                    TextButton(
                         modifier = Modifier.weight(1f),
                         onClick = { onLoadFilter() }
                     ) {
@@ -134,9 +117,25 @@ fun SearchFiltersView(
                         }
                     }
                 }
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onResetFilter() }
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.refresh),
+                            contentDescription = null
+                        )
+                        Text(text = "Reset filters")
+                    }
+                }
             }
         }
     }
+
 }
 
 @Preview(showBackground = true)
