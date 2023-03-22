@@ -11,9 +11,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -171,29 +173,48 @@ fun SearchFilters(
     onOpenTagSelector: () -> Unit = {},
     onFilterUpdate: (GlobalFilters) -> Unit = {},
 ) {
-    var filterDetails by remember { mutableStateOf(false) }
-    var filterDates by remember { mutableStateOf(false) }
-    var filterAmount by remember { mutableStateOf(false) }
-    var filterTags by remember { mutableStateOf(false) }
-    var filterArea by remember { mutableStateOf(false) }
+    var filterDetails by rememberSaveable { mutableStateOf(false) }
+    var filterDates by rememberSaveable { mutableStateOf(false) }
+    var filterAmount by rememberSaveable { mutableStateOf(false) }
+    var filterTags by rememberSaveable { mutableStateOf(false) }
+    var filterArea by rememberSaveable { mutableStateOf(false) }
+
+
 
     Column(Modifier.fillMaxSize()) {
+        Surface(elevation = 12.dp) {
+            Column {
+                Row(
+                    Modifier.fillMaxWidth().padding(end = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        modifier = Modifier.padding(16.dp).weight(1f),
+                        text = "Filters",
+                        style = MaterialTheme.typography.h5
+                    )
+                    TextButton(onClick = { /*TODO*/ }) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.refresh),
+                                contentDescription = null
+                            )
+                            Text(text = "RESET")
+                        }
+                    }
+                }
+            }
+        }
         LazyColumn(
             Modifier
                 .fillMaxSize()
                 .weight(1f)
                 .scrollable(rememberScrollState(), orientation = Orientation.Vertical)
         ) {
-            item {
-                Column {
-                    Text(
-                        text = "Filters",
-                        style = MaterialTheme.typography.h5,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                    Divider()
-                }
-            }
             item {
                 Column {
                     Column(
@@ -212,10 +233,9 @@ fun SearchFilters(
                         InputText(
                             label = "Description",
                             value = globalFilters.description ?: "",
-                            onValueChange = {
-                                onFilterUpdate(globalFilters.copy(description = it))
-                            }
-                        )
+                        ) {
+                            onFilterUpdate(globalFilters.copy(description = it))
+                        }
                     }
                     Divider()
                 }
@@ -235,12 +255,12 @@ fun SearchFilters(
                             })
                             Text("Date range", style = MaterialTheme.typography.h6)
                         }
-                        InputDate(label = "From", onValueChange = {
-                            //onFilterUpdate(globalFilters.copy(fromDate = it.toDateOrNull()))
-                        })
-                        InputDate(label = "To", onValueChange = {
-                            //onFilterUpdate(globalFilters.copy(toDate = it.toDateOrNull()))
-                        })
+                        InputDate(label = "From") {
+                            onFilterUpdate(globalFilters.copy(fromDate = it))
+                        }
+                        InputDate(label = "To") {
+                            onFilterUpdate(globalFilters.copy(toDate = it))
+                        }
                     }
                     Divider()
                 }
@@ -262,14 +282,22 @@ fun SearchFilters(
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(Modifier.weight(1f / 2f)) {
-                                InputText(label = "Minimum", value = "0.0", onValueChange = {
-                                    onFilterUpdate(globalFilters.copy(fromAmount = it.toDouble()))
-                                })
+                                InputText(
+                                    label = "Minimum",
+                                    value = globalFilters.fromAmount.toString(),
+                                    keyboardType = KeyboardType.Number,
+                                ) {
+                                    onFilterUpdate(globalFilters.copy(fromAmount = it))
+                                }
                             }
                             Box(Modifier.weight(1f / 2f)) {
-                                InputText(label = "Maximum", value = "0.0", onValueChange = {
-                                    onFilterUpdate(globalFilters.copy(toAmount = it.toDouble()))
-                                })
+                                InputText(
+                                    label = "Maximum",
+                                    value = globalFilters.toAmount.toString(),
+                                    keyboardType = KeyboardType.Number,
+                                ) {
+                                    onFilterUpdate(globalFilters.copy(toAmount = it))
+                                }
                             }
                         }
                     }
@@ -318,19 +346,31 @@ fun SearchFilters(
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(Modifier.weight(1f / 2f)) {
-                                InputText(label = "Latitude", value = "0.0", onValueChange = {
-                                    onFilterUpdate(globalFilters.copy(latitude = it.toDouble()))
-                                })
+                                InputText(
+                                    label = "Latitude",
+                                    value = globalFilters.latitude ?: "0.0",
+                                    keyboardType = KeyboardType.Number,
+                                ) {
+                                    onFilterUpdate(globalFilters.copy(latitude = it))
+                                }
                             }
                             Box(Modifier.weight(1f / 2f)) {
-                                InputText(label = "Longitude", value = "0.0", onValueChange = {
-                                    onFilterUpdate(globalFilters.copy(longitude = it.toDouble()))
-                                })
+                                InputText(
+                                    label = "Longitude",
+                                    value = globalFilters.longitude ?: "0.0",
+                                    keyboardType = KeyboardType.Number,
+                                ) {
+                                    onFilterUpdate(globalFilters.copy(longitude = it))
+                                }
                             }
                         }
-                        InputText(label = "Radius", value = "0.0", onValueChange = {
-
-                        })
+                        InputText(
+                            label = "Radius",
+                            value = globalFilters.radius ?: "0.0",
+                            keyboardType = KeyboardType.Number,
+                        ) {
+                            onFilterUpdate(globalFilters.copy(radius = it))
+                        }
                     }
                     Divider()
                 }
@@ -382,10 +422,10 @@ fun SearchFilters(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.refresh),
+                            painter = painterResource(id = R.drawable.check),
                             contentDescription = null
                         )
-                        Text(text = "Reset filters")
+                        Text(text = "Apply filters")
                     }
                 }
             }

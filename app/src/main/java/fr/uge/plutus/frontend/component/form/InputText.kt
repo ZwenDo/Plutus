@@ -27,6 +27,7 @@ fun InputText(
     errorMessage: String? = null,
     enabled: Boolean = true,
     isPassword: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text,
     leadingIcon: @Composable (() -> Unit)? = null,
     onValueChange: (String) -> Unit,
 ) {
@@ -54,10 +55,10 @@ fun InputText(
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Next,
                 autoCorrect = !isPassword,
-                keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text
+                keyboardType = if (isPassword) KeyboardType.Password else keyboardType
             ),
             keyboardActions = KeyboardActions(
-                onDone = { focusRequester.requestFocus() }
+                onDone = { focusRequester.requestFocus() },
             ),
             leadingIcon = leadingIcon
         )
