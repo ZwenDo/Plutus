@@ -291,6 +291,13 @@ fun SearchFilters(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun SearchFiltersPreview() {
+    val globalFilters = GlobalFilters()
+    SearchFilters(globalFilters)
+}
+
 @Composable
 fun SearchFiltersView() {
     var openTagSelector by remember { mutableStateOf(false) }
@@ -323,11 +330,4 @@ fun SearchFiltersView() {
     ) {
         globalState.globalFilters = it
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SearchFiltersViewPreview() {
-    val globalFilters = GlobalFilters()
-    SearchFilters(globalFilters)
 }
