@@ -17,6 +17,7 @@ interface GlobalState {
     var currentTransaction: Transaction?
     var currentView: View
     var scaffoldState: ScaffoldState
+    var globalFilters: GlobalFilters
 }
 
 @Composable
@@ -26,8 +27,9 @@ fun initGlobalState(): GlobalState {
     globalState = object : GlobalState {
         override var currentBook: Book? by rememberSaveable { mutableStateOf(null) }
         override var currentTransaction: Transaction? by rememberSaveable { mutableStateOf(null) }
-        override var currentView: View by rememberSaveable { mutableStateOf(View.TRANSACTION_SEARCH) }
+        override var currentView: View by rememberSaveable { mutableStateOf(View.BOOK_SELECTION) }
         override var scaffoldState: ScaffoldState by remember { mutableStateOf(scaffoldState) }
+        override var globalFilters: GlobalFilters by remember { mutableStateOf(GlobalFilters()) }
     }
 
     return globalState

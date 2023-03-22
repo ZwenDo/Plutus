@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.book.BookCreationView
@@ -22,7 +23,7 @@ enum class View(
     val headerComponent: @Composable () -> Unit,
     val contentComponent: @Composable (PaddingValues) -> Unit,
     val fabComponent: @Composable (() -> Unit) = {},
-    val drawerComponent: @Composable ColumnScope.() -> Unit = {}
+    val drawerComponent: @Composable (ColumnScope.() -> Unit)? = null
 ) {
     @RequiresApi(Build.VERSION_CODES.O)
     BOOK_SELECTION(
@@ -71,7 +72,16 @@ enum class View(
     TRANSACTION_LIST(
         headerComponent = {
             val globalState = globalState()
-            TopAppBar(title = { Text("Transactions: ${globalState.currentBook!!.name}") })
+            TopAppBar(
+                title = { Text("Transactions: ${globalState.currentBook!!.name}") },
+                actions = {
+                    IconButton(onClick = {
+                        globalState.currentView = TRANSACTION_SEARCH
+                    }) {
+                        Icon(Icons.Default.Search, "Search")
+                    }
+                }
+            )
         },
         contentComponent = { DisplayTransactions() },
         fabComponent = {
@@ -90,16 +100,20 @@ enum class View(
     @RequiresApi(Build.VERSION_CODES.O)
     TRANSACTION_SEARCH(
         headerComponent = {
+            val globalState = globalState()
             TopAppBar(
                 title = { Text("Search transaction") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        globalState.currentView = TRANSACTION_LIST
+                    }) {
+                        Icon(Icons.Default.ArrowBack, "Back")
+                    }
+                }
             )
         },
-        contentComponent = {
-            TransactionSearchView()
-        },
-        drawerComponent = {
-            SearchFiltersView()
-        }
+        contentComponent = { TransactionSearchView() },
+        drawerComponent = { SearchFiltersView() }
     ),
 
     @RequiresApi(Build.VERSION_CODES.O)
