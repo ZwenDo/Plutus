@@ -3,7 +3,7 @@ package fr.uge.plutus.frontend.store
 import java.util.*
 
 class GlobalFiltersWrapper(
-    var filters: GlobalFilters
+    var filters: GlobalFilters = GlobalFilters()
 ) {
 
     inline fun copy(block: GlobalFilters.() -> Unit): GlobalFiltersWrapper =
@@ -17,7 +17,7 @@ class GlobalFilters(
     var toDate: String? = null,
     var fromAmount: String? = null,
     var toAmount: String? = null,
-    val tags: MutableSet<UUID> = mutableSetOf(),
+    var tags: Set<UUID> = mutableSetOf(),
     var latitude: String? = null,
     var longitude: String? = null,
     var radius: String? = null

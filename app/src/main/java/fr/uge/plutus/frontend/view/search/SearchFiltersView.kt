@@ -26,7 +26,7 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.TagType
 import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputText
-import fr.uge.plutus.frontend.store.GlobalFilters
+import fr.uge.plutus.frontend.store.GlobalFiltersWrapper
 import fr.uge.plutus.frontend.store.globalState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -166,12 +166,12 @@ fun TagSelectorPreview() {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SearchFilters(
-    globalFilters: GlobalFilters,
+    globalFilters: GlobalFiltersWrapper,
     onResetFilter: () -> Unit = {},
     onSaveFilter: () -> Unit = {},
     onLoadFilter: () -> Unit = {},
     onOpenTagSelector: () -> Unit = {},
-    onFilterUpdate: (GlobalFilters) -> Unit = {},
+    onFilterUpdate: (GlobalFiltersWrapper) -> Unit = {},
 ) {
     var filterDetails by rememberSaveable { mutableStateOf(false) }
     var filterDates by rememberSaveable { mutableStateOf(false) }
@@ -183,16 +183,20 @@ fun SearchFilters(
         Surface(elevation = 12.dp) {
             Column {
                 Row(
-                    Modifier.fillMaxWidth().padding(end = 8.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(end = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        modifier = Modifier.padding(16.dp).weight(1f),
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .weight(1f),
                         text = "Filters",
                         style = MaterialTheme.typography.h5
                     )
-                    TextButton(onClick = { /*TODO*/ }) {
+                    TextButton(onClick = { onResetFilter() }) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -230,10 +234,10 @@ fun SearchFilters(
                         }
                         InputText(
                             label = "Description",
-                            value = globalFilters.description ?: "",
+                            value = globalFilters.filters.description ?: "",
                             enabled = filterDetails
                         ) {
-                            onFilterUpdate(globalFilters.copy(description = it))
+                            onFilterUpdate(globalFilters.copy { description = it })
                         }
                     }
                     Divider()
@@ -255,10 +259,10 @@ fun SearchFilters(
                             Text("Date range", style = MaterialTheme.typography.h6)
                         }
                         InputDate(label = "From", enabled = filterDates) {
-                            onFilterUpdate(globalFilters.copy(fromDate = it))
+                            onFilterUpdate(globalFilters.copy { fromDate = it })
                         }
                         InputDate(label = "To", enabled = filterDates) {
-                            onFilterUpdate(globalFilters.copy(toDate = it))
+                            onFilterUpdate(globalFilters.copy { toDate = it })
                         }
                     }
                     Divider()
@@ -283,21 +287,21 @@ fun SearchFilters(
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Minimum",
-                                    value = globalFilters.fromAmount.toString(),
+                                    value = globalFilters.filters.fromAmount.toString(),
                                     keyboardType = KeyboardType.Number,
                                     enabled = filterAmount
                                 ) {
-                                    onFilterUpdate(globalFilters.copy(fromAmount = it))
+                                    onFilterUpdate(globalFilters.copy { fromAmount = it })
                                 }
                             }
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Maximum",
-                                    value = globalFilters.toAmount.toString(),
+                                    value = globalFilters.filters.toAmount.toString(),
                                     keyboardType = KeyboardType.Number,
                                     enabled = filterAmount
                                 ) {
-                                    onFilterUpdate(globalFilters.copy(toAmount = it))
+                                    onFilterUpdate(globalFilters.copy { toAmount = it })
                                 }
                             }
                         }
@@ -324,7 +328,7 @@ fun SearchFilters(
                             Text("Tags", style = MaterialTheme.typography.h6)
                         }
                         TextButton(onClick = { onOpenTagSelector() }, enabled = filterTags) {
-                            Text(text = "${globalFilters.tags.size} selected ")
+                            Text(text = "${globalFilters.filters.tags.size} selected ")
                         }
                     }
                     Divider()
@@ -349,31 +353,31 @@ fun SearchFilters(
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Latitude",
-                                    value = globalFilters.latitude ?: "0.0",
+                                    value = globalFilters.filters.latitude ?: "0.0",
                                     keyboardType = KeyboardType.Number,
                                     enabled = filterArea
                                 ) {
-                                    onFilterUpdate(globalFilters.copy(latitude = it))
+                                    onFilterUpdate(globalFilters.copy { latitude = it })
                                 }
                             }
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Longitude",
-                                    value = globalFilters.longitude ?: "0.0",
+                                    value = globalFilters.filters.longitude ?: "0.0",
                                     keyboardType = KeyboardType.Number,
                                     enabled = filterArea
                                 ) {
-                                    onFilterUpdate(globalFilters.copy(longitude = it))
+                                    onFilterUpdate(globalFilters.copy { longitude = it })
                                 }
                             }
                         }
                         InputText(
                             label = "Radius",
-                            value = globalFilters.radius ?: "0.0",
+                            value = globalFilters.filters.radius ?: "0.0",
                             keyboardType = KeyboardType.Number,
                             enabled = filterArea
                         ) {
-                            onFilterUpdate(globalFilters.copy(radius = it))
+                            onFilterUpdate(globalFilters.copy { radius = it })
                         }
                     }
                     Divider()
@@ -419,7 +423,7 @@ fun SearchFilters(
                 }
                 Button(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { onResetFilter() }
+                    onClick = { /* APPLY */ }
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -441,7 +445,7 @@ fun SearchFilters(
 @Preview(showBackground = true)
 @Composable
 fun SearchFiltersPreview() {
-    val globalFilters = GlobalFilters()
+    val globalFilters = GlobalFiltersWrapper()
     SearchFilters(globalFilters)
 }
 
@@ -454,7 +458,7 @@ fun SearchFiltersView() {
     var availableTags by remember { mutableStateOf(emptyList<Tag>()) }
 
     LaunchedEffect(Unit) {
-        globalState.globalFilters = GlobalFilters()
+        globalState.globalFilters = GlobalFiltersWrapper()
         withContext(Dispatchers.IO) {
             availableTags = Database.tags().findByBookId(globalState.currentBook!!.uuid)
         }
@@ -463,18 +467,18 @@ fun SearchFiltersView() {
     TagSelector(
         open = openTagSelector,
         tags = availableTags,
-        selectedTags = globalState.globalFilters.tags
+        selectedTags = globalState.globalFilters.filters.tags
     ) { tags ->
         openTagSelector = false
-        globalState.globalFilters = globalState.globalFilters.copy(
-            tags = tags.map { it.tagId }.toSet()
-        )
+        globalState.globalFilters = globalState.globalFilters.copy {
+            this.tags = tags.mapTo(mutableSetOf()) { it.tagId }
+        }
     }
 
     SearchFilters(
         globalFilters = globalState.globalFilters,
         onOpenTagSelector = { openTagSelector = true },
-        onResetFilter = { globalState.globalFilters = GlobalFilters() },
+        onResetFilter = { globalState.globalFilters = GlobalFiltersWrapper() },
     ) {
         globalState.globalFilters = it
     }
