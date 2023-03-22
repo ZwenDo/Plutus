@@ -26,6 +26,7 @@ import java.util.*
 fun InputDate(
     label: String,
     errorMessage: String? = null,
+    enabled: Boolean = true,
     onValueChange: (String) -> Unit,
 ) {
     val calendar = Calendar.getInstance()
@@ -60,7 +61,8 @@ fun InputDate(
             ) {
                 Icon(Icons.Default.DateRange, contentDescription = null)
             }
-        }
+        },
+        enabled = enabled,
     ) {
         date = it
         onValueChange(date)
