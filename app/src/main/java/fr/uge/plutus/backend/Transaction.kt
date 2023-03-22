@@ -1,5 +1,6 @@
 package fr.uge.plutus.backend
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.room.*
 import java.io.Serializable
 import java.util.*
@@ -30,7 +31,7 @@ data class Transaction(
     @PrimaryKey val transactionId: UUID = UUID.randomUUID()
 ) : Serializable {
 
-    fun attachments(database: Database? = null): List<Attachment> {
+    suspend fun attachments(database: Database? = null): List<Attachment> {
         val dao = database?.attachments() ?: Database.attachments()
         return dao.findAllByTransactionId(transactionId)
     }
@@ -51,10 +52,27 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE bookId = :bookId")
     suspend fun findAllByBookId(bookId: UUID): List<Transaction>
 
+    @Query(
+        """
+        SELECT * 
+        FROM transactions
+        JOIN tag_transaction_join 
+        ON transactions.transactionId = tag_transaction_join.transactionId
+        WHERE bookId = :bookId
+        AND tagId IN (:tags)
+        """
+    )
+    suspend fun findAllByBookIdWithTags(bookId: UUID, tags: Set<UUID>): List<Transaction>
+
     @Query("SELECT * FROM transactions WHERE transactionId = :id LIMIT 1")
     suspend fun findById(id: UUID): Transaction?
 
-    //@Query("SELECT * FROM transactions WHERE date BETWEEN :start AND :end AND bookId = :bookId")
+    suspend fun upsert(transaction: Transaction) = try {
+        insert(transaction)
+    } catch (e: SQLiteConstraintException) {
+        update(transaction)
+    }
+
     @Query("SELECT * FROM transactions NATURAL JOIN tag_transaction_join WHERE date BETWEEN :start AND :end AND bookId = :bookId AND tagId = :tagId")
     suspend fun findByBookIdAndDateRangeAndTagId(
         bookId: UUID,

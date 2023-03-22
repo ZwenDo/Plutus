@@ -54,7 +54,7 @@ class BooksTest {
         val book2 = Book("Kotlin For Dummies")
         bookDao.insert(book2)
 
-        val books = bookDao.getAll()
+        val books = bookDao.findAll()
         assertEquals(2, books.size)
         assertTrue(book in books)
         assertTrue(book2 in books)
@@ -155,7 +155,7 @@ class BooksTest {
         bookDao.insert(book)
         val transaction = Transaction("My transaction", Date(), 10.0, book.uuid)
         transactionDao.insert(transaction)
-        val tag = tagDao.insert("My tag", book.uuid)
+        val tag = tagDao.insert("My tag", book.uuid, null)
         tagTransactionsDao.insert(transaction, tag)
 
         val copyName = "My Other Book"
