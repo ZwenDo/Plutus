@@ -9,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -162,7 +161,6 @@ fun TagSelectorPreview() {
     }
 }
 
-
 @Composable
 fun SearchFilters(
     globalFilters: GlobalFilters,
@@ -172,12 +170,6 @@ fun SearchFilters(
     onOpenTagSelector: () -> Unit = {},
     onFilterUpdate: (GlobalFilters) -> Unit = {},
 ) {
-    var filterDetails by rememberSaveable { mutableStateOf(false) }
-    var filterDates by rememberSaveable { mutableStateOf(false) }
-    var filterAmount by rememberSaveable { mutableStateOf(false) }
-    var filterTags by rememberSaveable { mutableStateOf(false) }
-    var filterArea by rememberSaveable { mutableStateOf(false) }
-
     Column(Modifier.fillMaxSize()) {
         Surface(elevation = 12.dp) {
             Column {
@@ -222,19 +214,10 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filterDetails, onCheckedChange = {
-                                filterDetails = it
-                            })
-                            Text("Transaction details", style = MaterialTheme.typography.h6)
-                        }
+                        Text("Transaction details", style = MaterialTheme.typography.h6)
                         InputText(
                             label = "Description",
                             value = globalFilters.description,
-                            enabled = filterDetails
                         ) {
                             onFilterUpdate(globalFilters.copy { description = it })
                         }
@@ -248,19 +231,11 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filterDates, onCheckedChange = {
-                                filterDates = it
-                            })
-                            Text("Date range", style = MaterialTheme.typography.h6)
-                        }
-                        InputDate(label = "From", enabled = filterDates) {
+                        Text("Date range", style = MaterialTheme.typography.h6)
+                        InputDate(label = "From") {
                             onFilterUpdate(globalFilters.copy { fromDate = it })
                         }
-                        InputDate(label = "To", enabled = filterDates) {
+                        InputDate(label = "To") {
                             onFilterUpdate(globalFilters.copy { toDate = it })
                         }
                     }
@@ -273,22 +248,13 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filterAmount, onCheckedChange = {
-                                filterAmount = it
-                            })
-                            Text("Amount range", style = MaterialTheme.typography.h6)
-                        }
+                        Text("Amount range", style = MaterialTheme.typography.h6)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Minimum",
                                     value = globalFilters.fromAmount,
                                     keyboardType = KeyboardType.Number,
-                                    enabled = filterAmount
                                 ) {
                                     onFilterUpdate(globalFilters.copy { fromAmount = it })
                                 }
@@ -298,7 +264,6 @@ fun SearchFilters(
                                     label = "Maximum",
                                     value = globalFilters.toAmount,
                                     keyboardType = KeyboardType.Number,
-                                    enabled = filterAmount
                                 ) {
                                     onFilterUpdate(globalFilters.copy { toAmount = it })
                                 }
@@ -317,16 +282,8 @@ fun SearchFilters(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filterTags, onCheckedChange = {
-                                filterTags = it
-                            })
-                            Text("Tags", style = MaterialTheme.typography.h6)
-                        }
-                        TextButton(onClick = { onOpenTagSelector() }, enabled = filterTags) {
+                        Text("Tags", style = MaterialTheme.typography.h6)
+                        TextButton(onClick = { onOpenTagSelector() }) {
                             Text(text = "${globalFilters.tags.size} selected ")
                         }
                     }
@@ -339,22 +296,13 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filterArea, onCheckedChange = {
-                                filterArea = it
-                            })
-                            Text("Area range", style = MaterialTheme.typography.h6)
-                        }
+                        Text("Area range", style = MaterialTheme.typography.h6)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Latitude",
                                     value = globalFilters.latitude,
-                                    keyboardType = KeyboardType.Number,
-                                    enabled = filterArea
+                                    keyboardType = KeyboardType.Number
                                 ) {
                                     onFilterUpdate(globalFilters.copy { latitude = it })
                                 }
@@ -363,8 +311,7 @@ fun SearchFilters(
                                 InputText(
                                     label = "Longitude",
                                     value = globalFilters.longitude,
-                                    keyboardType = KeyboardType.Number,
-                                    enabled = filterArea
+                                    keyboardType = KeyboardType.Number
                                 ) {
                                     onFilterUpdate(globalFilters.copy { longitude = it })
                                 }
@@ -373,8 +320,7 @@ fun SearchFilters(
                         InputText(
                             label = "Radius",
                             value = globalFilters.radius,
-                            keyboardType = KeyboardType.Number,
-                            enabled = filterArea
+                            keyboardType = KeyboardType.Number
                         ) {
                             onFilterUpdate(globalFilters.copy { radius = it })
                         }
@@ -443,14 +389,12 @@ fun SearchFilters(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun SearchFiltersPreview() {
     val globalFilters = GlobalFiltersWrapper()
     SearchFilters(globalFilters)
 }
-
 
 @Composable
 fun SearchFiltersView() {
