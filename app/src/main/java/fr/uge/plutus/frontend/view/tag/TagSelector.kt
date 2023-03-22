@@ -25,11 +25,11 @@ fun TagSelector(
     open: Boolean,
     tags: List<Tag>,
     selectedTags: Set<UUID> = emptySet(),
-    onClose: (List<Tag>) -> Unit = {},
+    onClose: (List<Tag>?) -> Unit = {},
 ) {
     val selection = remember { mutableStateMapOf(*selectedTags.map { it to Unit }.toTypedArray()) }
 
-    LaunchedEffect(selectedTags) {
+    LaunchedEffect(selectedTags, open) {
         selection.clear()
         selection.putAll(selectedTags.map { it to Unit })
     }
@@ -46,7 +46,7 @@ fun TagSelector(
         if (submit) {
             onClose(tags.filter { selection.contains(it.tagId) })
         } else {
-            onClose(emptyList())
+            onClose(null)
         }
     }) {
         LazyColumn(

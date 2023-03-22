@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fr.uge.plutus.R
@@ -364,8 +363,10 @@ fun SearchFiltersView() {
         selectedTags = globalState.globalFilters.filters.tags
     ) { tags ->
         openTagSelector = false
-        globalState.globalFilters = globalState.globalFilters.copy {
-            this.tags = tags.mapTo(mutableSetOf()) { it.tagId }
+        if (tags != null) {
+            globalState.globalFilters = globalState.globalFilters.copy {
+                this.tags = tags.mapTo(mutableSetOf()) { it.tagId }
+            }
         }
     }
 

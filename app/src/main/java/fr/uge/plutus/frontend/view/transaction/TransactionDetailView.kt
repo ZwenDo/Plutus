@@ -3,6 +3,7 @@ package fr.uge.plutus.frontend.view.transaction
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -36,6 +37,7 @@ import fr.uge.plutus.frontend.view.tag.TagDTO
 import fr.uge.plutus.frontend.view.tag.TagSelector
 import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 
@@ -51,6 +53,26 @@ private suspend fun getBookTags(bookId: UUID): List<Tag> =
         Database.tags().findByBookId(bookId)
     }
 
+
+private suspend fun updateTransactionTags(
+    transaction: Transaction,
+    transactionTags: List<Tag>,
+    tags: List<Tag>
+) = withContext(Dispatchers.IO) {
+    // Adding tags
+    tags.filter {
+        it !in transactionTags
+    }.forEach {
+        Database.tagTransactionJoin().insert(transaction, it)
+    }
+    // Removing tags
+    transactionTags.filter {
+        it !in tags
+    }.forEach {
+        Database.tagTransactionJoin().delete(transaction, it)
+    }
+
+}
 
 
 @Composable
@@ -144,7 +166,9 @@ private fun DisplayTags(tags: List<Tag>) {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun TagsSection(transaction: Transaction) {
+    val context = LocalContext.current
     val globalState = globalState()
+    val coroutineScope = rememberCoroutineScope()
 
     var tags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
     var transactionTags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
@@ -153,7 +177,10 @@ private fun TagsSection(transaction: Transaction) {
     var tagCreatorOpen by rememberSaveable { mutableStateOf(false) }
     var tagDto by rememberSaveable { mutableStateOf<TagDTO?>(null) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(Unit, tagDto) {
+        if (tagDto != null) {
+            return@LaunchedEffect
+        }
         tags = getBookTags(transaction.bookId)
     }
     LaunchedEffect(viewId) {
@@ -161,22 +188,16 @@ private fun TagsSection(transaction: Transaction) {
     }
     LaunchedEffect(tagDto) {
         val dto = tagDto ?: return@LaunchedEffect
-        withContext(Dispatchers.IO) {
-            val newTag = if (dto.budgetTarget == null) {
+        val newTag = withContext(Dispatchers.IO) {
+            if (dto.budgetTarget == null) {
                 Database.tags().insert(dto.name, globalState.currentBook!!.uuid)
             } else {
                 Database.tags().insert(dto.name, globalState.currentBook!!.uuid, dto.budgetTarget)
             }
         }
+        Toast.makeText(context, "Tag “${newTag.name}” created", Toast.LENGTH_SHORT).show()
         tagDto = null
     }
-
-    val myTags = listOf(
-        Tag("Food", TagType.EXPENSE, UUID.randomUUID()),
-        Tag("Transport", TagType.EXPENSE, UUID.randomUUID()),
-        Tag("Salary", TagType.INCOME, UUID.randomUUID()),
-        Tag("Gift", TagType.INCOME, UUID.randomUUID()),
-    )
 
     Surface(onClick = { tagSelectorOpen = true }) {
         Row(
@@ -192,14 +213,14 @@ private fun TagsSection(transaction: Transaction) {
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
-                if (myTags.isEmpty()) {
+                if (transactionTags.isEmpty()) {
                     Text(
                         text = "No tags",
                         style = MaterialTheme.typography.body1,
                     )
                 } else {
                     Box(Modifier.padding(top = 8.dp)) {
-                        DisplayTags(tags = myTags)
+                        DisplayTags(tags = transactionTags)
                     }
                 }
             }
@@ -211,11 +232,16 @@ private fun TagsSection(transaction: Transaction) {
 
     TagSelector(
         open = tagSelectorOpen,
-        tags = myTags,
+        tags = tags,
         selectedTags = transactionTags.map { it.tagId }.toSet(),
     ) {
         tagSelectorOpen = false
-        viewId++
+        if (it != null) { // null means the user clicked to cancel the dialog
+            coroutineScope.launch {
+                updateTransactionTags(transaction, transactionTags, it)
+                viewId++
+            }
+        }
     }
 
     TagCreator(open = tagCreatorOpen) { tag ->

@@ -1,7 +1,5 @@
 package fr.uge.plutus.frontend.view.tag
 
-import android.database.sqlite.SQLiteConstraintException
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Checkbox
@@ -35,16 +33,16 @@ fun TagCreator(
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var addBudgetTarget by rememberSaveable { mutableStateOf(false) }
-    var budgetTarget by rememberSaveable { mutableStateOf<Double?>(0.0) }
-    var currency by rememberSaveable { mutableStateOf<Currency?>(null) }
-    var period by rememberSaveable { mutableStateOf<TimePeriod?>(null) }
+    var budgetTarget by rememberSaveable { mutableStateOf(0.0) }
+    var currency by rememberSaveable { mutableStateOf(Currency.USD) }
+    var period by rememberSaveable { mutableStateOf(TimePeriod.DAILY) }
 
     fun reset() {
         name = ""
         addBudgetTarget = false
         budgetTarget = 0.0
-        currency = null
-        period = null
+        currency = Currency.USD
+        period = TimePeriod.DAILY
     }
 
     Dialog(
@@ -54,10 +52,7 @@ fun TagCreator(
         onClose = { submit ->
             if (submit) {
                 if (addBudgetTarget) {
-                    if (budgetTarget != null && currency != null && period != null) {
-                        // todo add error messages
-                    }
-                    onClose(TagDTO(name, BudgetTarget(budgetTarget!!, currency!!, period!!)))
+                    onClose(TagDTO(name, BudgetTarget(budgetTarget, currency, period)))
                 } else {
                     onClose(TagDTO(name, null))
                 }
