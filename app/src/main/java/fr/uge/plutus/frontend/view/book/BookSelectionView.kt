@@ -19,11 +19,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.backend.serialization.ExportBook
@@ -31,6 +35,7 @@ import fr.uge.plutus.backend.serialization.importBook
 import fr.uge.plutus.frontend.component.common.Loading
 import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.plus
+import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun BookSelectionView(onChosen: (Book) -> Unit) {
@@ -79,6 +84,7 @@ fun BookSelectionItem(book: Book, onChosen: (Book) -> Unit) {
 
     if (exporting) {
         ExportBook("baba", book, book.name) {
+            Toast.makeText(currentContext, "Export Completed", Toast.LENGTH_SHORT).show()
             exporting = false
         }
     }
@@ -95,19 +101,28 @@ fun BookSelectionItem(book: Book, onChosen: (Book) -> Unit) {
 
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onChosen(book) }
-            .border(1.dp, Color.Black, RoundedCornerShape(8.dp))
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.Center
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(book.name)
-        Button(onClick = {
-            exporting = true
-        }) {
-            Text(text = "Export")
+        IconButton(
+            modifier = Modifier
+                .scale(0.8f)
+                .border(1.dp, Color.Black, CircleShape),
+            onClick = {
+                exporting = true
+            }
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.file_upload),
+                contentDescription = "Export"
+            )
         }
-        Button(onClick = {
+        IconButton(
+            modifier = Modifier
+                .scale(0.8f)
+                .border(1.dp, Color.Black, CircleShape),
+            onClick = {
             val intent = Intent(
                 Intent.ACTION_OPEN_DOCUMENT,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI
@@ -117,9 +132,22 @@ fun BookSelectionItem(book: Book, onChosen: (Book) -> Unit) {
                 }
             launcher.launch(intent)
         }) {
-            Text(text = "Import")
+            Icon(
+                painter = painterResource(id = R.drawable.file_download),
+                contentDescription = "Import"
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onChosen(book) }
+                .border(1.dp, Color.Black, RoundedCornerShape(8.dp))
+                .padding(8.dp),
+        ) {
+            Text(book.name)
         }
     }
+
 }
 
 @Composable
