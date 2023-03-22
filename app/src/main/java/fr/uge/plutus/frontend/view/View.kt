@@ -10,14 +10,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.res.painterResource
+import fr.uge.plutus.R
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.book.BookCreationView
 import fr.uge.plutus.frontend.view.book.BookOverviewLoader
 import fr.uge.plutus.frontend.view.book.BookSelectionView
 import fr.uge.plutus.frontend.view.search.*
 import fr.uge.plutus.frontend.view.transaction.*
+import kotlinx.coroutines.launch
 
 enum class View(
     val headerComponent: @Composable () -> Unit,
@@ -72,18 +75,25 @@ enum class View(
     TRANSACTION_LIST(
         headerComponent = {
             val globalState = globalState()
+            val coroutineScope = rememberCoroutineScope()
             TopAppBar(
                 title = { Text("Transactions: ${globalState.currentBook!!.name}") },
                 actions = {
                     IconButton(onClick = {
-                        globalState.currentView = TRANSACTION_SEARCH
+                        coroutineScope.launch {
+                            globalState.scaffoldState.drawerState.open()
+                        }
                     }) {
-                        Icon(Icons.Default.Search, "Search")
+                        Icon(
+                            painter = painterResource(id = R.drawable.filter),
+                            "Search"
+                        )
                     }
                 }
             )
         },
-        contentComponent = { DisplayTransactions() },
+        contentComponent = { TransactionSearchView() },
+        drawerComponent = { SearchFiltersView() },
         fabComponent = {
             val globalState = globalState()
             FloatingActionButton(onClick = {
@@ -96,26 +106,6 @@ enum class View(
             }
         }
     ),
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    TRANSACTION_SEARCH(
-        headerComponent = {
-            val globalState = globalState()
-            TopAppBar(
-                title = { Text("Search transaction") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        globalState.currentView = TRANSACTION_LIST
-                    }) {
-                        Icon(Icons.Default.ArrowBack, "Back")
-                    }
-                }
-            )
-        },
-        contentComponent = { TransactionSearchView() },
-        drawerComponent = { SearchFiltersView() }
-    ),
-
     @RequiresApi(Build.VERSION_CODES.O)
     TRANSACTION_DETAILS(
         headerComponent = {
