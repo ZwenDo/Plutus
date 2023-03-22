@@ -3,6 +3,7 @@ package fr.uge.plutus.backend.serialization
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import fr.uge.plutus.MainActivity
@@ -14,6 +15,64 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.util.*
+import javax.crypto.BadPaddingException
+
+@Composable
+fun ExportBook(
+    password: String?,
+    book: Book,
+    name: String,
+    exportTags: Set<Tag> = emptySet(),
+    onExportCompleted: () -> Unit = {}
+) {
+    val globalState = globalState()
+
+    Log.d("ExportBook", "HERE")
+    LaunchedEffect(globalState.writeExternalStoragePermission) {
+        if (!globalState.writeExternalStoragePermission) {
+            MainActivity.requestWriteExternalStoragePermission()
+            return@LaunchedEffect
+        }
+        export(book, name, password, exportTags)
+        onExportCompleted()
+    }
+}
+
+suspend fun importBook(
+    password: String?,
+    fileUri: Uri,
+    context: Context,
+    mergeDestinationBook: UUID,
+    database: Database? = null
+): Boolean {
+    require(
+        fileUri.scheme == "content" &&
+                fileUri.lastPathSegment?.endsWith(".book.plutus") == true
+    ) {
+        "Invalid file: $fileUri"
+    }
+
+    val content = context
+        .contentResolver
+        .openInputStream(fileUri)!!
+        .use { it.readBytes() }
+        .let {
+            if (password != null) {
+                try {
+                    decrypt(password, it)
+                } catch (e: BadPaddingException) {
+                    return false
+                }
+            } else {
+                it
+            }
+        }
+
+    val bookDTO = Json.decodeFromString(BookDTO.serializer(), String(content))
+    bookDTO.loadToDB(database, mergeDestinationBook)
+    return true
+}
+
 
 private suspend fun Transaction.toDTO(
     database: Database? = null,
@@ -62,6 +121,7 @@ private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null)
     val filterDao = database?.filters() ?: Database.filters()
 
 
+    Log.d("Export", "a")
     val transactions = transactionDao
         .run {
             if (exportTags.isNotEmpty()) { // filter transactions by tags if there is at least one tag selected
@@ -72,9 +132,11 @@ private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null)
             }
         }
         .map { it.toDTO(database) }
+    Log.d("Export", "b")
     val tags = tagDao.findByBookId(uuid).map { it.toDTO() }
+    Log.d("Export", "c")
     val filters = filterDao.findAllByBookId(uuid).map { it.toDTO() }
-
+    Log.d("Export", "d")
     return BookDTO(
         uuid,
         name,
@@ -115,31 +177,19 @@ private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID) {
     }
 }
 
-
-@Composable
-fun ExportBook(
-    book: Book,
-    name: String,
-    exportTags: Set<Tag> = emptySet()
-) {
-    val globalState = globalState()
-
-    LaunchedEffect(globalState.writeExternalStoragePermission) {
-        if (!globalState.writeExternalStoragePermission) {
-            MainActivity.requestWriteExternalStoragePermission()
-            return@LaunchedEffect
-        }
-        export(book, name, exportTags)
-    }
+private val json = Json {
+    prettyPrint = false
 }
 
 private suspend fun export(
     book: Book,
     name: String,
+    password: String?,
     exportTags: Set<Tag>
 ) {
     require("/" !in name && "\\" !in name) { "Invalid name: $name" }
-    val json = Json.encodeToString(book.toDTO(exportTags))
+    val json = json.encodeToString(book.toDTO(exportTags))
+    Log.d("Export", json)
 
     val folder = Environment
         .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
@@ -158,31 +208,10 @@ private suspend fun export(
     }
     if (!didCreate) throw IllegalStateException("Cannot create file: $outputFile")
 
-    outputFile.writeText(json)
-}
-
-suspend fun importBook(
-    fileUri: Uri,
-    context: Context,
-    mergeDestinationBook: UUID,
-    database: Database? = null
-) {
-    require(
-        fileUri.scheme == "content" &&
-                fileUri.lastPathSegment?.endsWith(".book.plutus") == true
-    ) {
-        "Invalid file: $fileUri"
+    val bytes = if (password != null) {
+        encrypt(password, json.toByteArray())
+    } else {
+        json.toByteArray()
     }
-
-    val content = context
-        .contentResolver
-        .openInputStream(fileUri)!!
-        .use {
-            it.bufferedReader().use { b ->
-                b.readText()
-            }
-        }
-    val bookDTO = Json.decodeFromString(BookDTO.serializer(), content)
-    bookDTO.loadToDB(database, mergeDestinationBook)
+    outputFile.writeBytes(bytes)
 }
-

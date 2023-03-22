@@ -1,11 +1,12 @@
 package fr.uge.plutus.frontend.view.transaction
 
 import android.database.sqlite.SQLiteConstraintException
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -37,7 +38,7 @@ enum class Field {
     LONGITUDE
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
@@ -49,7 +50,7 @@ private fun Preview() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
 fun TransactionCreationView(onExit: () -> Unit = {}) {
     val currentBook = globalState().currentBook
@@ -63,8 +64,16 @@ fun TransactionCreationView(onExit: () -> Unit = {}) {
     var description by rememberSaveable { mutableStateOf(initialTransaction?.description ?: "") }
     var date by rememberSaveable { mutableStateOf(initialTransaction?.date?.toString() ?: "") }
     var amount by rememberSaveable { mutableStateOf(initialTransaction?.amount?.toString() ?: "") }
-    var latitude by rememberSaveable { mutableStateOf(initialTransaction?.latitude?.toString() ?: "") }
-    var longitude by rememberSaveable { mutableStateOf(initialTransaction?.longitude?.toString() ?: "") }
+    var latitude by rememberSaveable {
+        mutableStateOf(
+            initialTransaction?.latitude?.toString() ?: ""
+        )
+    }
+    var longitude by rememberSaveable {
+        mutableStateOf(
+            initialTransaction?.longitude?.toString() ?: ""
+        )
+    }
     var currency by rememberSaveable {
         mutableStateOf(initialTransaction?.currency ?: Currency.USD)
     }

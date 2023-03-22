@@ -1,15 +1,7 @@
 package fr.uge.plutus.frontend.view
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.frontend.store.globalState
-import fr.uge.plutus.frontend.store.initGlobalState
 import fr.uge.plutus.frontend.view.book.BookCreationView
 import fr.uge.plutus.frontend.view.book.BookSelectionView
 import fr.uge.plutus.frontend.view.transaction.DisplayTransactions
@@ -23,10 +15,9 @@ enum class View {
     TRANSACTION_LIST,
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainView() {
-    val globalState = initGlobalState()
+    val globalState = globalState()
 
     when (globalState.currentView) {
         View.BOOK_CREATION -> BookCreationView {
