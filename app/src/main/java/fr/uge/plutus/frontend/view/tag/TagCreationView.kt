@@ -74,7 +74,6 @@ fun TagCreationView(onClose: () -> Unit = {}) {
     var creating by rememberSaveable { mutableStateOf(false) }
     var delete by rememberSaveable { mutableStateOf(false) }
     var update by rememberSaveable { mutableStateOf(false) }
-    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var tagMap by rememberSaveable { mutableStateOf(emptyMap<String, Tag>()) }
     var tagMapDelete by rememberSaveable { mutableStateOf(emptyMap<String, Tag>()) }
     var loaded by rememberSaveable { mutableStateOf(false) }
@@ -99,7 +98,7 @@ fun TagCreationView(onClose: () -> Unit = {}) {
                     }
                     Toast.makeText(context, "Tag created", Toast.LENGTH_SHORT).show()
                 } catch (e: SQLiteConstraintException) {
-                    errorMessage = "Tag name already exist"
+                    Toast.makeText(context, "Tag name already exist", Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -111,7 +110,7 @@ fun TagCreationView(onClose: () -> Unit = {}) {
                     }
                     Toast.makeText(context, "Tag added", Toast.LENGTH_SHORT).show()
                 } catch (e: SQLiteConstraintException) {
-                    errorMessage = "Tag is already added"
+                    Toast.makeText(context, "Tag is already added", Toast.LENGTH_SHORT).show()
                 }
             }
 
@@ -126,7 +125,7 @@ fun TagCreationView(onClose: () -> Unit = {}) {
                     }
                     Toast.makeText(context, "Tag deleted", Toast.LENGTH_SHORT).show()
                 } catch (e: SQLiteConstraintException) {
-                    errorMessage = "Tag is already deleted"
+                    Toast.makeText(context, "Tag is already deleted", Toast.LENGTH_SHORT).show()
                 }
             }
             delete = false
