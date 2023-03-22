@@ -4,12 +4,11 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.book.BookCreationView
@@ -92,13 +91,20 @@ enum class View(
     TRANSACTION_DETAILS(
         headerComponent = {
             val globalState = globalState()
+            val currentTransaction = globalState.currentTransaction
             Column {
-                TopAppBar(title = { Text("Details") })
-                if (globalState.currentTransaction != null) {
-                    DisplayHeader(globalState.currentTransaction!!) {
-                        globalState.currentView = TRANSACTION_LIST
-                        globalState.currentTransaction = null
-                    }
+                TopAppBar(
+                    title = { Text("Transaction details") },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            globalState.currentView = TRANSACTION_LIST
+                            globalState.currentTransaction = null
+                        }) {
+                            Icon(Icons.Default.ArrowBack, "Back")
+                        }
+                    })
+                if (currentTransaction != null) {
+                    DisplayHeader(currentTransaction)
                 }
             }
         },
@@ -106,6 +112,17 @@ enum class View(
             val globalState = globalState()
             if (globalState.currentTransaction != null) {
                 DisplayTransactionDetails(globalState.currentTransaction!!)
+            }
+        },
+        fabComponent = {
+            val globalState = globalState()
+            FloatingActionButton(onClick = {
+                globalState.currentView = TRANSACTION_CREATION
+            }) {
+                Icon(
+                    Icons.Default.Edit,
+                    "Edit"
+                )
             }
         }
     )

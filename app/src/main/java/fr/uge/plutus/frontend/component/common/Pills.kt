@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.sp
 private fun PillText(caption: String) {
     Text(
         text = caption,
-        modifier = Modifier.padding(7.dp),
-        fontSize = 20.sp
+        modifier = Modifier.padding(10.dp, 2.dp),
+        fontSize = 16.sp
     )
 }
 

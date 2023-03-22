@@ -4,20 +4,13 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -29,7 +22,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.uge.plutus.R
@@ -38,10 +30,7 @@ import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.component.common.Loading
-import fr.uge.plutus.frontend.store.globalState
-import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.tag.TagCreationView
-import fr.uge.plutus.ui.theme.PlutusTheme
 import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -60,38 +49,13 @@ fun DisplayHeader(
     transaction: Transaction,
     backgroundColor: Color = MaterialTheme.colors.primary,
     fontColor: Color = MaterialTheme.colors.onPrimary,
-    onBack: () -> Unit
 ) {
-    val globalState = globalState()
     Column(
         Modifier
             .fillMaxWidth()
             .background(backgroundColor)
             .padding(bottom = 20.dp)
     ) {
-        Row(Modifier
-            .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
-                )
-            }
-            IconButton(onClick = {
-                globalState.currentTransaction = transaction
-                globalState.currentView = View.TRANSACTION_CREATION
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Edit,
-                    contentDescription = "Edit",
-                    tint = Color.White
-                )
-            }
-        }
-
         Text(
             text = "${transaction.amount} ${transaction.currency}",
             modifier = Modifier.fillMaxWidth(),
@@ -142,16 +106,23 @@ fun DisplayTags(tags: List<Tag>) {
     )
     {
         items(tags) {
-            val caption = it.stringRepresentation
+            var caption = it.stringRepresentation
+            it.budgetTarget?.let { target -> caption += " (${target.value} ${target.currency} ${target.timePeriod.displayName})" }
             DisplayPill(caption) { /* TODO: Display tag's details */ }
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayTagsSection(transaction: Transaction) {
     var loaded by rememberSaveable { mutableStateOf(false) }
     var tags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
+    var viewId by rememberSaveable { mutableStateOf(0) }
+
+    LaunchedEffect(viewId) {
+        tags = getTransactionsTags(transaction)
+    }
 
     if (!loaded) {
         Loading {
@@ -169,11 +140,14 @@ fun DisplayTagsSection(transaction: Transaction) {
             DisplayTags(tags = tags)
         }
         Row {
-            TagCreationView()
+            TagCreationView() {
+                viewId++
+            }
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayTransactionDetails(transaction: Transaction) {
     Column(

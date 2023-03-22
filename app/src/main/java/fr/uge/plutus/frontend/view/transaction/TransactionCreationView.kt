@@ -108,7 +108,7 @@ fun TransactionCreationView() {
         if (actualAmount == null) {
             errors[Field.AMOUNT] = "Amount is invalid"
         }
-        if ((longitude.isBlank()) xor (longitude.isBlank())) {
+        if ((longitude.isBlank()) xor (latitude.isBlank())) {
             errors[Field.LATITUDE] = "Latitude and longitude must be both set or both unset"
             errors[Field.LONGITUDE] = "Latitude and longitude must be both set or both unset"
         }
@@ -162,7 +162,7 @@ fun TransactionCreationView() {
                     val todoTag = tags
                         .findByName("@todo", currentBook.uuid)
                         .firstOrNull { it.type == TagType.INFO }
-                        ?: tags.insert("@todo", currentBook.uuid)
+                        ?: tags.insert("@todo", currentBook.uuid, null)
                     Database.tagTransactionJoin().insert(transaction, todoTag)
                 }
             }
