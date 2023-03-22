@@ -22,6 +22,7 @@ fun InputText(
     placeholder: String = label,
     singleLine: Boolean = true,
     errorMessage: String? = null,
+    enabled: Boolean = true,
     leadingIcon: @Composable (() -> Unit)? = null,
     onValueChange: (String) -> Unit,
 ) {
@@ -42,6 +43,7 @@ fun InputText(
             placeholder = { Text(placeholder) },
             singleLine = singleLine,
             isError = errorMessage != null,
+            enabled = enabled,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             keyboardActions = KeyboardActions(
                 onDone = { focusRequester.requestFocus() }

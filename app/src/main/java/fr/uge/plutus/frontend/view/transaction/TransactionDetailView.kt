@@ -106,16 +106,23 @@ fun DisplayTags(tags: List<Tag>) {
     )
     {
         items(tags) {
-            val caption = it.stringRepresentation
+            var caption = it.stringRepresentation
+            it.budgetTarget?.let { target -> caption += " (${target.value} ${target.currency} ${target.timePeriod.displayName})" }
             DisplayPill(caption) { /* TODO: Display tag's details */ }
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayTagsSection(transaction: Transaction) {
     var loaded by rememberSaveable { mutableStateOf(false) }
     var tags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
+    var viewId by rememberSaveable { mutableStateOf(0) }
+
+    LaunchedEffect(viewId) {
+        tags = getTransactionsTags(transaction)
+    }
 
     if (!loaded) {
         Loading {
@@ -133,11 +140,14 @@ fun DisplayTagsSection(transaction: Transaction) {
             DisplayTags(tags = tags)
         }
         Row {
-            TagCreationView()
+            TagCreationView() {
+                viewId++
+            }
         }
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayTransactionDetails(transaction: Transaction) {
     Column(

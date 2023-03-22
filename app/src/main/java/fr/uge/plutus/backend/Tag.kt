@@ -1,9 +1,15 @@
 package fr.uge.plutus.backend
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.room.*
-import java.util.*
+import fr.uge.plutus.util.toDate
+import fr.uge.plutus.util.toLocalDate
 import java.io.Serializable
+import java.time.temporal.ChronoField
+import java.time.temporal.ChronoUnit.*
+import java.util.*
 
 enum class TagType(val code: String) {
     INFO(""),
@@ -40,6 +46,50 @@ enum class TagType(val code: String) {
     }
 }
 
+enum class TimePeriod(
+    val displayName: String
+) {
+    DAILY("Daily"),
+    WEEKLY("Weekly"),
+    MONTHLY("Monthly"),
+    YEARLY("Yearly");
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun toDateRange(date: Date): Pair<Date, Date> {
+        val localDate = date.toLocalDate()
+        return when (this) {
+            DAILY -> {
+                val start = localDate.atStartOfDay()
+                val end = start.plus(1, DAYS).minusNanos(1)
+                start to end
+            }
+            WEEKLY -> {
+                val start = localDate.with(ChronoField.DAY_OF_WEEK, 1).atStartOfDay()
+                val end = start.plus(1, WEEKS).minusNanos(1)
+                start to end
+            }
+            MONTHLY -> {
+                val start = localDate.with(ChronoField.DAY_OF_MONTH, 1).atStartOfDay()
+                val end = start.plus(1, MONTHS).minusNanos(1)
+                start to end
+            }
+            YEARLY -> {
+                val start = localDate.with(ChronoField.DAY_OF_YEAR, 1).atStartOfDay()
+                val end = start.plus(1, YEARS).minusNanos(1)
+                start to end
+            }
+        }.let { (start, end) ->
+            start.toDate() to end.toDate()
+        }
+    }
+}
+
+data class BudgetTarget(
+    @ColumnInfo(name = "value") val value: Double,
+    @ColumnInfo(name = "currency") val currency: Currency,
+    @ColumnInfo(name = "time_period") val timePeriod: TimePeriod,
+)
+
 @Entity(
     tableName = "tag",
     foreignKeys = [
@@ -48,7 +98,8 @@ enum class TagType(val code: String) {
             parentColumns = ["uuid"],
             childColumns = ["bookId"],
             onDelete = ForeignKey.CASCADE
-        )],
+        )
+    ],
     indices = [
         Index(
             value = ["name", "bookId", "type"], unique = true
@@ -58,6 +109,7 @@ data class Tag(
     val name: String,
     val type: TagType,
     val bookId: UUID,
+    @Embedded val budgetTarget: BudgetTarget? = null,
     @PrimaryKey val tagId: UUID = UUID.randomUUID()
 ) : Serializable {
     val stringRepresentation: String
@@ -80,9 +132,9 @@ interface TagDao {
     @Query("SELECT * FROM tag WHERE bookId = :bookId")
     fun findByBookId(bookId: UUID): List<Tag>
 
-    fun insert(tag: String, bookId: UUID): Tag {
+    fun insert(tag: String, bookId: UUID, budgetTarget: BudgetTarget?): Tag {
         val (type, name) = TagType.tagFromString(tag)
-        val tagEntity = Tag(name, type, bookId)
+        val tagEntity = Tag(name, type, bookId, budgetTarget)
         _insert(tagEntity)
         return tagEntity
     }
