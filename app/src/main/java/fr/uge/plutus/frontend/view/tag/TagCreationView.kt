@@ -78,8 +78,8 @@ fun TagCreationView(onClose: () -> Unit = {}) {
     var tagMap by rememberSaveable { mutableStateOf(emptyMap<String, Tag>()) }
     var tagMapDelete by rememberSaveable { mutableStateOf(emptyMap<String, Tag>()) }
     var loaded by rememberSaveable { mutableStateOf(false) }
-    var onSelectDelete by remember { mutableStateOf<Tag?>(null) }
-    var onSelectAdd by remember { mutableStateOf<Tag?>(null) }
+    var onSelectDelete by rememberSaveable { mutableStateOf<Tag?>(null) }
+    var onSelectAdd by rememberSaveable { mutableStateOf<Tag?>(null) }
 
     LaunchedEffect(update) {
         if (creating) {
