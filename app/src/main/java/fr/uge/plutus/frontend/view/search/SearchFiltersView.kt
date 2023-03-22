@@ -179,8 +179,6 @@ fun SearchFilters(
     var filterTags by rememberSaveable { mutableStateOf(false) }
     var filterArea by rememberSaveable { mutableStateOf(false) }
 
-
-
     Column(Modifier.fillMaxSize()) {
         Surface(elevation = 12.dp) {
             Column {
@@ -233,6 +231,7 @@ fun SearchFilters(
                         InputText(
                             label = "Description",
                             value = globalFilters.description ?: "",
+                            enabled = filterDetails
                         ) {
                             onFilterUpdate(globalFilters.copy(description = it))
                         }
@@ -255,10 +254,10 @@ fun SearchFilters(
                             })
                             Text("Date range", style = MaterialTheme.typography.h6)
                         }
-                        InputDate(label = "From") {
+                        InputDate(label = "From", enabled = filterDates) {
                             onFilterUpdate(globalFilters.copy(fromDate = it))
                         }
-                        InputDate(label = "To") {
+                        InputDate(label = "To", enabled = filterDates) {
                             onFilterUpdate(globalFilters.copy(toDate = it))
                         }
                     }
@@ -286,6 +285,7 @@ fun SearchFilters(
                                     label = "Minimum",
                                     value = globalFilters.fromAmount.toString(),
                                     keyboardType = KeyboardType.Number,
+                                    enabled = filterAmount
                                 ) {
                                     onFilterUpdate(globalFilters.copy(fromAmount = it))
                                 }
@@ -295,6 +295,7 @@ fun SearchFilters(
                                     label = "Maximum",
                                     value = globalFilters.toAmount.toString(),
                                     keyboardType = KeyboardType.Number,
+                                    enabled = filterAmount
                                 ) {
                                     onFilterUpdate(globalFilters.copy(toAmount = it))
                                 }
@@ -322,7 +323,7 @@ fun SearchFilters(
                             })
                             Text("Tags", style = MaterialTheme.typography.h6)
                         }
-                        TextButton(onClick = { onOpenTagSelector() }) {
+                        TextButton(onClick = { onOpenTagSelector() }, enabled = filterTags) {
                             Text(text = "${globalFilters.tags.size} selected ")
                         }
                     }
@@ -350,6 +351,7 @@ fun SearchFilters(
                                     label = "Latitude",
                                     value = globalFilters.latitude ?: "0.0",
                                     keyboardType = KeyboardType.Number,
+                                    enabled = filterArea
                                 ) {
                                     onFilterUpdate(globalFilters.copy(latitude = it))
                                 }
@@ -359,6 +361,7 @@ fun SearchFilters(
                                     label = "Longitude",
                                     value = globalFilters.longitude ?: "0.0",
                                     keyboardType = KeyboardType.Number,
+                                    enabled = filterArea
                                 ) {
                                     onFilterUpdate(globalFilters.copy(longitude = it))
                                 }
@@ -368,6 +371,7 @@ fun SearchFilters(
                             label = "Radius",
                             value = globalFilters.radius ?: "0.0",
                             keyboardType = KeyboardType.Number,
+                            enabled = filterArea
                         ) {
                             onFilterUpdate(globalFilters.copy(radius = it))
                         }
