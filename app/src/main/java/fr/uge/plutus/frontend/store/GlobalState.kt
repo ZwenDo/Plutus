@@ -25,7 +25,7 @@ fun initGlobalState(): GlobalState {
     globalState = object : GlobalState {
         override var currentBook: Book? by rememberSaveable { mutableStateOf(null) }
         override var currentTransaction: Transaction? by rememberSaveable { mutableStateOf(null) }
-        override var currentView: View by rememberSaveable { mutableStateOf(View.TRANSACTION_SEARCH) }
+        override var currentView: View by rememberSaveable { mutableStateOf(View.BOOK_SELECTION) }
     }
 
     return globalState
