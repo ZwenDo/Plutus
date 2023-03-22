@@ -1,7 +1,5 @@
 package fr.uge.plutus.frontend.component.scaffold
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,7 +23,6 @@ import fr.uge.plutus.ui.theme.Purple200
 import fr.uge.plutus.ui.theme.Purple500
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Navbar() {
     val globalState = globalState()
@@ -93,7 +90,7 @@ fun NavbarButton(icon: Int, isActive: Boolean, disabled: Boolean, onClick: () ->
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Preview(showBackground = true)
 @Composable
 fun NavbarPreview() {

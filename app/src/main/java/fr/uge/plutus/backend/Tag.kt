@@ -1,8 +1,6 @@
 package fr.uge.plutus.backend
 
 import android.database.sqlite.SQLiteConstraintException
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.room.*
 import fr.uge.plutus.util.toDate
@@ -55,7 +53,7 @@ enum class TimePeriod(
     MONTHLY("Monthly"),
     YEARLY("Yearly");
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    
     fun toDateRange(date: Date): Pair<Date, Date> {
         val localDate = date.toLocalDate()
         return when (this) {

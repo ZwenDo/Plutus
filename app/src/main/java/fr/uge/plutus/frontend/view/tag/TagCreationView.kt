@@ -1,9 +1,7 @@
 package fr.uge.plutus.frontend.view.tag
 
 import android.database.sqlite.SQLiteConstraintException
-import android.os.Build
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -41,7 +39,7 @@ private suspend fun updateTagMapToDelete(transaction: Transaction): Map<String, 
         return@withContext tagsValue.associateBy { it.name }
     }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 private suspend fun checkTagTarget(tag: Tag, transaction: Transaction) =
     withContext(Dispatchers.Main) {
         if (tag.budgetTarget == null) {
@@ -58,7 +56,7 @@ private suspend fun checkTagTarget(tag: Tag, transaction: Transaction) =
         }
     }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
 fun TagCreationView(onClose: () -> Unit = {}) {
     val globalState = globalState()

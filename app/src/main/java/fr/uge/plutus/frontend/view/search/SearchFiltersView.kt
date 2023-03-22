@@ -1,7 +1,5 @@
 package fr.uge.plutus.frontend.view.search
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
@@ -163,7 +161,7 @@ fun TagSelectorPreview() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
 fun SearchFilters(
     globalFilters: GlobalFiltersWrapper,
@@ -441,7 +439,7 @@ fun SearchFilters(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Preview(showBackground = true)
 @Composable
 fun SearchFiltersPreview() {
@@ -449,7 +447,7 @@ fun SearchFiltersPreview() {
     SearchFilters(globalFilters)
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
 fun SearchFiltersView() {
     var openTagSelector by remember { mutableStateOf(false) }

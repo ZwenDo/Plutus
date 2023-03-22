@@ -1,7 +1,5 @@
 package fr.uge.plutus.frontend.view.transaction
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -27,7 +25,6 @@ import kotlinx.coroutines.withContext
 import java.util.*
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TransactionSearchView() {
     val globalState = globalState()
@@ -53,7 +50,7 @@ fun TransactionSearchView() {
     TransactionList(transactions, tags)
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
 fun TransactionList(
     transactions: Map<Transaction, Set<UUID>>,
@@ -96,7 +93,7 @@ fun TransactionList(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TransactionSearchResult(transaction: Transaction, tags: List<Tag> = emptyList()) {
@@ -143,7 +140,7 @@ fun TransactionSearchResult(transaction: Transaction, tags: List<Tag> = emptyLis
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Preview
 @Composable
 fun TransactionSearchViewPreview() {

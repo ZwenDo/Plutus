@@ -3,14 +3,14 @@ package fr.uge.plutus.frontend.view.transaction
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.*
+import androidx.compose.material.Divider
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -22,7 +22,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.uge.plutus.R
@@ -44,7 +43,7 @@ private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
     }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
 fun DisplayHeader(
     transaction: Transaction,
@@ -114,7 +113,7 @@ fun DisplayTags(tags: List<Tag>) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
 fun DisplayTagsSection(transaction: Transaction) {
     var loaded by rememberSaveable { mutableStateOf(false) }
@@ -148,7 +147,7 @@ fun DisplayTagsSection(transaction: Transaction) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 @Composable
 fun DisplayTransactionDetails(transaction: Transaction) {
     Column(
