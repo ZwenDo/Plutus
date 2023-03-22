@@ -67,15 +67,6 @@ fun BookSelectionItem(book: Book) {
             exporting = ImportExportState.NONE
         }
     }
-//
-//    LaunchedEffect(importing) {
-//        if (importing == null) return@LaunchedEffect
-//
-//        if (!importBook("baba", importing!!, currentContext, book.uuid)) {
-//            Toast.makeText(currentContext, "Invalid password", Toast.LENGTH_SHORT).show()
-//        }
-//        importing = null
-//    }
 
     Row(
         modifier = Modifier
