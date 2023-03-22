@@ -9,11 +9,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Divider
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -28,11 +27,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.uge.plutus.R
+import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
-import fr.uge.plutus.backend.Database
-import fr.uge.plutus.backend.Tag
-import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.component.common.DisplayPill
+import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.view.tag.TagCreator
+import fr.uge.plutus.frontend.view.tag.TagDTO
+import fr.uge.plutus.frontend.view.tag.TagSelector
 import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -43,6 +44,11 @@ private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
     withContext(Dispatchers.IO) {
         Database.tagTransactionJoin()
             .findTagsByTransactionId(transaction.transactionId)
+    }
+
+private suspend fun getBookTags(bookId: UUID): List<Tag> =
+    withContext(Dispatchers.IO) {
+        Database.tags().findByBookId(bookId)
     }
 
 
@@ -121,16 +127,16 @@ private fun DescriptionSection(transaction: Transaction) {
 @Composable
 private fun DisplayTags(tags: List<Tag>) {
     LazyRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(5.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     )
     {
         items(tags) {
             var caption = it.stringRepresentation
-            it.budgetTarget?.let { target -> caption += " (${target.value} ${target.currency} ${target.timePeriod.displayName})" }
-            DisplayPill(caption) { /* TODO: Display tag's details */ }
+            it.budgetTarget?.let { target ->
+                caption += " (${target.value} ${target.currency} ${target.timePeriod.displayName})"
+            }
+            DisplayPill(caption)
         }
     }
 }
@@ -138,34 +144,83 @@ private fun DisplayTags(tags: List<Tag>) {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun TagsSection(transaction: Transaction) {
-    var loaded by rememberSaveable { mutableStateOf(false) }
+    val globalState = globalState()
+
     var tags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
+    var transactionTags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
     var viewId by rememberSaveable { mutableStateOf(0) }
+    var tagSelectorOpen by rememberSaveable { mutableStateOf(false) }
+    var tagCreatorOpen by rememberSaveable { mutableStateOf(false) }
+    var tagDto by rememberSaveable { mutableStateOf<TagDTO?>(null) }
 
-    LaunchedEffect(viewId) {
-        tags = getTransactionsTags(transaction)
+    LaunchedEffect(Unit) {
+        tags = getBookTags(transaction.bookId)
     }
-
-    Surface(onClick = { /*TODO*/ }) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = "Tags",
-                fontSize = 14.sp,
-                color = Color.Gray
-            )
-            if (tags.isEmpty()) {
-                Text(
-                    text = "No tags",
-                    style = MaterialTheme.typography.body1,
-                )
+    LaunchedEffect(viewId) {
+        transactionTags = getTransactionsTags(transaction)
+    }
+    LaunchedEffect(tagDto) {
+        val dto = tagDto ?: return@LaunchedEffect
+        withContext(Dispatchers.IO) {
+            val newTag = if (dto.budgetTarget == null) {
+                Database.tags().insert(dto.name, globalState.currentBook!!.uuid)
             } else {
-                DisplayTags(tags = tags)
+                Database.tags().insert(dto.name, globalState.currentBook!!.uuid, dto.budgetTarget)
             }
         }
+        tagDto = null
+    }
+
+    val myTags = listOf(
+        Tag("Food", TagType.EXPENSE, UUID.randomUUID()),
+        Tag("Transport", TagType.EXPENSE, UUID.randomUUID()),
+        Tag("Salary", TagType.INCOME, UUID.randomUUID()),
+        Tag("Gift", TagType.INCOME, UUID.randomUUID()),
+    )
+
+    Surface(onClick = { tagSelectorOpen = true }) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = "Tags",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                if (myTags.isEmpty()) {
+                    Text(
+                        text = "No tags",
+                        style = MaterialTheme.typography.body1,
+                    )
+                } else {
+                    Box(Modifier.padding(top = 8.dp)) {
+                        DisplayTags(tags = myTags)
+                    }
+                }
+            }
+            TextButton(onClick = { tagCreatorOpen = true }) {
+                Text(text = "NEW TAG")
+            }
+        }
+    }
+
+    TagSelector(
+        open = tagSelectorOpen,
+        tags = myTags,
+        selectedTags = transactionTags.map { it.tagId }.toSet(),
+    ) {
+        tagSelectorOpen = false
+        viewId++
+    }
+
+    TagCreator(open = tagCreatorOpen) { tag ->
+        tagCreatorOpen = false
+        tagDto = tag
     }
 }
 
@@ -205,7 +260,6 @@ fun LocationSectionPreview() {
     LocationSection(latitude = 48.8534, longitude = 2.3488)
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TransactionDetails(transaction: Transaction) {
     Column(Modifier.fillMaxSize()) {
@@ -220,7 +274,6 @@ fun TransactionDetails(transaction: Transaction) {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun TransactionDetailsPreview() {
