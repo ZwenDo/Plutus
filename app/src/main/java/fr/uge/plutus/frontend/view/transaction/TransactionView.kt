@@ -1,7 +1,5 @@
 package fr.uge.plutus.frontend.view.transaction
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,10 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.backend.Tag
@@ -122,7 +122,6 @@ fun TransactionList(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplayTransactions() {
     val globalState = globalState()
@@ -138,7 +137,7 @@ fun DisplayTransactions() {
     } else {
         if (transactions.isEmpty()) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "No transactions yet", Modifier.padding(10.dp))
+                Text(text = stringResource(R.string.no_transaction_yet), Modifier.padding(10.dp))
             }
         } else {
             TransactionList(transactions) {
@@ -149,7 +148,6 @@ fun DisplayTransactions() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun TransactionListPreview() {

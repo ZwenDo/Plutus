@@ -1,7 +1,5 @@
 package fr.uge.plutus.frontend.component.scaffold
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -17,7 +15,6 @@ import fr.uge.plutus.frontend.store.initGlobalState
 import fr.uge.plutus.frontend.view.View
 
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun PlutusScaffold() {
     val globalState = initGlobalState()
@@ -35,7 +32,6 @@ fun PlutusScaffold() {
     )
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun ScaffoldPreview() {

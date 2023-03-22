@@ -13,9 +13,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.backend.Transaction
@@ -112,15 +114,15 @@ fun TransactionsMonthChart(transactionsOfThisMonth: List<Transaction>) {
 
     Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         BarChart(values = amountByDay)
-        Text("(Scroll horizontally)")
+        Text(stringResource(R.string.scroll_horizontally))
         Text(
-            text = "Summary of ${
+            text = stringResource(id = R.string.summary_of_calendar_name).format("${
                 calendar.getDisplayName(
                     Calendar.MONTH,
                     Calendar.LONG,
                     Locale.getDefault()
                 )
-            } ${calendar.get(Calendar.YEAR)}",
+            } ${calendar.get(Calendar.YEAR)}"),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(16.dp)
@@ -174,22 +176,22 @@ fun BookOverview(transactions: List<Transaction>) {
             TransactionsMonthChart(transactionsOfThisMonth)
         }
         item {
-            TextCard("N° of transactions this month", transactionsOfThisMonth.size.toString())
+            TextCard(stringResource(R.string.n_of_transactions_this_month), transactionsOfThisMonth.size.toString())
         }
         item {
-            TextCard("Mean of this month", "%.2f".format(mean) + " USD")
+            TextCard(stringResource(R.string.mean_of_this_month), "%.2f".format(mean) + " USD")
         }
         item {
-            TextCard("Total of this month", "$total USD")
+            TextCard(stringResource(R.string.total_of_this_month), "$total USD")
         }
         item {
             if (biggestIncome != null) {
-                TransactionCard("Biggest income of this month", biggestIncome!!)
+                TransactionCard(stringResource(R.string.biggest_income_of_this_month), biggestIncome!!)
             }
         }
         item {
             if (biggestOutcome != null) {
-                TransactionCard("Biggest outcome of this month", biggestOutcome!!)
+                TransactionCard(stringResource(R.string.biggest_outcome_of_this_month), biggestOutcome!!)
             }
         }
     }
@@ -211,7 +213,7 @@ fun BookOverviewLoader() {
         if (transactions.isEmpty()) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "No transactions yet ; go to the transaction list to create one",
+                    text = stringResource(R.string.no_transactions_yet_visit),
                     Modifier.padding(10.dp)
                 )
             }

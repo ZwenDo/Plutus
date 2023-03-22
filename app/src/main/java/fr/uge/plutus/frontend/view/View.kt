@@ -16,16 +16,20 @@ import fr.uge.plutus.frontend.view.transaction.DisplayHeader
 import fr.uge.plutus.frontend.view.transaction.DisplayTransactionDetails
 import fr.uge.plutus.frontend.view.transaction.DisplayTransactions
 import fr.uge.plutus.frontend.view.transaction.TransactionCreationView
+import androidx.compose.ui.res.stringResource
+import fr.uge.plutus.R
 
 enum class View(
     val headerComponent: @Composable () -> Unit,
     val contentComponent: @Composable (PaddingValues) -> Unit,
     val fabComponent: @Composable (() -> Unit) = {}
+
+
 ) {
 
     BOOK_SELECTION(
         headerComponent = {
-            TopAppBar(title = { Text("Books") })
+            TopAppBar(title = { Text(stringResource(id = R.string.books)) })
         },
         contentComponent = { BookSelectionView() },
         fabComponent = {
@@ -35,7 +39,7 @@ enum class View(
             }) {
                 Icon(
                     Icons.Default.Add,
-                    "New book"
+                    stringResource(R.string.new_book)
                 )
             }
         }
@@ -43,7 +47,7 @@ enum class View(
 
     BOOK_CREATION(
         headerComponent = {
-            TopAppBar(title = { Text("New book") })
+            TopAppBar(title = { Text(stringResource(R.string.new_book)) })
         },
         contentComponent = { BookCreationView() }
     ),
@@ -51,21 +55,21 @@ enum class View(
     BOOK_OVERVIEW(
         headerComponent = {
             val globalState = globalState()
-            TopAppBar(title = { Text("Overview: ${globalState.currentBook!!.name}") })
+            TopAppBar(title = { Text(stringResource(id = R.string.overview_book_name).format(globalState.currentBook!!.name)) })
         },
         contentComponent = { BookOverviewLoader() }
     ),
 
     TRANSACTION_CREATION(
         headerComponent = {
-            TopAppBar(title = { Text("New transaction") })
+            TopAppBar(title = { Text(stringResource(R.string.new_transaction)) })
         },
         contentComponent = { TransactionCreationView() }
     ),
 
     TRANSACTION_EDIT(
         headerComponent = {
-            TopAppBar(title = { Text("Edit transaction") })
+            TopAppBar(title = { Text(stringResource(R.string.edit_transaction)) })
         },
         contentComponent = { TransactionCreationView() }
     ),
@@ -73,7 +77,7 @@ enum class View(
     TRANSACTION_LIST(
         headerComponent = {
             val globalState = globalState()
-            TopAppBar(title = { Text("Transactions: ${globalState.currentBook!!.name}") })
+            TopAppBar(title = { Text(stringResource(R.string.transaction_book_name).format(globalState.currentBook!!.name)) })
         },
         contentComponent = { DisplayTransactions() },
         fabComponent = {
@@ -83,7 +87,7 @@ enum class View(
             }) {
                 Icon(
                     Icons.Default.Add,
-                    "New transaction"
+                    stringResource(R.string.new_transaction)
                 )
             }
         }
@@ -95,13 +99,13 @@ enum class View(
             val currentTransaction = globalState.currentTransaction
             Column {
                 TopAppBar(
-                    title = { Text("Transaction details") },
+                    title = { Text(stringResource(R.string.transaction_details)) },
                     navigationIcon = {
                         IconButton(onClick = {
                             globalState.currentView = TRANSACTION_LIST
                             globalState.currentTransaction = null
                         }) {
-                            Icon(Icons.Default.ArrowBack, "Back")
+                            Icon(Icons.Default.ArrowBack, stringResource(R.string.back))
                         }
                     })
                 if (currentTransaction != null) {
@@ -122,7 +126,7 @@ enum class View(
             }) {
                 Icon(
                     Icons.Default.Edit,
-                    "Edit"
+                    stringResource(R.string.edit)
                 )
             }
         }
