@@ -91,6 +91,7 @@ enum class View(
     TRANSACTION_DETAILS(
         headerComponent = {
             val globalState = globalState()
+            val currentTransaction = globalState.currentTransaction
             Column {
                 TopAppBar(
                     title = { Text("Transaction details") },
@@ -102,8 +103,8 @@ enum class View(
                             Icon(Icons.Default.ArrowBack, "Back")
                         }
                     })
-                if (globalState.currentTransaction != null) {
-                    DisplayHeader(globalState.currentTransaction!!)
+                if (currentTransaction != null) {
+                    DisplayHeader(currentTransaction)
                 }
             }
         },
