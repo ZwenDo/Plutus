@@ -125,15 +125,13 @@ enum class View(
                         }
                     })
                 if (currentTransaction != null) {
-                    DisplayHeader(currentTransaction)
+                    TransactionHeader(currentTransaction)
                 }
             }
         },
         contentComponent = {
             val globalState = globalState()
-            if (globalState.currentTransaction != null) {
-                DisplayTransactionDetails(globalState.currentTransaction!!)
-            }
+            TransactionDetails(globalState.currentTransaction!!)
         },
         fabComponent = {
             val globalState = globalState()
