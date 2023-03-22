@@ -38,6 +38,11 @@ fun TagSelector(
 ) {
     val selection = remember { mutableStateMapOf(*selectedTags.map { it to Unit }.toTypedArray()) }
 
+    LaunchedEffect(selectedTags) {
+        selection.clear()
+        selection.putAll(selectedTags.map { it to Unit })
+    }
+
     fun toggleTag(uuid: UUID) {
         if (selection.contains(uuid)) {
             selection.remove(uuid)
