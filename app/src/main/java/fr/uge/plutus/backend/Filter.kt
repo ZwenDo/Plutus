@@ -3,6 +3,7 @@ package fr.uge.plutus.backend
 import androidx.room.*
 import java.util.*
 import java.io.Serializable
+import java.text.DateFormat
 
 enum class Criteria(val value: String) {
     MIN_AMOUNT("minAmount"),
@@ -10,6 +11,9 @@ enum class Criteria(val value: String) {
     CURRENCY("currency"),
     MIN_DATE("minDate"),
     MAX_DATE("maxDate"),
+    AREA_RANGE("areaRange"),
+    MIN_LATITUDE("minLatitude"),
+    MAX_LATITUDE("maxLatitude"),
 }
 
 @Entity(
