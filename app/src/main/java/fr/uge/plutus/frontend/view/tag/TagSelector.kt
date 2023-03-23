@@ -52,6 +52,7 @@ fun TagSelector(
         LazyColumn(
             Modifier
                 .fillMaxWidth()
+                .weight(1f)
                 .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
         ) {
             items(tags) { tag ->

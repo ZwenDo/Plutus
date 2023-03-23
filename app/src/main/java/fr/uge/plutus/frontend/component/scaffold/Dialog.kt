@@ -16,17 +16,15 @@ fun Dialog(
     submitButtonText: String = "OK",
     cancelButtonText: String = "CANCEL",
     onClose: (Boolean) -> Unit = {},
-    content: @Composable () -> Unit
+    content: @Composable ColumnScope.() -> Unit
 ) {
     if (open) {
         androidx.compose.ui.window.Dialog(
             onDismissRequest = { onClose(false) }
         ) {
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp),
-                shape = RoundedCornerShape(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
@@ -41,9 +39,7 @@ fun Dialog(
                         )
                     }
                     Divider()
-                    Box(Modifier.fillMaxWidth().weight(1f)) {
-                        content()
-                    }
+                    content()
                     Divider()
                     Row(
                         Modifier
@@ -78,6 +74,9 @@ fun Dialog(
 @Composable
 fun DialogPreview() {
     Dialog(open = true, title = "Test dialog") {
-        Text(text = "Test content")
+        Text(
+            modifier = Modifier.padding(24.dp, 16.dp),
+            text = "Test content"
+        )
     }
 }
