@@ -79,7 +79,6 @@ enum class View(
     TRANSACTION_LIST(
         headerComponent = {
             val globalState = globalState()
-            TopAppBar(title = { Text(stringResource(R.string.transaction_book_name).format(globalState.currentBook!!.name)) })
             val coroutineScope = rememberCoroutineScope()
             var showMenu by remember { mutableStateOf(false) }
 
