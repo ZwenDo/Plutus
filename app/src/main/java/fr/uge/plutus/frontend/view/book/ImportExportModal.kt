@@ -1,9 +1,11 @@
 package fr.uge.plutus.frontend.view.book
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,7 +21,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import fr.uge.plutus.R
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.serialization.ExportBook
@@ -189,9 +190,7 @@ fun ImportExportModal(
         }
     }
 
-    val exportSuccessfulMessage = stringResource(R.string.export_successful)
-    val passwordInvalidMessage = stringResource(R.string.invalid_password)
-    val importSuccessfulMessage = stringResource(R.string.import_successful)
+    val clipboardCopyTag = stringResource(R.string.clipboard_copy_tag)
 
     if (!isImport && submit) {
         ExportBook(
@@ -201,13 +200,22 @@ fun ImportExportModal(
             isCloud = isCloud,
         ) {
             if (it == null) {
-                Toast.makeText(currentContext, "Invalid password", Toast.LENGTH_SHORT).show()
+                Toast.makeText(currentContext, R.string.invalid_password, Toast.LENGTH_SHORT).show()
                 return@ExportBook
             }
-            // TODO it is the token
-            Log.d("YEP", "token: $it")
+            val clipboard = currentContext.getSystemService(
+                Context.CLIPBOARD_SERVICE
+            ) as ClipboardManager
+            val clip = ClipData.newPlainText(clipboardCopyTag, it)
+            clipboard.setPrimaryClip(clip)
             submit = false
-            Toast.makeText(currentContext, exportSuccessfulMessage, Toast.LENGTH_SHORT).show()
+            if (isCloud) {
+                Toast.makeText(currentContext, R.string.clipboard_copy_toast, Toast.LENGTH_LONG)
+                    .show()
+            } else {
+                Toast.makeText(currentContext, R.string.export_successful, Toast.LENGTH_LONG)
+                    .show()
+            }
             onDismiss()
         }
     }
@@ -223,9 +231,9 @@ fun ImportExportModal(
             mergeDestinationBook = target.uuid
         )
         if (!importResult) {
-            Toast.makeText(currentContext, passwordInvalidMessage, Toast.LENGTH_SHORT).show()
+            Toast.makeText(currentContext, R.string.invalid_password, Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(currentContext, importSuccessfulMessage, Toast.LENGTH_SHORT).show()
+            Toast.makeText(currentContext, R.string.import_successful, Toast.LENGTH_SHORT).show()
             globalState.mustRefetchTransactions = true
         }
         importingUri = null
