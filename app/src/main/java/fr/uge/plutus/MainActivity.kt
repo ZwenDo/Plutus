@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
     private suspend fun todoNotification(context: Context) {
         withContext(Dispatchers.IO) {
             val channelId = "Todo Plutus"
-            val notificationId = 0
+            val notificationId = 1
             val textTitle = "Transaction to do"
             val calendar = Calendar.getInstance()
             calendar.time = Date()
@@ -74,21 +74,21 @@ class MainActivity : ComponentActivity() {
             createNotificationChannel(channelId, context)
             val transactions =
                 Database.transactions().findAllTransactionDescriptionByTodoByDate(start, end)
-            transactions.forEach {
+            for (transaction in transactions) {
                 showSimpleNotification(
                     context,
                     channelId,
                     notificationId,
                     textTitle,
-                    it.description
+                    transaction.description
                 )
-                Database.transactions().findById(it.transactionId)?.let { transaction ->
+                Database.transactions().findById(transaction.transactionId)?.let { transac ->
                     val tags = Database.tagTransactionJoin()
-                        .findTagsByTransactionId(transaction.transactionId)
+                        .findTagsByTransactionId(transac.transactionId)
                     for (tag in tags) {
-                        val todoTag = Database.tags().findByName("@todo", it.bookId)
+                        val todoTag = Database.tags().findByName("@todo", transac.bookId)
                             .firstOrNull { tag.type == TagType.INFO } ?: continue
-                        Database.tagTransactionJoin().delete(transaction, todoTag)
+                        Database.tagTransactionJoin().delete(transac, todoTag)
                     }
                 }
             }
