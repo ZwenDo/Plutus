@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -166,7 +167,7 @@ private fun DescriptionSection(transaction: Transaction) {
             .padding(16.dp)
     ) {
         Text(
-            text = "Description",
+            text = stringResource(R.string.description),
             fontSize = 14.sp,
             color = Color.Gray
         )
@@ -208,6 +209,8 @@ private fun TagsSection(transaction: Transaction) {
     var tagCreatorOpen by rememberSaveable { mutableStateOf(false) }
     var tagDto by rememberSaveable { mutableStateOf<TagDTO?>(null) }
 
+    val tagCreatedMessage = stringResource(R.string.tag_name_created)
+
     LaunchedEffect(Unit, tagDto) {
         if (tagDto != null) {
             return@LaunchedEffect
@@ -226,7 +229,7 @@ private fun TagsSection(transaction: Transaction) {
                 Database.tags().insert(dto.name, globalState.currentBook!!.uuid, dto.budgetTarget)
             }
         }
-        Toast.makeText(context, "Tag “${newTag.name}” created", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, tagCreatedMessage.format(newTag.name), Toast.LENGTH_SHORT).show()
         tagDto = null
     }
 
@@ -240,13 +243,13 @@ private fun TagsSection(transaction: Transaction) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = "Tags",
+                    text = stringResource(R.string.tags),
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
                 if (transactionTags.isEmpty()) {
                     Text(
-                        text = "No tags",
+                        text = stringResource(R.string.no_tags),
                         style = MaterialTheme.typography.body1,
                     )
                 } else {
@@ -256,7 +259,7 @@ private fun TagsSection(transaction: Transaction) {
                 }
             }
             TextButton(onClick = { tagCreatorOpen = true }) {
-                Text(text = "NEW TAG")
+                Text(text = stringResource(R.string.new_tag))
             }
         }
     }
@@ -291,7 +294,7 @@ fun LocationSection(latitude: Double, longitude: Double) {
             .padding(16.dp)
     ) {
         Text(
-            text = "Location",
+            text = stringResource(R.string.location),
             fontSize = 14.sp,
             color = Color.Gray
         )
@@ -323,6 +326,8 @@ fun TransactionDetails(transaction: Transaction) {
     val globalState = globalState()
     val coroutineScope = rememberCoroutineScope()
 
+    val transactionDeletedMessage = stringResource(R.string.transaction_deleted)
+
     Column(Modifier.fillMaxSize()) {
         DescriptionSection(transaction)
         Divider()
@@ -339,7 +344,7 @@ fun TransactionDetails(transaction: Transaction) {
             globalState.currentView = View.TRANSACTION_LIST
             globalState.deletingTransaction = false
             deleteTransaction(transaction)
-            Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, transactionDeletedMessage, Toast.LENGTH_SHORT).show()
             globalState.currentTransaction = null
         }
     }
@@ -349,26 +354,26 @@ fun TransactionDetails(transaction: Transaction) {
             onDismissRequest = { globalState.deletingTransaction = false },
             title = {
                 Text(
-                    "Delete transaction",
+                    stringResource(R.string.delete_transaction),
                     style = MaterialTheme.typography.h6
                 )
             },
             text = {
                 Text(
-                    "Are you sure you want to delete this transaction? This action cannot be undone.",
+                    stringResource(R.string.are_you_sure_you_want_to_delete_this_transaction),
                     style = MaterialTheme.typography.body1
                 )
             },
             confirmButton = {
                 TextButton(onClick = { delete() }) {
-                    Text("DELETE")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = {
                     globalState.deletingTransaction = false
                 }) {
-                    Text("CANCEL")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

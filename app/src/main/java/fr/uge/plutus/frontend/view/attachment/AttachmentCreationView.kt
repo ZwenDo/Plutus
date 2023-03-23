@@ -1,9 +1,7 @@
 package fr.uge.plutus.frontend.view.attachment
 
 import android.content.Intent
-import android.net.Uri
 import android.provider.MediaStore
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
@@ -17,16 +15,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.Attachment
 import fr.uge.plutus.ui.theme.Gray
 import java.util.*
@@ -64,7 +60,7 @@ fun AttachmentCreationView(
                 launcher.launch(intent)
             },
         ) {
-            Text(text = "Add attachment from storage")
+            Text(text = stringResource(R.string.add_attachment_from_storage))
         }
     }
 

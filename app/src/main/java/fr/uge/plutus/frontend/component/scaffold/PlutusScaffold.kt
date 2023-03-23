@@ -38,7 +38,6 @@ fun PlutusScaffold() {
     )
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun ScaffoldPreview() {

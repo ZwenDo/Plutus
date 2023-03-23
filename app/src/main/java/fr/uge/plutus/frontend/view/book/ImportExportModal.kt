@@ -14,8 +14,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.serialization.ExportBook
 import fr.uge.plutus.backend.serialization.importBook
@@ -31,16 +34,16 @@ fun ImportBookModal(
 ) {
     Dialog(
         open = true,
-        title = "Import in “${book.name}”",
-        submitButtonText = "IMPORT",
+        title = stringResource(R.string.import_in_book_name).format(book.name),
+        submitButtonText = stringResource(R.string.import_button),
         onClose = {}
     ) {
         Column(
             Modifier.padding(24.dp, 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(text = "This book is password protected. Please enter the password to decrypt the file.")
-            InputText(label = "Password", value = "", onValueChange = {})
+            Text(text = stringResource(R.string.this_book_is_password_protected))
+            InputText(label = stringResource(R.string.password), value = "", onValueChange = {})
         }
     }
 }
@@ -58,16 +61,16 @@ fun ExportBookModal(
 ) {
     Dialog(
         open = true,
-        title = "Export “${book.name}”",
-        submitButtonText = "EXPORT",
+        title = stringResource(R.string.export_book).format(book.name),
+        submitButtonText = stringResource(R.string.export_maj),
         onClose = {}
     ) {
         Column(
             Modifier.padding(24.dp, 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            InputText(label = "Output file name", value = "", onValueChange = {})
-            InputText(label = "Password", value = "", onValueChange = {})
+            InputText(label = stringResource(R.string.output_file_name), value = "", onValueChange = {})
+            InputText(label = stringResource(R.string.password), value = "", onValueChange = {})
         }
     }
 }
@@ -100,6 +103,10 @@ fun ImportExportModal(
         }
     }
 
+    val exportSuccessfulMessage = stringResource(R.string.export_successful)
+    val passwordInvalidMessage = stringResource(R.string.invalid_password)
+    val importSuccessfulMessage = stringResource(R.string.import_successful)
+
     if (!isImport && submit) {
         if (isCloud) {
             Toast.makeText(
@@ -115,7 +122,7 @@ fun ImportExportModal(
                 name = exportName.ifBlank { target.name },
             ) {
                 submit = false
-                Toast.makeText(currentContext, "Export successful", Toast.LENGTH_SHORT).show()
+                Toast.makeText(currentContext, exportSuccessfulMessage, Toast.LENGTH_SHORT).show()
                 onDismiss()
             }
         }
@@ -131,9 +138,9 @@ fun ImportExportModal(
             target.uuid
         )
         if (!importResult) {
-            Toast.makeText(currentContext, "Invalid password", Toast.LENGTH_SHORT).show()
+            Toast.makeText(currentContext, passwordInvalidMessage, Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(currentContext, "Import successful", Toast.LENGTH_SHORT).show()
+            Toast.makeText(currentContext, importSuccessfulMessage, Toast.LENGTH_SHORT).show()
         }
         importingUri = null
         onDismiss()
@@ -175,9 +182,9 @@ fun ImportExportModal(
             ) {
                 Text(
                     text = if (isImport) {
-                        "Import in ${target.name}"
+                        stringResource(id = R.string.import_in_book).format(target.name)
                     } else {
-                        "Export ${target.name}"
+                        stringResource(id = R.string.export_book).format(target.name)
                     },
                     style = MaterialTheme.typography.h6,
                 )
@@ -189,11 +196,11 @@ fun ImportExportModal(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(text = "Cloud ${if (isImport) "import" else "export"}")
+                        Text(text = stringResource(id = R.string.cloud_import_export).format(if (isImport) "import" else "export"))
                         Checkbox(checked = isCloud, onCheckedChange = { isCloud = it })
                     }
                     InputText(
-                        label = "File key",
+                        label = stringResource(R.string.file_key),
                         value = cloudKey,
                         enabled = isCloud
                     ) {
@@ -202,21 +209,21 @@ fun ImportExportModal(
                 }
                 if (!isImport) {
                     InputText(
-                        label = "Export name",
+                        label = stringResource(R.string.export_name),
                         value = exportName,
                     ) {
                         exportName = it
                     }
                 }
                 InputText(
-                    label = "Password",
+                    label = stringResource(R.string.password),
                     value = password,
                     isPassword = true
                 ) {
                     password = it
                 }
                 Button(onClick = { submit = true }) {
-                    Text(text = if (isImport) "Import" else "Export")
+                    Text(text = if (isImport) stringResource(id = R.string.import_book) else stringResource(id = R.string.export))
                 }
             }
         }

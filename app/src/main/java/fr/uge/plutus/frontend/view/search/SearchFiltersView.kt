@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,37 +41,50 @@ private enum class FilterFields {
 
 val DATE_REGEX = Regex("""\d{1,2}/\d{1,2}/\d{4}""")
 
-private fun checkFilters(filters: GlobalFilters): Map<FilterFields, String> {
-    val errors = mutableMapOf<FilterFields, String>()
+private fun checkFilters(filters: GlobalFilters): Map<FilterFields, Int> {
+    val errors = mutableMapOf<FilterFields, Int>()
+    val fromDateErrorMessage = R.string.from_date_must_be_before_to_date
+    val toDateErrorMessage = R.string.to_date_must_be_after
+    val fromDateMustBeValidMessage = R.string.from_date_must_be_valid
+    val toDateMustBeValidMessage = R.string.to_date_must_be_valid
+    val fromAmountMustBeValidMessage = R.string.from_amount_must_be_valid
+    val toAmountMustBeValidMessage = R.string.to_amount_must_be_valid
+    val fromAmountMustBeBeforeMessage =  R.string.from_amount_must_be_before_to_amount
+    val toAmountMustBeAfterMessage = R.string.to_amount_must_be_before_from_amount
+    val latitudeAndLongitudeMustBeValidMessage = R.string.latitude_and_longitude_must_be_set_or_unset
+    val radiusMustBeValidMessage = R.string.radius_must_be_set_if_latitude_and_longitude_are_set
+    val latitudeMustBeValid = R.string.latitude_must_be_valid
+    val longitudeMustBeValid = R.string.longitude_must_be_valid
+    val radiusMustBeValid = R.string.radius_must_be_valid
     if (filters.fromDate.isNotEmpty() && filters.toDate.isNotEmpty() && filters.fromDate > filters.toDate) {
-        errors[FilterFields.FROM_DATE] = "From date must be before to date"
-        errors[FilterFields.TO_DATE] = "To date must be after from date"
+        errors[FilterFields.FROM_DATE] = fromDateErrorMessage
+        errors[FilterFields.TO_DATE] = toDateErrorMessage
     }
     if (filters.fromDate.isNotEmpty() && !filters.fromDate.matches(DATE_REGEX)) {
-        errors[FilterFields.FROM_DATE] = "From date must be valid"
+        errors[FilterFields.FROM_DATE] = fromDateMustBeValidMessage
     }
     if (filters.toDate.isNotEmpty() && !filters.toDate.matches(DATE_REGEX)) {
-        errors[FilterFields.TO_DATE] = "To date must be valid"
+        errors[FilterFields.TO_DATE] = toDateMustBeValidMessage
     }
     // check if amount is a valid number
     if (filters.fromAmount.isNotEmpty() && filters.fromAmount.toDoubleOrNull() == null) {
-        errors[FilterFields.FROM_AMOUNT] = "From amount must be a valid number"
+        errors[FilterFields.FROM_AMOUNT] = fromAmountMustBeValidMessage
     }
     if (filters.toAmount.isNotEmpty() && filters.toAmount.toDoubleOrNull() == null) {
-        errors[FilterFields.TO_AMOUNT] = "To amount must be a valid number"
+        errors[FilterFields.TO_AMOUNT] = toAmountMustBeValidMessage
     }
     if (filters.fromAmount.isNotEmpty() && filters.toAmount.isNotEmpty() && filters.fromAmount.toDouble() > filters.toAmount.toDouble()) {
-        errors[FilterFields.FROM_AMOUNT] = "From amount must be before to amount"
-        errors[FilterFields.TO_AMOUNT] = "To amount must be after from amount"
+        errors[FilterFields.FROM_AMOUNT] = fromAmountMustBeBeforeMessage
+        errors[FilterFields.TO_AMOUNT] = toAmountMustBeAfterMessage
     }
     if (filters.latitude.isNotEmpty() != filters.longitude.isNotEmpty()) {
         errors[FilterFields.AREA_LATITUDE] =
-            "Latitude and longitude must be either both set of both unset"
+            latitudeAndLongitudeMustBeValidMessage
         errors[FilterFields.AREA_LONGITUDE] =
-            "Latitude and longitude must be either both set of both unset"
+            latitudeAndLongitudeMustBeValidMessage
     }
     if (filters.latitude.isNotEmpty() && filters.longitude.isNotEmpty() && filters.radius.isEmpty()) {
-        errors[FilterFields.AREA_RADIUS] = "Radius must be set if latitude and longitude are set"
+        errors[FilterFields.AREA_RADIUS] = radiusMustBeValidMessage
     }
     if (filters.latitude.isNotEmpty() && filters.longitude.isNotEmpty() && filters.radius.isNotEmpty()) {
         val lat = filters.latitude.toDoubleOrNull()
@@ -78,14 +92,14 @@ private fun checkFilters(filters: GlobalFilters): Map<FilterFields, String> {
         val radius = filters.radius.toDoubleOrNull()
         if (lat == null || lat < -90 || lat > 90) {
             errors[FilterFields.AREA_LATITUDE] =
-                "Latitude must be a valid number between -90 and 90"
+                latitudeMustBeValid
         }
         if (lon == null || lon < -180 || lon > 180) {
             errors[FilterFields.AREA_LONGITUDE] =
-                "Longitude must be a valid number between -180 and 180"
+                longitudeMustBeValid
         }
         if (radius == null || radius < 0) {
-            errors[FilterFields.AREA_RADIUS] = "Radius must be a valid number greater than 0"
+            errors[FilterFields.AREA_RADIUS] = radiusMustBeValid
         }
     }
     return errors
@@ -102,7 +116,7 @@ fun SearchFilters(
 ) {
     val globalState = globalState()
     val coroutineScope = rememberCoroutineScope()
-    var errors by remember { mutableStateOf(emptyMap<FilterFields, String>()) }
+    var errors by remember { mutableStateOf(emptyMap<FilterFields, Int>()) }
 
     fun updateFilters(globalFilters: GlobalFilters) {
         errors = emptyMap()
@@ -123,7 +137,7 @@ fun SearchFilters(
                         modifier = Modifier
                             .padding(16.dp)
                             .weight(1f),
-                        text = "Filters",
+                        text = stringResource(R.string.filters),
                         style = MaterialTheme.typography.h5
                     )
                     TextButton(onClick = {
@@ -141,7 +155,7 @@ fun SearchFilters(
                                 painter = painterResource(id = R.drawable.refresh),
                                 contentDescription = null
                             )
-                            Text(text = "RESET")
+                            Text(text = stringResource(R.string.reset))
                         }
                     }
                 }
@@ -159,11 +173,11 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Transaction details", style = MaterialTheme.typography.h6)
+                        Text(stringResource(R.string.transaction_details), style = MaterialTheme.typography.h6)
                         InputText(
-                            label = "Description",
+                            label = stringResource(R.string.description),
                             value = globalFilters.description,
-                            errorMessage = errors[FilterFields.DESCRIPTION],
+                            errorMessage = errors.keyToStringOrNull(FilterFields.DESCRIPTION),
                         ) {
                             updateFilters(globalFilters.copy { description = it })
                         }
@@ -177,18 +191,18 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Date range", style = MaterialTheme.typography.h6)
+                        Text(stringResource(R.string.date_range), style = MaterialTheme.typography.h6)
                         InputDate(
-                            label = "From",
+                            label = stringResource(R.string.from),
                             value = globalFilters.fromDate,
-                            errorMessage = errors[FilterFields.FROM_DATE]
+                            errorMessage = errors.keyToStringOrNull(FilterFields.FROM_DATE)
                         ) {
                             updateFilters(globalFilters.copy { fromDate = it })
                         }
                         InputDate(
-                            label = "To",
+                            label = stringResource(R.string.to),
                             value = globalFilters.toDate,
-                            errorMessage = errors[FilterFields.TO_DATE]
+                            errorMessage = errors.keyToStringOrNull(FilterFields.TO_DATE)
                         ) {
                             updateFilters(globalFilters.copy { toDate = it })
                         }
@@ -202,24 +216,24 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Amount range", style = MaterialTheme.typography.h6)
+                        Text(stringResource(R.string.amount_range), style = MaterialTheme.typography.h6)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
-                                    label = "Minimum",
+                                    label = stringResource(R.string.minimum),
                                     value = globalFilters.fromAmount,
                                     keyboardType = KeyboardType.Number,
-                                    errorMessage = errors[FilterFields.FROM_AMOUNT],
+                                    errorMessage = errors.keyToStringOrNull(FilterFields.FROM_AMOUNT),
                                 ) {
                                     updateFilters(globalFilters.copy { fromAmount = it })
                                 }
                             }
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
-                                    label = "Maximum",
+                                    label = stringResource(R.string.maximum),
                                     value = globalFilters.toAmount,
                                     keyboardType = KeyboardType.Number,
-                                    errorMessage = errors[FilterFields.TO_AMOUNT],
+                                    errorMessage = errors.keyToStringOrNull(FilterFields.TO_AMOUNT),
                                 ) {
                                     updateFilters(globalFilters.copy { toAmount = it })
                                 }
@@ -238,9 +252,9 @@ fun SearchFilters(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Tags", style = MaterialTheme.typography.h6)
+                        Text(stringResource(R.string.tags), style = MaterialTheme.typography.h6)
                         TextButton(onClick = { onOpenTagSelector() }) {
-                            Text(text = "${globalFilters.tags.size} selected ")
+                            Text(text = stringResource(R.string.number_selected).format(globalFilters.tags.size))
                         }
                     }
                     Divider()
@@ -252,34 +266,34 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Area range", style = MaterialTheme.typography.h6)
+                        Text(stringResource(R.string.area_range), style = MaterialTheme.typography.h6)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
-                                    label = "Latitude",
+                                    label = stringResource(R.string.latitude),
                                     value = globalFilters.latitude,
                                     keyboardType = KeyboardType.Number,
-                                    errorMessage = errors[FilterFields.AREA_LATITUDE],
+                                    errorMessage = errors.keyToStringOrNull(FilterFields.AREA_LATITUDE),
                                 ) {
                                     updateFilters(globalFilters.copy { latitude = it })
                                 }
                             }
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
-                                    label = "Longitude",
+                                    label = stringResource(R.string.longitude),
                                     value = globalFilters.longitude,
                                     keyboardType = KeyboardType.Number,
-                                    errorMessage = errors[FilterFields.AREA_LONGITUDE],
+                                    errorMessage = errors.keyToStringOrNull(FilterFields.AREA_LONGITUDE),
                                 ) {
                                     updateFilters(globalFilters.copy { longitude = it })
                                 }
                             }
                         }
                         InputText(
-                            label = "Radius",
+                            label = stringResource(R.string.radius),
                             value = globalFilters.radius,
                             keyboardType = KeyboardType.Number,
-                            errorMessage = errors[FilterFields.AREA_RADIUS],
+                            errorMessage = errors.keyToStringOrNull(FilterFields.AREA_RADIUS),
                         ) {
                             updateFilters(globalFilters.copy { radius = it })
                         }
@@ -307,7 +321,7 @@ fun SearchFilters(
                                 painter = painterResource(id = R.drawable.save),
                                 contentDescription = null
                             )
-                            Text(text = "Save filters")
+                            Text(text = stringResource(R.string.save_filters))
                         }
                     }
                     TextButton(
@@ -322,7 +336,7 @@ fun SearchFilters(
                                 painter = painterResource(id = R.drawable.folder),
                                 contentDescription = null
                             )
-                            Text(text = "Load filters")
+                            Text(text = stringResource(R.string.load_filters))
                         }
                     }
                 }
@@ -346,7 +360,7 @@ fun SearchFilters(
                             painter = painterResource(id = R.drawable.check),
                             contentDescription = null
                         )
-                        Text(text = "Apply filters")
+                        Text(text = stringResource(R.string.apply_filters))
                     }
                 }
             }
@@ -420,6 +434,8 @@ fun FilterSaveComponent(onDismiss: () -> Unit) {
     var buttonClicked by remember { mutableStateOf(false) }
     val globalState = globalState()
 
+    val filterNameErrorMessage = stringResource(R.string.filter_name_cannot_be_blank)
+
     LaunchedEffect(buttonClicked) {
         if (!buttonClicked) return@LaunchedEffect
 
@@ -435,26 +451,26 @@ fun FilterSaveComponent(onDismiss: () -> Unit) {
     }
 
     Dialog(
-        title = "Save filter",
+        title = stringResource(R.string.save_filter),
         onClose = { submit ->
             if (submit) {
                 if (filterName.isNotBlank()) {
                     buttonClicked = true
                 } else {
-                    errorMessage = "Filter name cannot be blank"
+                    errorMessage = filterNameErrorMessage
                 }
             } else {
                 onDismiss()
             }
         },
         open = true,
-        submitButtonText = "SAVE",
+        submitButtonText = stringResource(R.string.save),
     ) {
         Column(
             modifier = Modifier.padding(24.dp, 16.dp),
         ) {
             InputText(
-                label = "Filter name",
+                label = stringResource(R.string.filter_name),
                 value = filterName,
                 errorMessage = errorMessage,
             ) {
@@ -495,17 +511,19 @@ fun FilterLoadComponent(onDismiss: () -> Unit) {
     }
 
     Dialog(
-        title = "Load filter",
+        title = stringResource(R.string.load_filter),
         onClose = { onDismiss() },
         open = true,
         displaySubmitButton = false,
-        cancelButtonText = "CLOSE"
+        cancelButtonText = stringResource(R.string.close)
     ) {
         Box(Modifier.height(300.dp)) {
             if (filters.isEmpty()) {
                 Text(
-                    modifier = Modifier.padding(24.dp, 64.dp).fillMaxWidth(),
-                    text = "No filters found",
+                    modifier = Modifier
+                        .padding(24.dp, 64.dp)
+                        .fillMaxWidth(),
+                    text = stringResource(R.string.no_filters_found),
                     style = MaterialTheme.typography.body1,
                     textAlign = TextAlign.Center,
                 )
@@ -541,4 +559,10 @@ fun FilterLoadComponent(onDismiss: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun Map<FilterFields, Int>.keyToStringOrNull(key: FilterFields): String? {
+    val i = this[key] ?: return null
+    return stringResource(id = i)
 }

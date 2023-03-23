@@ -10,12 +10,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.frontend.component.common.DisplayPill
@@ -137,12 +139,12 @@ fun EmptyTransactionListPlaceholder() {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "No transaction found",
+            text = stringResource(R.string.no_transaction_found),
             style = MaterialTheme.typography.h5,
             textAlign = TextAlign.Center,
         )
         Text(
-            text = "Click on the button below to create a new one",
+            text = stringResource(R.string.click_to_create),
             style = MaterialTheme.typography.body1,
             color = Color.Gray,
             textAlign = TextAlign.Center,
