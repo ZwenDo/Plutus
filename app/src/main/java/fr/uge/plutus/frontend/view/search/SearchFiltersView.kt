@@ -499,6 +499,7 @@ fun FilterLoadComponent(onDismiss: () -> Unit) {
         onClose = { onDismiss() },
         open = true,
         displaySubmitButton = false,
+        cancelButtonText = "CLOSE"
     ) {
         Box(Modifier.height(300.dp)) {
             if (filters.isEmpty()) {

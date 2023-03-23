@@ -1,11 +1,7 @@
 package fr.uge.plutus.frontend.view.book
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -114,36 +110,34 @@ fun TransactionSortingDialog(onDismiss: () -> Unit = {}) {
             onDismiss()
         }
     ) {
-        LazyColumn {
-            items(SortField.values()) {
-                Surface(
-                    onClick = {
-                        currentSorting = currentSorting.replace(it)
-                    },
-                ) {
-                    Column {
-                        Row(
-                            Modifier.padding(24.dp, 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = it.displayName,
-                            )
+        SortField.values().forEachIndexed { index, it ->
+            Surface(onClick = {
+                currentSorting = currentSorting.replace(it)
+            }) {
+                Column {
+                    Row(
+                        Modifier.padding(24.dp, 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = it.displayName,
+                        )
 
-                            val current = currentSorting
-                            if (current?.field == it) {
-                                val icon = if (current.ascending) {
-                                    R.drawable.ascending_arrow
-                                } else {
-                                    R.drawable.descending_arrow
-                                }
-                                Icon(
-                                    painter = painterResource(id = icon),
-                                    contentDescription = null,
-                                )
+                        val current = currentSorting
+                        if (current?.field == it) {
+                            val icon = if (current.ascending) {
+                                R.drawable.ascending_arrow
+                            } else {
+                                R.drawable.descending_arrow
                             }
+                            Icon(
+                                painter = painterResource(id = icon),
+                                contentDescription = null,
+                            )
                         }
+                    }
+                    if (index != SortField.values().size - 1) {
                         Divider()
                     }
                 }
