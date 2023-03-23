@@ -111,12 +111,12 @@ fun TransactionSortingDialog(onDismiss: () -> Unit = {}) {
         }
     ) {
         SortField.values().forEachIndexed { index, it ->
-            Surface(onClick = {
-                currentSorting = currentSorting.replace(it)
-            }) {
-                Column {
+            Column {
+                Surface(onClick = {
+                    currentSorting = currentSorting.replace(it)
+                }) {
                     Row(
-                        Modifier.padding(24.dp, 8.dp),
+                        Modifier.padding(24.dp, 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
@@ -137,9 +137,9 @@ fun TransactionSortingDialog(onDismiss: () -> Unit = {}) {
                             )
                         }
                     }
-                    if (index != SortField.values().size - 1) {
-                        Divider()
-                    }
+                }
+                if (index != SortField.values().size - 1) {
+                    Divider()
                 }
             }
         }
