@@ -52,7 +52,7 @@ fun TagSelector(
         LazyColumn(
             Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .requiredHeightIn(min = 200.dp, max = 300.dp)
                 .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
         ) {
             items(tags) { tag ->
