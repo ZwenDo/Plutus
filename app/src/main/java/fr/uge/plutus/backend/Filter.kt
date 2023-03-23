@@ -1,9 +1,11 @@
 package fr.uge.plutus.backend
 
 import androidx.room.*
-import java.util.*
+import fr.uge.plutus.frontend.store.GlobalFilters
+import fr.uge.plutus.util.ifNotBlank
+import fr.uge.plutus.util.toDateOrNull
 import java.io.Serializable
-import java.text.DateFormat
+import java.util.*
 
 enum class Criteria(val value: String) {
     MIN_AMOUNT("minAmount"),
@@ -136,4 +138,78 @@ interface FilterDao {
 
     @Query("SELECT * FROM filters WHERE filterId = :id LIMIT 1")
     suspend fun findById(id: UUID): Filter?
+
+    suspend fun insertFromGlobalFilters(
+        name: String,
+        bookId: UUID,
+        globalFilters: GlobalFilters,
+        database: Database? = null
+    ) {
+        val filter = globalFilters.toFilter(name, bookId)
+        insert(filter)
+
+        val tagFilterJoinDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
+
+        globalFilters.tags.forEach { tag ->
+            val tagFilterJoin = TagFilterJoin(tag, filter.filterId, bookId)
+            tagFilterJoinDao._insert(tagFilterJoin)
+        }
+    }
+}
+
+
+private fun GlobalFilters.toFilter(name: String, bookId: UUID): Filter =
+    Filter.create(name, bookId) { b ->
+        description.ifNotBlank {
+            b.description = it
+        }
+
+        fromDate.ifNotBlank {
+            b.minDate = it.toDateOrNull()
+        }
+
+        toDate.ifNotBlank {
+            b.maxDate = it.toDateOrNull()
+        }
+
+        fromAmount.ifNotBlank {
+            b.minAmount = it.toDouble()
+        }
+
+        toAmount.ifNotBlank {
+            b.maxAmount = it.toDouble()
+        }
+
+        latitude.ifNotBlank {
+            b.latitude = it.toDouble()
+        }
+
+        longitude.ifNotBlank {
+            b.longitude = it.toDouble()
+        }
+
+        radius.ifNotBlank {
+            b.areaRange = it.toDouble()
+        }
+    }
+
+suspend fun Filter.toGlobalFilters(database: Database? = null): GlobalFilters {
+    val tagFilterJoinDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
+    val tagFilterJoins = tagFilterJoinDao.findTagsByFilter(filterId)
+
+    return GlobalFilters.new {
+        description = getCriteriaValue(Criteria.DESCRIPTION)
+
+        fromDate = getCriteriaValue(Criteria.MIN_DATE)
+        toDate = getCriteriaValue(Criteria.MAX_DATE)
+
+        fromAmount = getCriteriaValue(Criteria.MIN_AMOUNT)
+        toAmount = getCriteriaValue(Criteria.MAX_AMOUNT)
+
+        latitude = getCriteriaValue(Criteria.LATITUDE)
+        longitude = getCriteriaValue(Criteria.LONGITUDE)
+        radius = getCriteriaValue(Criteria.AREA_RANGE)
+
+        tags = tagFilterJoins.mapTo(mutableSetOf(), Tag::tagId)
+    }
 }

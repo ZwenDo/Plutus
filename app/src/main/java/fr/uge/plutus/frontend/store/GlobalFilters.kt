@@ -1,8 +1,5 @@
 package fr.uge.plutus.frontend.store
 
-import fr.uge.plutus.backend.Filter
-import fr.uge.plutus.util.ifNotBlank
-import fr.uge.plutus.util.toDateOrNull
 import java.util.*
 
 interface GlobalFilters {
@@ -19,22 +16,29 @@ interface GlobalFilters {
 
     var mustApply: Boolean
 
-    fun copy(block: GlobalFilters.() -> Unit): GlobalFiltersWrapper
+    fun copy(block: GlobalFilters.() -> Unit): GlobalFilters
+
+    companion object {
+
+        fun new(initBlock: GlobalFilters.() -> Unit = {}): GlobalFilters =
+            GlobalFiltersWrapper().copy(initBlock)
+
+    }
 
 }
 
-class GlobalFiltersWrapper private constructor(
+private class GlobalFiltersWrapper private constructor(
     private val filters: GlobalFilters
 ) : GlobalFilters by filters {
 
     constructor() : this(GlobalFilterImpl())
 
-    override fun copy(block: GlobalFilters.() -> Unit): GlobalFiltersWrapper =
+    override fun copy(block: GlobalFilters.() -> Unit): GlobalFilters =
         GlobalFiltersWrapper(filters.apply(block))
 
 }
 
-class GlobalFilterImpl : GlobalFilters {
+private class GlobalFilterImpl : GlobalFilters {
 
     override var description: String = ""
     override var fromDate: String = ""
@@ -47,43 +51,7 @@ class GlobalFilterImpl : GlobalFilters {
     override var radius: String = ""
     override var mustApply: Boolean = true
 
-    override fun copy(block: GlobalFilters.() -> Unit): GlobalFiltersWrapper {
-        throw UnsupportedOperationException("Cannot copy a GlobalFilterImpl")
-    }
+    override fun copy(block: GlobalFilters.() -> Unit): GlobalFilters =
+        throw AssertionError("This method should not be called")
 
-}
-
-
-fun GlobalFilters.toFilter(name: String, bookId: UUID): Filter = Filter.create(name, bookId) { b ->
-    description.ifNotBlank {
-        b.description = it
-    }
-
-    fromDate.ifNotBlank {
-        b.minDate = it.toDateOrNull()
-    }
-
-    toDate.ifNotBlank {
-        b.maxDate = it.toDateOrNull()
-    }
-
-    fromAmount.ifNotBlank {
-        b.minAmount = it.toDouble()
-    }
-
-    toAmount.ifNotBlank {
-        b.maxAmount = it.toDouble()
-    }
-
-    latitude.ifNotBlank {
-        b.latitude = it.toDouble()
-    }
-
-    longitude.ifNotBlank {
-        b.longitude = it.toDouble()
-    }
-
-    radius.ifNotBlank {
-        b.areaRange = it.toDouble()
-    }
 }
