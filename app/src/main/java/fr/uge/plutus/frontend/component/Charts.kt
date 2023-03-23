@@ -26,7 +26,7 @@ fun <K : Comparable<K>> BarChart(values: Map<K, Double>) {
         ) {
             items(values.entries.sortedBy { it.key }.toList()) { (label, value) ->
                 Spacer(modifier = Modifier.width(10.dp))
-                BarChartBar(label.toString(), value, values.values.maxOrNull()!!)
+                BarChartBar(label.toString(), value, values.values.maxOf { abs(it) })
             }
         }
     }
@@ -57,13 +57,32 @@ fun BarChartBar(label: String, value: Double, maxValue: Double) {
 }
 
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun BarChartPreview() {
-    BarChart(values = mapOf("1" to 10.0, "2" to -20.0, "3" to 60.0, "4" to -40.0, "5" to 50.0))
+    BarChart(
+        values = mapOf(
+            "1" to 10.0,
+            "2" to -20.0,
+            "3" to 60.0,
+            "4" to -40.0,
+            "5" to 50.0,
+            "6" to -60.0,
+        )
+    )
 }
 
-@Preview
+@Preview(showBackground = true)
+@Composable
+fun BarChartPreview2() {
+    BarChart(
+        values = mapOf(
+            "1" to -10.0,
+        )
+    )
+}
+
+@Preview(showBackground = true)
 @Composable
 fun BarChartBarPreview() {
     BarChartBar(label = "1", value = 100.0, maxValue = 100.0)

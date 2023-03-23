@@ -3,17 +3,19 @@ package fr.uge.plutus.frontend.view.transaction
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Divider
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -22,18 +24,28 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.uge.plutus.R
-import fr.uge.plutus.backend.Database
-import fr.uge.plutus.backend.Tag
-import fr.uge.plutus.backend.Transaction
+import fr.uge.plutus.backend.*
+import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.frontend.component.common.DisplayPill
-import fr.uge.plutus.frontend.component.common.Loading
-import fr.uge.plutus.frontend.view.tag.TagCreationView
+import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.view.View
+import fr.uge.plutus.frontend.view.tag.TagCreator
+import fr.uge.plutus.frontend.view.tag.TagDTO
+import fr.uge.plutus.frontend.view.tag.TagSelector
 import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.*
+
+
+private suspend fun deleteTransaction(transaction: Transaction) = withContext(Dispatchers.IO) {
+    Database.transactions().delete(transaction)
+}
 
 
 private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
@@ -42,10 +54,54 @@ private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
             .findTagsByTransactionId(transaction.transactionId)
     }
 
+private suspend fun getBookTags(bookId: UUID): List<Tag> =
+    withContext(Dispatchers.IO) {
+        Database.tags().findByBookId(bookId)
+    }
+
+
+private suspend fun updateTransactionTags(
+    transaction: Transaction,
+    transactionTags: List<Tag>,
+    tags: List<Tag>
+) = withContext(Dispatchers.IO) {
+    // Adding tags
+    tags.filter {
+        it !in transactionTags
+    }.forEach {
+        Database.tagTransactionJoin().insert(transaction, it)
+    }
+    // Removing tags
+    transactionTags.filter {
+        it !in tags
+    }.forEach {
+        Database.tagTransactionJoin().delete(transaction, it)
+    }
+
+}
 
 
 @Composable
-fun DisplayHeader(
+private fun createMapWithLocation(latitude: Double, longitude: Double): ImageBitmap {
+    val context = LocalContext.current
+    val mapBitmap = BitmapFactory.decodeResource(
+        context.resources,
+        R.drawable.equirectangular_world_map,
+        BitmapFactory.Options().also { it.inMutable = true })
+    val canvas = Canvas(mapBitmap)
+    val radius = minOf(canvas.width, canvas.height) / 50f
+    val x = (longitude + 180.0) / 360.0 * canvas.width
+    val y = (latitude + 90.0) / 180.0 * canvas.height
+    canvas.drawCircle(
+        x.toFloat(),
+        y.toFloat(),
+        radius,
+        Paint().apply { color = Color.Red.toArgb() })
+    return mapBitmap.asImageBitmap()
+}
+
+@Composable
+fun TransactionHeader(
     transaction: Transaction,
     backgroundColor: Color = MaterialTheme.colors.primary,
     fontColor: Color = MaterialTheme.colors.onPrimary,
@@ -78,110 +134,151 @@ fun DisplayHeader(
 }
 
 @Composable
-fun DisplayDescriptionSection(transaction: Transaction) {
+private fun DescriptionSection(transaction: Transaction) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(5.dp)
+            .padding(16.dp)
     ) {
         Text(
-            text = "Description de la transaction",
-            fontSize = 15.sp,
+            text = "Description",
+            fontSize = 14.sp,
             color = Color.Gray
         )
         Text(
             text = transaction.description,
-            fontSize = 20.sp
+            style = MaterialTheme.typography.body1,
         )
     }
 }
 
 @Composable
-fun DisplayTags(tags: List<Tag>) {
+private fun DisplayTags(tags: List<Tag>) {
     LazyRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(5.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     )
     {
         items(tags) {
             var caption = it.stringRepresentation
-            it.budgetTarget?.let { target -> caption += " (${target.value} ${target.currency} ${target.timePeriod.displayName})" }
-            DisplayPill(caption) { /* TODO: Display tag's details */ }
+            it.budgetTarget?.let { target ->
+                caption += " (${target.value} ${target.currency} ${target.timePeriod.displayName})"
+            }
+            DisplayPill(caption)
         }
     }
 }
 
-
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun DisplayTagsSection(transaction: Transaction) {
-    var loaded by rememberSaveable { mutableStateOf(false) }
-    var tags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
-    var viewId by rememberSaveable { mutableStateOf(0) }
+private fun TagsSection(transaction: Transaction) {
+    val context = LocalContext.current
+    val globalState = globalState()
+    val coroutineScope = rememberCoroutineScope()
 
+    var tags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
+    var transactionTags by rememberSaveable { mutableStateOf(listOf<Tag>()) }
+    var viewId by rememberSaveable { mutableStateOf(0) }
+    var tagSelectorOpen by rememberSaveable { mutableStateOf(false) }
+    var tagCreatorOpen by rememberSaveable { mutableStateOf(false) }
+    var tagDto by rememberSaveable { mutableStateOf<TagDTO?>(null) }
+
+    LaunchedEffect(Unit, tagDto) {
+        if (tagDto != null) {
+            return@LaunchedEffect
+        }
+        tags = getBookTags(transaction.bookId)
+    }
     LaunchedEffect(viewId) {
-        tags = getTransactionsTags(transaction)
+        transactionTags = getTransactionsTags(transaction)
+    }
+    LaunchedEffect(tagDto) {
+        val dto = tagDto ?: return@LaunchedEffect
+        val newTag = withContext(Dispatchers.IO) {
+            if (dto.budgetTarget == null) {
+                Database.tags().insert(dto.name, globalState.currentBook!!.uuid)
+            } else {
+                Database.tags().insert(dto.name, globalState.currentBook!!.uuid, dto.budgetTarget)
+            }
+        }
+        Toast.makeText(context, "Tag “${newTag.name}” created", Toast.LENGTH_SHORT).show()
+        tagDto = null
     }
 
-    if (!loaded) {
-        Loading {
-            tags = getTransactionsTags(transaction)
-            loaded = true
+    Surface(onClick = { tagSelectorOpen = true }) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = "Tags",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                if (transactionTags.isEmpty()) {
+                    Text(
+                        text = "No tags",
+                        style = MaterialTheme.typography.body1,
+                    )
+                } else {
+                    Box(Modifier.padding(top = 8.dp)) {
+                        DisplayTags(tags = transactionTags)
+                    }
+                }
+            }
+            TextButton(onClick = { tagCreatorOpen = true }) {
+                Text(text = "NEW TAG")
+            }
         }
-    } else {
-        Column(Modifier.fillMaxWidth()) {
-            Text(
-                text = "Tags",
-                modifier = Modifier.padding(5.dp),
-                fontSize = 15.sp,
-                color = Color.Gray
-            )
-            DisplayTags(tags = tags)
-        }
-        Row {
-            TagCreationView() {
+    }
+
+    TagSelector(
+        open = tagSelectorOpen,
+        tags = tags,
+        selectedTags = transactionTags.map { it.tagId }.toSet(),
+    ) {
+        tagSelectorOpen = false
+        if (it != null) { // null means the user clicked to cancel the dialog
+            coroutineScope.launch {
+                updateTransactionTags(transaction, transactionTags, it)
                 viewId++
             }
         }
     }
-}
 
-
-@Composable
-fun DisplayTransactionDetails(transaction: Transaction) {
-    Column(
-        Modifier
-            .padding(16.dp)
-            .fillMaxSize()
-    ) {
-        DisplayDescriptionSection(transaction = transaction)
-        Divider(
-            color = Color.Gray, modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-                .width(1.dp)
-        )
-        DisplayTagsSection(transaction = transaction)
-        if (transaction.latitude != null && transaction.longitude != null) {
-            Divider(
-                color = Color.Gray, modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-                    .width(1.dp)
-            )
-            DisplayLocation(latitude = transaction.latitude, longitude = transaction.longitude)
-        }
+    TagCreator(open = tagCreatorOpen) { tag ->
+        tagCreatorOpen = false
+        tagDto = tag
     }
 }
 
 @Composable
-fun DisplayLocation(latitude: Double, longitude: Double) {
+fun LocationSection(latitude: Double, longitude: Double) {
     val map = createMapWithLocation(latitude, longitude)
 
-    Box(Modifier.wrapContentSize()) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "Location",
+            fontSize = 14.sp,
+            color = Color.Gray
+        )
+        Text(
+            text = "$latitude, $longitude",
+            style = MaterialTheme.typography.body1,
+        )
         Image(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                .clip(RoundedCornerShape(8.dp)),
             bitmap = map,
             contentDescription = "",
             contentScale = ContentScale.FillWidth
@@ -189,21 +286,83 @@ fun DisplayLocation(latitude: Double, longitude: Double) {
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-fun createMapWithLocation(latitude: Double, longitude: Double): ImageBitmap {
+fun LocationSectionPreview() {
+    LocationSection(latitude = 48.8534, longitude = 2.3488)
+}
+
+@Composable
+fun TransactionDetails(transaction: Transaction) {
     val context = LocalContext.current
-    val mapBitmap = BitmapFactory.decodeResource(
-        context.resources,
-        R.drawable.equirectangular_world_map,
-        BitmapFactory.Options().also { it.inMutable = true })
-    val canvas = Canvas(mapBitmap)
-    val radius = minOf(canvas.width, canvas.height) / 50f
-    val x = (longitude + 180.0) / 360.0 * canvas.width
-    val y = (latitude + 90.0) / 180.0 * canvas.height
-    canvas.drawCircle(
-        x.toFloat(),
-        y.toFloat(),
-        radius,
-        Paint().apply { color = Color.Red.toArgb() })
-    return mapBitmap.asImageBitmap()
+    val globalState = globalState()
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(Modifier.fillMaxSize()) {
+        DescriptionSection(transaction)
+        Divider()
+        TagsSection(transaction)
+        Divider()
+        if (transaction.latitude != null && transaction.longitude != null) {
+            LocationSection(latitude = transaction.latitude, longitude = transaction.longitude)
+            Divider()
+        }
+    }
+
+    fun delete() {
+        coroutineScope.launch {
+            globalState.currentView = View.TRANSACTION_LIST
+            globalState.deletingTransaction = false
+            deleteTransaction(transaction)
+            Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show()
+            globalState.currentTransaction = null
+        }
+    }
+
+    if (globalState.deletingTransaction) {
+        AlertDialog(
+            onDismissRequest = { globalState.deletingBook = false },
+            title = {
+                Text(
+                    "Delete transaction",
+                    style = MaterialTheme.typography.h6
+                )
+            },
+            text = {
+                Text(
+                    "Are you sure you want to delete this transaction? This action cannot be undone.",
+                    style = MaterialTheme.typography.body1
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { delete() }) {
+                    Text("DELETE")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    globalState.deletingBook = false
+                }) {
+                    Text("CANCEL")
+                }
+            }
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TransactionDetailsPreview() {
+    TransactionDetails(
+        transaction = Transaction(
+            transactionId = UUID.randomUUID(),
+            amount = 100.0,
+            currency = Currency.EUR,
+            description = "Achats de fournitures scolaires",
+            date = Date(),
+            latitude = 48.8534,
+            longitude = 2.3488,
+            bookId = UUID.randomUUID()
+        )
+    )
 }

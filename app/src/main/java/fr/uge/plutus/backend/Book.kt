@@ -1,10 +1,9 @@
 package fr.uge.plutus.backend
 
 import android.database.sqlite.SQLiteConstraintException
-import android.util.Log
 import androidx.room.*
-import java.util.UUID
 import java.io.Serializable
+import java.util.*
 
 @Entity(
     tableName = "books",
@@ -18,11 +17,21 @@ data class Book(
     @PrimaryKey val uuid: UUID = UUID.randomUUID()
 ) : Serializable
 
+data class BookWithTransactions(
+    @Embedded val book: Book,
+    val transactionCount: Int,
+) {
+    fun toPair() = Pair(book, transactionCount)
+}
+
 @Dao
 abstract class BookDao {
 
     @Query("SELECT * FROM books")
     abstract suspend fun findAll(): List<Book>
+
+    @Query("SELECT b.*, count(t.transactionId) as transactionCount FROM books AS b LEFT JOIN transactions AS t ON t.bookId = b.uuid GROUP BY b.uuid")
+    abstract suspend fun findAllAndCountTransactions(): List<BookWithTransactions>
 
     @Query("SELECT * FROM books WHERE uuid = :bookId LIMIT 1")
     abstract suspend fun findById(bookId: UUID): Book?

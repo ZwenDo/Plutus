@@ -7,17 +7,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.sqlite.db.SimpleSQLiteQuery
-import fr.uge.plutus.backend.Database
-import fr.uge.plutus.backend.Tag
-import fr.uge.plutus.backend.Transaction
-import fr.uge.plutus.backend.findWithGlobalFilters
+import fr.uge.plutus.backend.*
+import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
@@ -25,11 +25,134 @@ import fr.uge.plutus.util.toStringFormatted
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
-import javax.sql.DataSource
 
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun TransactionListItem(
+    transaction: Transaction,
+    tags: List<Tag> = emptyList(),
+    onClick: () -> Unit = {},
+) {
+    Surface(onClick = onClick) {
+        Column(Modifier.fillMaxWidth()) {
+            Row(
+                Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        transaction.description,
+                        style = MaterialTheme.typography.body1,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
+                    Text(
+                        transaction.date.toStringFormatted(),
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+                Text(
+                    "${transaction.amount} ${transaction.currency}",
+                    style = MaterialTheme.typography.h6,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            if (tags.isNotEmpty()) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 16.dp)
+                ) {
+                    items(tags) { tag ->
+                        DisplayPill(tag.name)
+                    }
+                }
+            }
+            Divider()
+        }
+    }
+}
+
+@Preview
+@Composable
+fun TransactionListItemPreview() {
+    TransactionListItem(
+        Transaction(
+            "Transaction 1",
+            Date(),
+            100.0,
+            UUID.randomUUID(),
+            Currency.EUR
+        )
+    )
+}
 
 @Composable
-fun TransactionSearchView() {
+fun TransactionList(
+    transactions: List<Pair<Transaction, Set<UUID>>>,
+    tags: List<Tag>,
+    onClick: (Transaction) -> Unit = {}
+) {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        LazyColumn {
+            items(transactions) { (transaction, tagIds) ->
+                TransactionListItem(transaction, tags.filter { tagIds.contains(it.tagId) }) {
+                    onClick(transaction)
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun TransactionListPreview() {
+    val transaction = Transaction(
+        "Transaction 1",
+        Date(),
+        100.0,
+        UUID.randomUUID(),
+        Currency.EUR
+    )
+    TransactionList(
+        listOf(transaction to emptySet()),
+        listOf(Tag("Tag 1", TagType.EXPENSE, UUID.randomUUID()))
+    )
+}
+
+@Composable
+fun EmptyTransactionListPlaceholder() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "No transaction found",
+            style = MaterialTheme.typography.h5,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = "Click on the button below to create a new one",
+            style = MaterialTheme.typography.body1,
+            color = Color.Gray,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun EmptyTransactionListPlaceholderPreview() {
+    EmptyTransactionListPlaceholder()
+}
+
+@Composable
+fun TransactionListView() {
     val globalState = globalState()
     val tagTransactionJoinDao = Database.tagTransactionJoin()
     val transactionDao = Database.transactions()
@@ -55,74 +178,12 @@ fun TransactionSearchView() {
         }
     }
 
-    TransactionList(transactions, tags)
-}
-
-
-@Composable
-fun TransactionList(
-    transactions: List<Pair<Transaction, Set<UUID>>>,
-    tags: List<Tag>,
-) {
-    Surface(modifier = Modifier.fillMaxSize()) {
-        LazyColumn {
-            items(transactions) { (transaction, tagIds) ->
-                TransactionSearchResult(transaction, tags.filter { tagIds.contains(it.tagId) })
-            }
+    if (transactions.isNotEmpty()) {
+        TransactionList(transactions, tags) {
+            globalState.currentTransaction = it
+            globalState.currentView = View.TRANSACTION_DETAILS
         }
+    } else {
+        EmptyTransactionListPlaceholder()
     }
-}
-
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun TransactionSearchResult(transaction: Transaction, tags: List<Tag> = emptyList()) {
-    val globalState = globalState()
-    Surface(onClick = {
-        globalState.currentTransaction = transaction
-        globalState.currentView = View.TRANSACTION_DETAILS
-    }) {
-        Column(Modifier.fillMaxWidth()) {
-            Row(
-                Modifier.padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        transaction.description,
-                        fontSize = 16.sp,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
-                    )
-                    Text(
-                        transaction.date.toStringFormatted(),
-                        style = MaterialTheme.typography.caption,
-                    )
-                }
-                Text(
-                    "${transaction.amount} ${transaction.currency}",
-                    style = MaterialTheme.typography.h6,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            if (tags.isNotEmpty()) {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(16.dp, 0.dp, 16.dp, 16.dp)
-                ) {
-                    items(tags) { tag ->
-                        DisplayPill(tag.name)
-                    }
-                }
-            }
-            Divider()
-        }
-    }
-}
-
-
-@Preview
-@Composable
-fun TransactionSearchViewPreview() {
-    TransactionSearchView()
 }

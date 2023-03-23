@@ -8,16 +8,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.runtime.*
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import fr.uge.plutus.R
 import fr.uge.plutus.frontend.store.globalState
-import fr.uge.plutus.frontend.view.book.BookCreationView
-import fr.uge.plutus.frontend.view.book.BookOverviewLoader
-import fr.uge.plutus.frontend.view.book.BookSelectionView
-import fr.uge.plutus.frontend.view.search.*
-import fr.uge.plutus.frontend.view.transaction.*
+import fr.uge.plutus.frontend.view.book.*
+import fr.uge.plutus.frontend.view.search.SearchFiltersView
+import fr.uge.plutus.frontend.view.transaction.TransactionCreationView
+import fr.uge.plutus.frontend.view.transaction.TransactionDetails
+import fr.uge.plutus.frontend.view.transaction.TransactionHeader
 import kotlinx.coroutines.launch
 
 enum class View(
@@ -78,8 +79,16 @@ enum class View(
         headerComponent = {
             val globalState = globalState()
             val coroutineScope = rememberCoroutineScope()
+            var showMenu by remember { mutableStateOf(false) }
+
             TopAppBar(
-                title = { Text("Transactions: ${globalState.currentBook!!.name}") },
+                title = {
+                    Text(
+                        "Transactions: ${globalState.currentBook!!.name}",
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                    )
+                },
                 actions = {
                     IconButton(onClick = {
                         coroutineScope.launch {
@@ -88,13 +97,39 @@ enum class View(
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.filter),
-                            "Search"
+                            "Filters"
                         )
+                    }
+                    IconButton(onClick = { showMenu = !showMenu }) {
+                        Icon(Icons.Default.MoreVert, null)
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false },
+                    ) {
+                        DropdownMenuItem(onClick = {
+                            showMenu = false
+                            globalState.importExportState = ImportExportState.IMPORT
+                        }) {
+                            Text("Import")
+                        }
+                        DropdownMenuItem(onClick = {
+                            showMenu = false
+                            globalState.importExportState = ImportExportState.EXPORT
+                        }) {
+                            Text("Export")
+                        }
+                        DropdownMenuItem(onClick = {
+                            showMenu = false
+                            globalState.deletingBook = true
+                        }) {
+                            Text("Delete book")
+                        }
                     }
                 }
             )
         },
-        contentComponent = { TransactionSearchView() },
+        contentComponent = { BookTransactionsListView() },
         drawerComponent = { SearchFiltersView() },
         fabComponent = {
             val globalState = globalState()
@@ -113,6 +148,9 @@ enum class View(
         headerComponent = {
             val globalState = globalState()
             val currentTransaction = globalState.currentTransaction
+
+            var showMenu by androidx.compose.runtime.remember { mutableStateOf(false) }
+
             Column {
                 TopAppBar(
                     title = { Text("Transaction details") },
@@ -123,17 +161,31 @@ enum class View(
                         }) {
                             Icon(Icons.Default.ArrowBack, "Back")
                         }
+                    },
+                    actions = {
+                        IconButton(onClick = { showMenu = !showMenu }) {
+                            Icon(Icons.Default.MoreVert, null)
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false },
+                        ) {
+                            DropdownMenuItem(onClick = {
+                                showMenu = false
+                                globalState.deletingTransaction = true
+                            }) {
+                                Text("Delete transaction")
+                            }
+                        }
                     })
                 if (currentTransaction != null) {
-                    DisplayHeader(currentTransaction)
+                    TransactionHeader(currentTransaction)
                 }
             }
         },
         contentComponent = {
             val globalState = globalState()
-            if (globalState.currentTransaction != null) {
-                DisplayTransactionDetails(globalState.currentTransaction!!)
-            }
+            TransactionDetails(globalState.currentTransaction!!)
         },
         fabComponent = {
             val globalState = globalState()

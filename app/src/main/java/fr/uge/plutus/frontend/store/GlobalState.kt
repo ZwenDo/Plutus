@@ -11,6 +11,7 @@ import androidx.core.app.ActivityCompat
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Transaction
 import fr.uge.plutus.frontend.view.View
+import fr.uge.plutus.frontend.view.book.ImportExportState
 
 private lateinit var globalState: GlobalState
 
@@ -21,6 +22,9 @@ interface GlobalState {
     var writeExternalStoragePermission: Boolean
     var scaffoldState: ScaffoldState
     var globalFilters: GlobalFilters
+    var importExportState: ImportExportState
+    var deletingBook: Boolean
+    var deletingTransaction: Boolean
 }
 
 @Composable
@@ -40,6 +44,9 @@ fun initGlobalState(): GlobalState {
             )
             mutableStateOf(permission == PackageManager.PERMISSION_GRANTED)
         }
+        override var importExportState by rememberSaveable { mutableStateOf(ImportExportState.NONE) }
+        override var deletingBook by rememberSaveable { mutableStateOf(false) }
+        override var deletingTransaction by rememberSaveable { mutableStateOf(false) }
     }
 
     return globalState

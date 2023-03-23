@@ -9,11 +9,8 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,6 +23,7 @@ import java.util.*
 fun InputDate(
     label: String,
     errorMessage: String? = null,
+    value: String = Date().toStringFormatted(),
     enabled: Boolean = true,
     onValueChange: (String) -> Unit,
 ) {
@@ -35,7 +33,11 @@ fun InputDate(
     val currentMonth = calendar.get(Calendar.MONTH)
     val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
 
-    var date by rememberSaveable { mutableStateOf(Date().toStringFormatted()) }
+    var date by rememberSaveable { mutableStateOf(value) }
+
+    LaunchedEffect(value) {
+        date = value
+    }
 
     useDoOnceOnMounted {
         onValueChange(date)
