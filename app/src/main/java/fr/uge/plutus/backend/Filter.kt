@@ -150,7 +150,6 @@ interface FilterDao {
                 update(it)
             }
         } else {
-            Log.d("YEP", "Here")
             insert(new)
             new
         }

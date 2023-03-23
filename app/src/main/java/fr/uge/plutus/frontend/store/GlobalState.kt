@@ -22,9 +22,11 @@ interface GlobalState {
     var writeExternalStoragePermission: Boolean
     var scaffoldState: ScaffoldState
     var globalFilters: GlobalFilters
+    var globalSorting: GlobalSorting?
     var importExportState: ImportExportState
     var deletingBook: Boolean
     var deletingTransaction: Boolean
+    var displaySorting: Boolean
 }
 
 @Composable
@@ -47,6 +49,8 @@ fun initGlobalState(): GlobalState {
         override var importExportState by rememberSaveable { mutableStateOf(ImportExportState.NONE) }
         override var deletingBook by rememberSaveable { mutableStateOf(false) }
         override var deletingTransaction by rememberSaveable { mutableStateOf(false) }
+        override var displaySorting by rememberSaveable { mutableStateOf(false) }
+        override var globalSorting: GlobalSorting? by rememberSaveable { mutableStateOf(null) }
     }
 
     return globalState

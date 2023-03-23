@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.frontend.component.common.DisplayPill
+import fr.uge.plutus.frontend.store.comparator
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.util.toStringFormatted
@@ -95,9 +96,13 @@ fun TransactionList(
     tags: List<Tag>,
     onClick: (Transaction) -> Unit = {}
 ) {
+    val globalState = globalState()
     Surface(modifier = Modifier.fillMaxSize()) {
         LazyColumn {
-            items(transactions) { (transaction, tagIds) ->
+            val list = transactions.sortedWith { (a, _), (b, _) ->
+                globalState.globalSorting.comparator.compare(a, b)
+            }
+            items(list) { (transaction, tagIds) ->
                 TransactionListItem(transaction, tags.filter { tagIds.contains(it.tagId) }) {
                     onClick(transaction)
                 }

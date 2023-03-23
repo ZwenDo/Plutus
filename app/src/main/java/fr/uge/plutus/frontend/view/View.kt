@@ -91,6 +91,14 @@ enum class View(
                 },
                 actions = {
                     IconButton(onClick = {
+                        globalState.displaySorting = true
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.sort),
+                            "Sort"
+                        )
+                    }
+                    IconButton(onClick = {
                         coroutineScope.launch {
                             globalState.scaffoldState.drawerState.open()
                         }
