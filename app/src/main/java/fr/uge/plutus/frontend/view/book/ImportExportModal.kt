@@ -3,6 +3,7 @@ package fr.uge.plutus.frontend.view.book
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -197,6 +198,7 @@ fun ImportExportModal(
                 return@ExportBook
             }
             // TODO it is the token
+            Log.d("YEP", "token: $it")
             submit = false
             Toast.makeText(currentContext, "Export successful", Toast.LENGTH_SHORT).show()
             onDismiss()
