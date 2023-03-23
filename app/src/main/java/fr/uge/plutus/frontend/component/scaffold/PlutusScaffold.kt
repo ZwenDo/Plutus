@@ -10,13 +10,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.store.initGlobalState
 import fr.uge.plutus.frontend.view.View
 
 
 @Composable
 fun PlutusScaffold() {
-    val globalState = initGlobalState()
+    val globalState = globalState()
 
     Scaffold(
         scaffoldState = globalState.scaffoldState,

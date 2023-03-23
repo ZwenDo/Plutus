@@ -19,47 +19,16 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import fr.uge.plutus.R
 
-@Composable
-fun NotificationApp() {
-    val context = LocalContext.current
-    val channelId = "Plutus"
-    val notificationId = 0
-
-    LaunchedEffect(Unit) {
-        createNotificationChannel(channelId, context)
-    }
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        Button(onClick = {
-            showSimpleNotification(
-                context,
-                channelId,
-                notificationId,
-                "Test notification",
-                "On s'amuse ici :))))))))))."
-            )
-        }, modifier = Modifier.padding(top = 16.dp)) {
-            Text(text = "Simple Notification")
-        }
-    }
-}
-
 fun createNotificationChannel(channelId: String, context: Context) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val name = "Plutus Notification"
-        val descriptionText = "Channel text"
-        val importance = NotificationManager.IMPORTANCE_DEFAULT
-        val channel = NotificationChannel(channelId, name, importance).apply {
-            description = descriptionText
-        }
-        val notificationManager: NotificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
+    val name = "Plutus Notification"
+    val descriptionText = "Channel text"
+    val importance = NotificationManager.IMPORTANCE_DEFAULT
+    val channel = NotificationChannel(channelId, name, importance).apply {
+        description = descriptionText
     }
+    val notificationManager: NotificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    notificationManager.createNotificationChannel(channel)
 }
 
 fun showSimpleNotification(
@@ -71,7 +40,7 @@ fun showSimpleNotification(
     priority: Int = NotificationCompat.PRIORITY_DEFAULT
 ) {
     val builder = NotificationCompat.Builder(context, channelId)
-        .setSmallIcon(R.drawable.book)
+        .setSmallIcon(R.drawable.plutus_icon)
         .setContentTitle(textTitle)
         .setContentText(textContent)
         .setPriority(priority)

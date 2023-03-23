@@ -1,5 +1,6 @@
 package fr.uge.plutus.frontend.view.transaction
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import createNotificationChannel
 import fr.uge.plutus.R
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
@@ -40,6 +42,7 @@ import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import showSimpleNotification
 import java.util.*
 
 
@@ -59,17 +62,40 @@ private suspend fun getBookTags(bookId: UUID): List<Tag> =
         Database.tags().findByBookId(bookId)
     }
 
+private suspend fun checkTagTarget(tag: Tag, transaction: Transaction, context: Context) =
+    withContext(Dispatchers.Main) {
+        val channelId = "Budget Plutus"
+        val notificationId = 0
+        val textTitle = "Budget exceeded"
+        val textContent = "You have exceeded your budget for the tag ${tag.name}"
+        createNotificationChannel(channelId, context)
+        if (tag.budgetTarget == null) {
+            return@withContext
+        }
+
+        val (from, to) = tag.budgetTarget.timePeriod.toDateRange(transaction.date)
+        val bookId = transaction.bookId
+        val transactions = Database.transactions()
+            .findByBookIdAndDateRangeAndTagId(bookId, from, to, tag.tagId)
+        val total = transactions.sumOf { it.amount }
+        if (total > tag.budgetTarget.value) {
+            showSimpleNotification(context, channelId, notificationId, textTitle, textContent)
+        }
+    }
+
 
 private suspend fun updateTransactionTags(
     transaction: Transaction,
     transactionTags: List<Tag>,
-    tags: List<Tag>
+    tags: List<Tag>,
+    context: Context
 ) = withContext(Dispatchers.IO) {
     // Adding tags
     tags.filter {
         it !in transactionTags
     }.forEach {
         Database.tagTransactionJoin().insert(transaction, it)
+        checkTagTarget(it, transaction, context)
     }
     // Removing tags
     transactionTags.filter {
@@ -77,7 +103,6 @@ private suspend fun updateTransactionTags(
     }.forEach {
         Database.tagTransactionJoin().delete(transaction, it)
     }
-
 }
 
 
@@ -244,7 +269,7 @@ private fun TagsSection(transaction: Transaction) {
         tagSelectorOpen = false
         if (it != null) { // null means the user clicked to cancel the dialog
             coroutineScope.launch {
-                updateTransactionTags(transaction, transactionTags, it)
+                updateTransactionTags(transaction, transactionTags, it, context)
                 viewId++
             }
         }

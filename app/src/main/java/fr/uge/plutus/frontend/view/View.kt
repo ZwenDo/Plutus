@@ -149,7 +149,7 @@ enum class View(
             val globalState = globalState()
             val currentTransaction = globalState.currentTransaction
 
-            var showMenu by androidx.compose.runtime.remember { mutableStateOf(false) }
+            var showMenu by remember { mutableStateOf(false) }
 
             Column {
                 TopAppBar(
