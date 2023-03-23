@@ -1,5 +1,6 @@
 package fr.uge.plutus.frontend.view.transaction
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -162,14 +163,14 @@ fun TransactionListView() {
     val tagTransactionJoinDao = Database.tagTransactionJoin()
     val transactionDao = Database.transactions()
     val tagDao = Database.tags()
-
     var transactions by rememberSaveable {
         mutableStateOf(listOf<Pair<Transaction, Set<UUID>>>())
     }
     var tags by rememberSaveable { mutableStateOf(emptyList<Tag>()) }
+    var load by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(globalState.globalFilters) {
-        if (!globalState.globalFilters.mustApply) return@LaunchedEffect
+    LaunchedEffect(load) {
+        if (!load) return@LaunchedEffect
         withContext(Dispatchers.IO) {
             tags = tagDao.findByBookId(globalState.currentBook!!.uuid)
             transactions = transactionDao
@@ -180,7 +181,19 @@ fun TransactionListView() {
                         .mapTo(mutableSetOf()) { tag -> tag.tagId }
                 }
             globalState.globalFilters = globalState.globalFilters.copy { mustApply = false }
+            load = false
         }
+    }
+
+    LaunchedEffect(globalState.globalFilters) {
+        if (!globalState.globalFilters.mustApply) return@LaunchedEffect
+        load = true
+    }
+
+    LaunchedEffect(globalState.mustRefetchTransactions) {
+        if (!globalState.mustRefetchTransactions) return@LaunchedEffect
+        load = true
+        globalState.mustRefetchTransactions = false
     }
 
     if (transactions.isNotEmpty()) {

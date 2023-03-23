@@ -21,6 +21,7 @@ import fr.uge.plutus.backend.serialization.ExportBook
 import fr.uge.plutus.backend.serialization.importBook
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.component.scaffold.Dialog
+import fr.uge.plutus.frontend.store.globalState
 import java.util.*
 import androidx.compose.ui.window.Dialog as JCDialog
 
@@ -85,6 +86,7 @@ fun ImportExportModal(
     isImport: Boolean = false,
     onDismiss: () -> Unit
 ) {
+    val globalState = globalState()
     var exportName by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var isCloud by rememberSaveable { mutableStateOf(false) }
@@ -134,6 +136,7 @@ fun ImportExportModal(
             Toast.makeText(currentContext, "Invalid password", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(currentContext, "Import successful", Toast.LENGTH_SHORT).show()
+            globalState.mustRefetchTransactions = true
         }
         importingUri = null
         onDismiss()

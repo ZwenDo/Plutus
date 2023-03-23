@@ -4,8 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import android.util.Log
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.*
 import fr.uge.plutus.MainActivity
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.frontend.store.globalState
@@ -30,7 +29,7 @@ fun ExportBook(
 ) {
     val globalState = globalState()
 
-    LaunchedEffect(true) {
+    LaunchedEffect(globalState.writeExternalStoragePermission) {
         if (!globalState.writeExternalStoragePermission) {
             MainActivity.requestWriteExternalStoragePermission()
             return@LaunchedEffect
@@ -97,7 +96,7 @@ private suspend fun Transaction.toDTO(
         date.time,
         amount,
         currency,
-        latitude?.let { it to longitude!! }, // TODO no.
+        latitude?.let { it to longitude!! },
         tags,
         attachments
     )
@@ -158,14 +157,12 @@ private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID) {
 
     val tagMap = mutableMapOf<UUID, UUID>()
     tags.forEach {
-        // if the book is imported as a new book, we need to generate new ids for the tags
         val tag = it.toTag(uuid, bookId)
         tagDao.upsert(tag)
         tagMap[it.tagId] = tag.tagId
     }
 
     transactions.forEach {
-        // if the book is imported as a new book, we need to generate new ids for the transactions
         val transaction = it.toTransaction(uuid, bookId)
         transactionDao.upsert(transaction)
         it.tags.forEach { tagId ->
@@ -178,7 +175,6 @@ private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID) {
         }
 
         it.attachments.forEach { attachmentDTO ->
-            // if the book is imported as a new book, we need to generate new ids for the attachments
             val attachment = attachmentDTO.toAttachment(
                 it.transactionId,
                 transaction.transactionId
