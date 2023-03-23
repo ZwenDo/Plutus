@@ -296,6 +296,7 @@ fun SearchFilters(
                 ) {
                     TextButton(
                         modifier = Modifier.weight(1f),
+                        enabled = !globalFilters.isEmpty,
                         onClick = { onSaveFilter() }
                     ) {
                         Row(
