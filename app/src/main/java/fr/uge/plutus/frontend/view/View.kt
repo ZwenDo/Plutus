@@ -80,11 +80,12 @@ enum class View(
             val globalState = globalState()
             val coroutineScope = rememberCoroutineScope()
             var showMenu by remember { mutableStateOf(false) }
+            val currentBook by remember { mutableStateOf(globalState.currentBook!!.name) }
 
             TopAppBar(
                 title = {
                     Text(
-                        "Transactions: ${globalState.currentBook!!.name}",
+                        "Transactions: $currentBook",
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                     )

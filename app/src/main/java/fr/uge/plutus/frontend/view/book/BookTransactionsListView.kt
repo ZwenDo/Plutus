@@ -53,9 +53,9 @@ fun BookTransactionsListView() {
         if (delete) {
             globalState.currentView = View.BOOK_SELECTION
             globalState.deletingBook = false
+            globalState.currentBook = null
             deleteBook(book)
             Toast.makeText(context, "Book “${book.name}” deleted", Toast.LENGTH_SHORT).show()
-            globalState.currentBook = null
             delete = false
         }
     }
