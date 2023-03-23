@@ -218,7 +218,8 @@ fun TransactionCreationView() {
                     onSelected = {
                         currency = it
                         errors.clear()
-                    }
+                    },
+                    enabled = false,
                 )
             }
         }
