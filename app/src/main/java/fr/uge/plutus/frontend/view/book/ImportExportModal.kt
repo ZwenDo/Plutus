@@ -74,10 +74,10 @@ fun ImportBookModal(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Checkbox(checked = isCloud, onCheckedChange = { isCloud = it })
-                Text(text = "Import from cloud")
+                Text(text = stringResource(R.string.import_from_cloud))
             }
             InputText(
-                label = "File key",
+                label = stringResource(R.string.file_key),
                 value = fileKey,
                 onValueChange = { fileKey = it },
                 enabled = isCloud,
@@ -88,9 +88,9 @@ fun ImportBookModal(
             Modifier.padding(24.dp, 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(text = "Please enter the password to decrypt the file if it is password protected.")
+            Text(text = stringResource(R.string.please_enter_the_password_to_decrypt))
             InputText(
-                label = "Password (optional)",
+                label = stringResource(R.string.password_optional),
                 value = password,
                 onValueChange = { password = it },
                 isPassword = true,
@@ -137,23 +137,23 @@ fun ExportBookModal(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Checkbox(checked = isCloud, onCheckedChange = { isCloud = it })
-                Text(text = "Export to cloud")
+                Text(text = stringResource(R.string.export_to_cloud))
             }
-            Text(text = "A unique access key will be generated, please keep it safe.")
+            Text(text = stringResource(R.string.unique_access_key_will_be_generated))
         }
         Divider()
         Column(
             Modifier.padding(24.dp, 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(text = "Only the currently visible transactions will be exported.")
+            Text(text = stringResource(R.string.only_the_currently_visible_transaction_will_be_exported))
             InputText(
-                label = "Output file name",
+                label = stringResource(R.string.output_file_name),
                 value = fileName,
                 onValueChange = { fileName = it },
             )
             InputText(
-                label = "Password (optional)",
+                label = stringResource(R.string.password_optional),
                 value = password,
                 onValueChange = { password = it },
                 isPassword = true,
