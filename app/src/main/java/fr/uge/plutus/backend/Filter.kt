@@ -5,6 +5,7 @@ import androidx.room.*
 import fr.uge.plutus.frontend.store.GlobalFilters
 import fr.uge.plutus.util.ifNotBlank
 import fr.uge.plutus.util.toDateOrNull
+import fr.uge.plutus.util.toStringFormatted
 import java.io.Serializable
 import java.util.*
 
@@ -213,9 +214,20 @@ suspend fun Filter.toGlobalFilters(database: Database? = null): GlobalFilters {
     return GlobalFilters.new {
         description = getCriteriaValue(Criteria.DESCRIPTION)
 
-        fromDate = getCriteriaValue(Criteria.MIN_DATE)
-        toDate = getCriteriaValue(Criteria.MAX_DATE)
-
+        fromDate = getCriteriaValue(Criteria.MIN_DATE).let {
+            if (it.isNotBlank()) {
+                Date(it.toLong()).toStringFormatted()
+            } else {
+                ""
+            }
+        }
+        toDate = getCriteriaValue(Criteria.MAX_DATE).let {
+            if (it.isNotBlank()) {
+                Date(it.toLong()).toStringFormatted()
+            } else {
+                ""
+            }
+        }
         fromAmount = getCriteriaValue(Criteria.MIN_AMOUNT)
         toAmount = getCriteriaValue(Criteria.MAX_AMOUNT)
 
