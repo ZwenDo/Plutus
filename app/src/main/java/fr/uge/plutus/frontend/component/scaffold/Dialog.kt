@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog as ComposeDialog
 
 @Composable
 fun Dialog(
@@ -15,11 +16,13 @@ fun Dialog(
     title: String,
     submitButtonText: String = "OK",
     cancelButtonText: String = "CANCEL",
+    displaySubmitButton: Boolean = true,
+    displayCancelButton: Boolean = true,
     onClose: (Boolean) -> Unit = {},
     content: @Composable ColumnScope.() -> Unit
 ) {
     if (open) {
-        androidx.compose.ui.window.Dialog(
+        ComposeDialog(
             onDismissRequest = { onClose(false) }
         ) {
             Surface(
@@ -40,22 +43,28 @@ fun Dialog(
                     }
                     Divider()
                     content()
-                    Divider()
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp, 2.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
-                    ) {
-                        TextButton(
-                            onClick = { onClose(false) }
+                    if (displayCancelButton || displaySubmitButton) {
+                        Divider()
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp, 2.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
                         ) {
-                            Text(text = cancelButtonText)
-                        }
-                        TextButton(
-                            onClick = { onClose(true) }
-                        ) {
-                            Text(text = submitButtonText)
+                            if (displayCancelButton) {
+                                TextButton(
+                                    onClick = { onClose(false) }
+                                ) {
+                                    Text(text = cancelButtonText)
+                                }
+                            }
+                            if (displaySubmitButton) {
+                                TextButton(
+                                    onClick = { onClose(true) }
+                                ) {
+                                    Text(text = submitButtonText)
+                                }
+                            }
                         }
                     }
                 }
@@ -68,6 +77,22 @@ fun Dialog(
 @Composable
 fun DialogPreview() {
     Dialog(open = true, title = "Test dialog") {
+        Text(
+            modifier = Modifier.padding(24.dp, 16.dp),
+            text = "Test content"
+        )
+    }
+}
+
+@Preview
+@Composable
+fun DialogPreview2() {
+    Dialog(
+        open = true,
+        title = "Test dialog",
+        displayCancelButton = false,
+        displaySubmitButton = false
+    ) {
         Text(
             modifier = Modifier.padding(24.dp, 16.dp),
             text = "Test content"

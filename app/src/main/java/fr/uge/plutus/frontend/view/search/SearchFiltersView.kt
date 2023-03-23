@@ -1,12 +1,11 @@
 package fr.uge.plutus.frontend.view.search
 
 import android.util.Log
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -14,20 +13,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fr.uge.plutus.R
-import fr.uge.plutus.backend.Database
-import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputText
+import fr.uge.plutus.frontend.component.scaffold.Dialog
 import fr.uge.plutus.frontend.store.GlobalFilters
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.tag.TagSelector
-import fr.uge.plutus.ui.theme.Gray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -438,41 +433,38 @@ fun FilterSaveComponent(onDismiss: () -> Unit) {
         onDismiss()
     }
 
-    Dialog(onDismissRequest = { onDismiss() }) {
-        Surface(shape = RoundedCornerShape(8.dp)) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+    Dialog(
+        title = "Save filter",
+        onClose = { submit ->
+            if (submit) {
+                if (filterName.isNotBlank()) {
+                    buttonClicked = true
+                } else {
+                    errorMessage = "Filter name cannot be blank"
+                }
+            } else {
+                onDismiss()
+            }
+        },
+        open = true,
+        submitButtonText = "SAVE",
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp, 16.dp),
+        ) {
+            InputText(
+                label = "Filter name",
+                value = filterName,
+                errorMessage = errorMessage,
             ) {
-                Text(
-                    text = "Save filter",
-                    style = MaterialTheme.typography.h6,
-                )
-                InputText(
-                    label = "Filter name",
-                    value = filterName,
-                    errorMessage = errorMessage,
-                ) {
-                    errorMessage = null
-                    filterName = it
-                }
-                Button(
-                    onClick = {
-                        if (filterName.isNotBlank()) {
-                            buttonClicked = true
-                        } else {
-                            errorMessage = "Filter name cannot be blank"
-                        }
-                    }
-                ) {
-                    Text(text = "Save")
-                }
+                errorMessage = null
+                filterName = it
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun FilterLoadComponent(onDismiss: () -> Unit) {
     val globalState = globalState()
@@ -493,37 +485,40 @@ fun FilterLoadComponent(onDismiss: () -> Unit) {
         onDismiss()
     }
 
-    Dialog(onDismissRequest = { onDismiss() }) {
-        Surface(shape = RoundedCornerShape(8.dp)) {
-            Column(
-                modifier = Modifier.padding(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = "Load filter",
-                    style = MaterialTheme.typography.h6,
-                )
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                        .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+    Dialog(
+        title = "Load filter",
+        onClose = { onDismiss() },
+        open = true,
+        displaySubmitButton = false,
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .requiredHeightIn(200.dp, 300.dp)
+                .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            items(filters) {
+                Surface(
+                    onClick = { toImport = it },
                 ) {
-                    items(filters) {
-                        Text(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(4.dp)
-                                .border(1.dp, Gray, RoundedCornerShape(8.dp))
-                                .padding(4.dp)
-                                .clickable {
-                                    toImport = it
-                                },
-                            textAlign = TextAlign.Center,
-                            text = it.name
-                        )
+                    Column {
+                        Row(
+                            Modifier.padding(24.dp, 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                modifier = Modifier.weight(1f),
+                                text = it.name,
+                            )
+                            IconButton(onClick = { /*TODO*/ }) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.close),
+                                    contentDescription = null,
+                                )
+                            }
+                        }
+                        Divider()
                     }
                 }
             }
