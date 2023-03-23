@@ -22,7 +22,8 @@ enum class Currency {
         parentColumns = ["uuid"],
         childColumns = ["bookId"],
         onDelete = ForeignKey.CASCADE
-    )]
+    )],
+    indices = [Index("amount"), Index("date")]
 )
 data class Transaction(
     val description: String,
