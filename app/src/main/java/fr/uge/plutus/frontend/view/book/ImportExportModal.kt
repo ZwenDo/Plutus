@@ -146,6 +146,7 @@ fun ExportBookModal(
             Modifier.padding(24.dp, 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            Text(text = "Only the currently visible transactions will be exported.")
             InputText(
                 label = "Output file name",
                 value = fileName,
@@ -194,6 +195,7 @@ fun ImportExportModal(
 
     if (!isImport && submit) {
         ExportBook(
+            list = globalState.currentTransactions,
             password.ifEmpty { null },
             book = target,
             name = exportName.ifBlank { target.name },

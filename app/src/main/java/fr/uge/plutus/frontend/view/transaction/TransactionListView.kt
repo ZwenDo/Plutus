@@ -182,6 +182,7 @@ fun TransactionListView() {
                         .findTagsByTransactionId(it.transactionId)
                         .mapTo(mutableSetOf()) { tag -> tag.tagId }
                 }
+            globalState.currentTransactions = transactions.map { it.first }
             globalState.globalFilters = globalState.globalFilters.copy { mustApply = false }
             load = false
         }

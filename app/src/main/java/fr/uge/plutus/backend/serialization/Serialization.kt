@@ -24,11 +24,11 @@ import javax.crypto.IllegalBlockSizeException
 
 @Composable
 fun ExportBook(
+    list: List<Transaction>,
     password: String?,
     book: Book,
     name: String,
     isCloud: Boolean,
-    exportTags: Set<Tag> = emptySet(),
     onExportCompleted: (String?) -> Unit = {}
 ) {
     val globalState = globalState()
@@ -38,7 +38,7 @@ fun ExportBook(
             MainActivity.requestWriteExternalStoragePermission()
             return@LaunchedEffect
         }
-        val result = export(book, name, password, isCloud, exportTags)
+        val result = export(list, book, name, password, isCloud)
         onExportCompleted(result)
     }
 }
@@ -127,21 +127,15 @@ private fun Filter.toDTO(tags: List<UUID>): FilterDTO = FilterDTO(
     tags,
 )
 
-private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null): BookDTO {
-    val transactionDao = database?.transactions() ?: Database.transactions()
+private suspend fun Book.toDTO(
+    list: List<Transaction>,
+    database: Database? = null
+): BookDTO {
     val tagDao = database?.tags() ?: Database.tags()
     val filterDao = database?.filters() ?: Database.filters()
     val tagFilterDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
 
-    val transactions = transactionDao
-        .run {
-            if (exportTags.isNotEmpty()) { // filter transactions by tags if there is at least one tag selected
-                val tagIds = exportTags.mapTo(HashSet(), Tag::tagId)
-                findAllByBookIdWithTags(uuid, tagIds)
-            } else {
-                findAllByBookId(uuid)
-            }
-        }
+    val transactions = list
         .map { it.toDTO(database) }
     val tags = tagDao.findByBookId(uuid).map { it.toDTO() }
     val filters = filterDao.findAllByBookId(uuid).map {
@@ -213,14 +207,14 @@ private val json = Json {
 }
 
 private suspend fun export(
+    list: List<Transaction>,
     book: Book,
     name: String,
     password: String?,
     isCloud: Boolean,
-    exportTags: Set<Tag>
 ): String? {
     require("/" !in name && "\\" !in name) { "Invalid name: $name" }
-    val json = json.encodeToString(book.toDTO(exportTags))
+    val json = json.encodeToString(book.toDTO(list))
 
     Log.d("YEP", "Salam")
 
