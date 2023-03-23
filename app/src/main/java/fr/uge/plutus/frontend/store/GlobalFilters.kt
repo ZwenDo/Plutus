@@ -16,6 +16,17 @@ interface GlobalFilters {
 
     var mustApply: Boolean
 
+    val isEmpty: Boolean
+        get() = description.isBlank() &&
+                fromDate.isBlank() &&
+                toDate.isBlank() &&
+                fromAmount.isBlank() &&
+                toAmount.isBlank() &&
+                tags.isEmpty() &&
+                latitude.isBlank() &&
+                longitude.isBlank() &&
+                radius.isBlank()
+
     fun copy(block: GlobalFilters.() -> Unit): GlobalFilters
 
     companion object {

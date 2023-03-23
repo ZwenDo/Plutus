@@ -1,6 +1,5 @@
 package fr.uge.plutus.frontend.view.search
 
-import android.util.Log
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
@@ -296,6 +295,7 @@ fun SearchFilters(
                 ) {
                     TextButton(
                         modifier = Modifier.weight(1f),
+                        enabled = !globalFilters.isEmpty,
                         onClick = { onSaveFilter() }
                     ) {
                         Row(
@@ -468,14 +468,22 @@ fun FilterSaveComponent(onDismiss: () -> Unit) {
 @Composable
 fun FilterLoadComponent(onDismiss: () -> Unit) {
     val globalState = globalState()
-    var filters by remember { mutableStateOf(listOf<Filter>()) }
+    val filters = remember { mutableStateListOf<Filter>() }
     var toImport by remember { mutableStateOf<Filter?>(null) }
+    var toDelete by remember { mutableStateOf<Filter?>(null) }
 
     LaunchedEffect(Unit) {
-        filters = Database
+        filters += Database
             .filters()
             .findAllByBookId(globalState.currentBook!!.uuid)
-        Log.d("YEP", "Filters: $filters")
+    }
+
+    LaunchedEffect(toDelete) {
+        if (toDelete == null) return@LaunchedEffect
+
+        Database.filters().delete(toDelete!!)
+        filters.remove(toDelete!!)
+        toDelete = null
     }
 
     LaunchedEffect(toImport) {
@@ -491,34 +499,32 @@ fun FilterLoadComponent(onDismiss: () -> Unit) {
         open = true,
         displaySubmitButton = false,
     ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .requiredHeightIn(200.dp, 300.dp)
-                .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            items(filters) {
-                Surface(
-                    onClick = { toImport = it },
-                ) {
-                    Column {
-                        Row(
-                            Modifier.padding(24.dp, 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = it.name,
-                            )
-                            IconButton(onClick = { /*TODO*/ }) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.close),
-                                    contentDescription = null,
+        Box(Modifier.requiredHeightIn(min = 200.dp, max = 300.dp)) {
+            LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
+            ) {
+                items(filters) {
+                    Surface(onClick = { toImport = it },) {
+                        Column {
+                            Row(
+                                Modifier.padding(24.dp, 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    modifier = Modifier.weight(1f),
+                                    text = it.name,
                                 )
+                                IconButton(onClick = { toDelete = it }) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.close),
+                                        contentDescription = null,
+                                    )
+                                }
                             }
+                            Divider()
                         }
-                        Divider()
                     }
                 }
             }
