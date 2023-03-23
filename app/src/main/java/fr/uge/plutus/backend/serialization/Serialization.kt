@@ -130,7 +130,7 @@ private fun Filter.toDTO(): FilterDTO {
         filterId,
         name,
         criterias,
-//        tags,
+TODO()//        tags,
     )
 }
 
@@ -165,12 +165,22 @@ private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID) {
     val transactionDao = database?.transactions() ?: Database.transactions()
     val tagTransactionJoinDao = database?.tagTransactionJoin() ?: Database.tagTransactionJoin()
     val attachmentDao = database?.attachments() ?: Database.attachments()
+    val filterDao = database?.filters() ?: Database.filters()
+    val tagFilterDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
 
     val tagMap = mutableMapOf<UUID, UUID>()
     tags.forEach {
         val tag = it.toTag(uuid, bookId)
         tagDao.upsert(tag)
         tagMap[it.tagId] = tag.tagId
+    }
+
+    filters.forEach {
+        val filter = it.toFilter(uuid, bookId)
+        filterDao.upsert(filter)
+        it.tags.forEach { id ->
+
+        }
     }
 
     transactions.forEach {
