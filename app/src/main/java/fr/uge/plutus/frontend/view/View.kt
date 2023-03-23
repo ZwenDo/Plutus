@@ -148,6 +148,9 @@ enum class View(
         headerComponent = {
             val globalState = globalState()
             val currentTransaction = globalState.currentTransaction
+
+            var showMenu by androidx.compose.runtime.remember { mutableStateOf(false) }
+
             Column {
                 TopAppBar(
                     title = { Text("Transaction details") },
@@ -157,6 +160,22 @@ enum class View(
                             globalState.currentTransaction = null
                         }) {
                             Icon(Icons.Default.ArrowBack, "Back")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { showMenu = !showMenu }) {
+                            Icon(Icons.Default.MoreVert, null)
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false },
+                        ) {
+                            DropdownMenuItem(onClick = {
+                                showMenu = false
+                                globalState.deletingTransaction = true
+                            }) {
+                                Text("Delete transaction")
+                            }
                         }
                     })
                 if (currentTransaction != null) {

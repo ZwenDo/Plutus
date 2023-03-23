@@ -32,6 +32,7 @@ import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.frontend.component.common.DisplayPill
 import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.tag.TagCreator
 import fr.uge.plutus.frontend.view.tag.TagDTO
 import fr.uge.plutus.frontend.view.tag.TagSelector
@@ -40,6 +41,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
+
+
+private suspend fun deleteTransaction(transaction: Transaction) = withContext(Dispatchers.IO) {
+    Database.transactions().delete(transaction)
+}
 
 
 private suspend fun getTransactionsTags(transaction: Transaction): List<Tag> =
@@ -288,6 +294,10 @@ fun LocationSectionPreview() {
 
 @Composable
 fun TransactionDetails(transaction: Transaction) {
+    val context = LocalContext.current
+    val globalState = globalState()
+    val coroutineScope = rememberCoroutineScope()
+
     Column(Modifier.fillMaxSize()) {
         DescriptionSection(transaction)
         Divider()
@@ -297,6 +307,46 @@ fun TransactionDetails(transaction: Transaction) {
             LocationSection(latitude = transaction.latitude, longitude = transaction.longitude)
             Divider()
         }
+    }
+
+    fun delete() {
+        globalState.currentView = View.TRANSACTION_LIST
+        globalState.deletingTransaction = false
+        coroutineScope.launch {
+            deleteTransaction(transaction)
+            Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show()
+            globalState.currentTransaction = null
+        }
+    }
+
+    if (globalState.deletingTransaction) {
+        AlertDialog(
+            onDismissRequest = { globalState.deletingBook = false },
+            title = {
+                Text(
+                    "Delete transaction",
+                    style = MaterialTheme.typography.h6
+                )
+            },
+            text = {
+                Text(
+                    "Are you sure you want to delete this transaction? This action cannot be undone.",
+                    style = MaterialTheme.typography.body1
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { delete() }) {
+                    Text("DELETE")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    globalState.deletingBook = false
+                }) {
+                    Text("CANCEL")
+                }
+            }
+        )
     }
 }
 
