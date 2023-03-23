@@ -499,34 +499,32 @@ fun FilterLoadComponent(onDismiss: () -> Unit) {
         open = true,
         displaySubmitButton = false,
     ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .requiredHeightIn(200.dp, 300.dp)
-                .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            items(filters) {
-                Surface(
-                    onClick = { toImport = it },
-                ) {
-                    Column {
-                        Row(
-                            Modifier.padding(24.dp, 8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = it.name,
-                            )
-                            IconButton(onClick = { toDelete = it }) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.close),
-                                    contentDescription = null,
+        Box(Modifier.requiredHeightIn(min = 200.dp, max = 300.dp)) {
+            LazyColumn(
+                Modifier
+                    .fillMaxSize()
+                    .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
+            ) {
+                items(filters) {
+                    Surface(onClick = { toImport = it },) {
+                        Column {
+                            Row(
+                                Modifier.padding(24.dp, 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    modifier = Modifier.weight(1f),
+                                    text = it.name,
                                 )
+                                IconButton(onClick = { toDelete = it }) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.close),
+                                        contentDescription = null,
+                                    )
+                                }
                             }
+                            Divider()
                         }
-                        Divider()
                     }
                 }
             }
