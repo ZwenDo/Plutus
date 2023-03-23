@@ -27,8 +27,69 @@ import fr.uge.plutus.frontend.store.GlobalFilters
 import fr.uge.plutus.frontend.store.GlobalFiltersWrapper
 import fr.uge.plutus.frontend.store.globalState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
+
+private enum class FilterFields {
+    DESCRIPTION,
+    FROM_DATE,
+    TO_DATE,
+    FROM_AMOUNT,
+    TO_AMOUNT,
+    AREA_LATITUDE,
+    AREA_LONGITUDE,
+    AREA_RADIUS,
+}
+
+val DATE_REGEX = Regex("""\d{1,2}/\d{1,2}/\d{4}""")
+
+private fun checkFilters(filters: GlobalFilters): Map<FilterFields, String> {
+    val errors = mutableMapOf<FilterFields, String>()
+    if (filters.fromDate.isNotEmpty() && filters.toDate.isNotEmpty() && filters.fromDate > filters.toDate) {
+        errors[FilterFields.FROM_DATE] = "From date must be before to date"
+        errors[FilterFields.TO_DATE] = "To date must be after from date"
+    }
+    if (filters.fromDate.isNotEmpty() && !filters.fromDate.matches(DATE_REGEX)) {
+        errors[FilterFields.FROM_DATE] = "From date must be valid"
+    }
+    if (filters.toDate.isNotEmpty() && !filters.toDate.matches(DATE_REGEX)) {
+        errors[FilterFields.TO_DATE] = "To date must be valid"
+    }
+    // check if amount is a valid number
+    if (filters.fromAmount.isNotEmpty() && filters.fromAmount.toDoubleOrNull() == null) {
+        errors[FilterFields.FROM_AMOUNT] = "From amount must be a valid number"
+    }
+    if (filters.toAmount.isNotEmpty() && filters.toAmount.toDoubleOrNull() == null) {
+        errors[FilterFields.TO_AMOUNT] = "To amount must be a valid number"
+    }
+    if (filters.fromAmount.isNotEmpty() && filters.toAmount.isNotEmpty() && filters.fromAmount.toDouble() > filters.toAmount.toDouble()) {
+        errors[FilterFields.FROM_AMOUNT] = "From amount must be before to amount"
+        errors[FilterFields.TO_AMOUNT] = "To amount must be after from amount"
+    }
+    if (filters.latitude.isNotEmpty() != filters.longitude.isNotEmpty()) {
+        errors[FilterFields.AREA_LATITUDE] = "Latitude and longitude must be either both set of both unset"
+        errors[FilterFields.AREA_LONGITUDE] = "Latitude and longitude must be either both set of both unset"
+    }
+    if (filters.latitude.isNotEmpty() && filters.longitude.isNotEmpty() && filters.radius.isEmpty()) {
+        errors[FilterFields.AREA_RADIUS] = "Radius must be set if latitude and longitude are set"
+    }
+    if (filters.latitude.isNotEmpty() && filters.longitude.isNotEmpty() && filters.radius.isNotEmpty()) {
+        val lat = filters.latitude.toDoubleOrNull()
+        val lon = filters.longitude.toDoubleOrNull()
+        val radius = filters.radius.toDoubleOrNull()
+        if (lat == null || lat < -90 || lat > 90) {
+            errors[FilterFields.AREA_LATITUDE] = "Latitude must be a valid number between -90 and 90"
+        }
+        if (lon == null || lon < -180 || lon > 180) {
+            errors[FilterFields.AREA_LONGITUDE] = "Longitude must be a valid number between -180 and 180"
+        }
+        if (radius == null || radius < 0) {
+            errors[FilterFields.AREA_RADIUS] = "Radius must be a valid number greater than 0"
+        }
+    }
+    return errors
+}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -170,6 +231,15 @@ fun SearchFilters(
     onOpenTagSelector: () -> Unit = {},
     onFilterUpdate: (GlobalFilters) -> Unit = {},
 ) {
+    val globalState = globalState()
+    val coroutineScope = rememberCoroutineScope()
+    var errors by remember { mutableStateOf(emptyMap<FilterFields, String>()) }
+
+    fun updateFilters(globalFilters: GlobalFilters) {
+        errors = emptyMap()
+        onFilterUpdate(globalFilters)
+    }
+
     Column(Modifier.fillMaxSize()) {
         Surface(elevation = 12.dp) {
             Column {
@@ -218,8 +288,9 @@ fun SearchFilters(
                         InputText(
                             label = "Description",
                             value = globalFilters.description,
+                            errorMessage = errors[FilterFields.DESCRIPTION],
                         ) {
-                            onFilterUpdate(globalFilters.copy { description = it })
+                            updateFilters(globalFilters.copy { description = it })
                         }
                     }
                     Divider()
@@ -232,11 +303,11 @@ fun SearchFilters(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text("Date range", style = MaterialTheme.typography.h6)
-                        InputDate(label = "From") {
-                            onFilterUpdate(globalFilters.copy { fromDate = it })
+                        InputDate(label = "From", errorMessage = errors[FilterFields.FROM_DATE]) {
+                            updateFilters(globalFilters.copy { fromDate = it })
                         }
-                        InputDate(label = "To") {
-                            onFilterUpdate(globalFilters.copy { toDate = it })
+                        InputDate(label = "To", errorMessage = errors[FilterFields.TO_DATE]) {
+                            updateFilters(globalFilters.copy { toDate = it })
                         }
                     }
                     Divider()
@@ -255,8 +326,9 @@ fun SearchFilters(
                                     label = "Minimum",
                                     value = globalFilters.fromAmount,
                                     keyboardType = KeyboardType.Number,
+                                    errorMessage = errors[FilterFields.FROM_AMOUNT],
                                 ) {
-                                    onFilterUpdate(globalFilters.copy { fromAmount = it })
+                                    updateFilters(globalFilters.copy { fromAmount = it })
                                 }
                             }
                             Box(Modifier.weight(1f / 2f)) {
@@ -264,8 +336,9 @@ fun SearchFilters(
                                     label = "Maximum",
                                     value = globalFilters.toAmount,
                                     keyboardType = KeyboardType.Number,
+                                    errorMessage = errors[FilterFields.TO_AMOUNT],
                                 ) {
-                                    onFilterUpdate(globalFilters.copy { toAmount = it })
+                                    updateFilters(globalFilters.copy { toAmount = it })
                                 }
                             }
                         }
@@ -302,27 +375,30 @@ fun SearchFilters(
                                 InputText(
                                     label = "Latitude",
                                     value = globalFilters.latitude,
-                                    keyboardType = KeyboardType.Number
+                                    keyboardType = KeyboardType.Number,
+                                    errorMessage = errors[FilterFields.AREA_LATITUDE],
                                 ) {
-                                    onFilterUpdate(globalFilters.copy { latitude = it })
+                                    updateFilters(globalFilters.copy { latitude = it })
                                 }
                             }
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Longitude",
                                     value = globalFilters.longitude,
-                                    keyboardType = KeyboardType.Number
+                                    keyboardType = KeyboardType.Number,
+                                    errorMessage = errors[FilterFields.AREA_LONGITUDE],
                                 ) {
-                                    onFilterUpdate(globalFilters.copy { longitude = it })
+                                    updateFilters(globalFilters.copy { longitude = it })
                                 }
                             }
                         }
                         InputText(
                             label = "Radius",
                             value = globalFilters.radius,
-                            keyboardType = KeyboardType.Number
+                            keyboardType = KeyboardType.Number,
+                            errorMessage = errors[FilterFields.AREA_RADIUS],
                         ) {
-                            onFilterUpdate(globalFilters.copy { radius = it })
+                            updateFilters(globalFilters.copy { radius = it })
                         }
                     }
                     Divider()
@@ -369,8 +445,13 @@ fun SearchFilters(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-
-                        onFilterUpdate(globalFilters.copy { mustApply = true })
+                        errors = checkFilters(globalFilters)
+                        if (errors.isEmpty()) {
+                            coroutineScope.launch {
+                                globalState.scaffoldState.drawerState.close()
+                            }
+                            onFilterUpdate(globalFilters.copy { mustApply = true })
+                        }
                     }
                 ) {
                     Row(
