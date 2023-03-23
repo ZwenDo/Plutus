@@ -121,7 +121,13 @@ fun SearchFilters(
                         text = "Filters",
                         style = MaterialTheme.typography.h5
                     )
-                    TextButton(onClick = { onResetFilter() }) {
+                    TextButton(onClick = {
+                        onResetFilter()
+                        errors = emptyMap()
+                        coroutineScope.launch {
+                            globalState.scaffoldState.drawerState.close()
+                        }
+                    }) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -167,10 +173,18 @@ fun SearchFilters(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text("Date range", style = MaterialTheme.typography.h6)
-                        InputDate(label = "From", errorMessage = errors[FilterFields.FROM_DATE]) {
+                        InputDate(
+                            label = "From",
+                            value = globalFilters.fromDate,
+                            errorMessage = errors[FilterFields.FROM_DATE]
+                        ) {
                             updateFilters(globalFilters.copy { fromDate = it })
                         }
-                        InputDate(label = "To", errorMessage = errors[FilterFields.TO_DATE]) {
+                        InputDate(
+                            label = "To",
+                            value = globalFilters.toDate,
+                            errorMessage = errors[FilterFields.TO_DATE]
+                        ) {
                             updateFilters(globalFilters.copy { toDate = it })
                         }
                     }
