@@ -20,7 +20,7 @@ interface GlobalState {
     var currentView: View
     var writeExternalStoragePermission: Boolean
     var scaffoldState: ScaffoldState
-    var globalFilters: GlobalFiltersWrapper
+    var globalFilters: GlobalFilters
 }
 
 @Composable
@@ -32,7 +32,7 @@ fun initGlobalState(): GlobalState {
         override var currentTransaction: Transaction? by rememberSaveable { mutableStateOf(null) }
         override var currentView: View by rememberSaveable { mutableStateOf(View.BOOK_SELECTION) }
         override var scaffoldState: ScaffoldState by remember { mutableStateOf(scaffoldState) }
-        override var globalFilters: GlobalFiltersWrapper by remember { mutableStateOf(GlobalFiltersWrapper()) }
+        override var globalFilters: GlobalFilters by remember { mutableStateOf(GlobalFiltersWrapper()) }
         override var writeExternalStoragePermission: Boolean by rememberSaveable {
             val permission = ActivityCompat.checkSelfPermission(
                 context,

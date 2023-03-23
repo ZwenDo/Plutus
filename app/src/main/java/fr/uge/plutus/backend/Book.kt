@@ -41,9 +41,7 @@ abstract class BookDao {
 
     suspend fun upsert(book: Book) = try {
         insert(book)
-        Log.d("YEP", "inserted: $book")
     } catch (e: SQLiteConstraintException) {
-        Log.d("YEP", "updated: $book")
         update(book)
     }
 

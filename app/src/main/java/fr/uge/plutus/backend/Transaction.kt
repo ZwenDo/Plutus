@@ -1,7 +1,12 @@
 package fr.uge.plutus.backend
 
 import android.database.sqlite.SQLiteConstraintException
+import android.util.Log
 import androidx.room.*
+import androidx.sqlite.db.SimpleSQLiteQuery
+import androidx.sqlite.db.SupportSQLiteQuery
+import fr.uge.plutus.frontend.store.GlobalFilters
+import fr.uge.plutus.util.toDateOrNull
 import java.io.Serializable
 import java.util.*
 
@@ -80,4 +85,72 @@ interface TransactionDao {
         end: Date,
         tagId: UUID
     ): List<Transaction>
+
+    @RawQuery
+    suspend fun findFiltered(query: SupportSQLiteQuery): List<Transaction>
+
+}
+
+
+suspend fun TransactionDao.findWithGlobalFilters(
+    bookId: UUID,
+    filters: GlobalFilters,
+    database: Database? = null
+): List<Transaction> {
+    val dao = database?.transactions() ?: Database.transactions()
+
+    val args = mutableListOf<Any>()
+    val query = buildString {
+        append("SELECT * FROM transactions WHERE bookId = ?")
+        args += bookId.toString()
+
+        filters.description.ifNotBlank {
+            append(" AND description LIKE ?")
+            args += "%$it%"
+        }
+
+        filters.fromDate.ifNotBlank {
+            append(" AND date >= ?")
+            args += it.toDateOrNull()!!.time
+        }
+
+        filters.toDate.ifNotBlank {
+            append(" AND date <= ?")
+            args += it.toDateOrNull()!!.time
+        }
+
+        filters.latitude.ifNotBlank {
+            append(" AND latitude BETWEEN ? AND ?")
+            args += it.toDouble() - filters.radius.toDouble()
+            args += it.toDouble() + filters.radius.toDouble()
+        }
+
+        filters.longitude.ifNotBlank {
+            append(" AND longitude BETWEEN ? AND ?")
+            args += it.toDouble() - filters.radius.toDouble()
+            args += it.toDouble() + filters.radius.toDouble()
+        }
+
+        filters.fromAmount.ifNotBlank {
+            append(" AND amount >= ?")
+            args += it.toDouble()
+        }
+
+        filters.toAmount.ifNotBlank {
+            append(" AND amount <= ?")
+            args += it.toDouble()
+        }
+
+        filters.tags.forEach {
+            append(" AND transactionId IN (SELECT transactionId FROM tag_transaction_join WHERE tagId = ?)")
+            args += it.toString()
+        }
+    }
+
+    val finalQuery = SimpleSQLiteQuery(query, args.toTypedArray())
+    return dao.findFiltered(finalQuery)
+}
+
+private inline fun String.ifNotBlank(block: (String) -> Unit) {
+    if (isNotBlank()) block(this)
 }
