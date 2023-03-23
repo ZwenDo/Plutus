@@ -51,11 +51,7 @@ suspend fun importBook(
     token: String?,
     database: Database? = null
 ): Boolean {
-    require(
-        fileUri == null ||
-                (fileUri.scheme == "content" &&
-                        fileUri.lastPathSegment?.endsWith(".book.plutus") == true)
-    ) {
+    require(fileUri == null || fileUri.scheme == "content") {
         "Invalid file: $fileUri"
     }
 
