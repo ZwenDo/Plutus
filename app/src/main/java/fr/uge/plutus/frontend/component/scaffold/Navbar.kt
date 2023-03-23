@@ -90,7 +90,6 @@ fun NavbarButton(icon: Int, isActive: Boolean, disabled: Boolean, onClick: () ->
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun NavbarPreview() {

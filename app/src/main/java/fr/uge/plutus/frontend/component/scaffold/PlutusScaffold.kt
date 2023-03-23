@@ -25,7 +25,11 @@ fun PlutusScaffold() {
         floatingActionButton = globalState.currentView.fabComponent,
         bottomBar = { Navbar() },
         content = { padding ->
-            Column(Modifier.fillMaxSize().padding(bottom = 60.dp)) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 60.dp)
+            ) {
                 globalState.currentView.contentComponent(padding)
             }
         },
@@ -33,7 +37,6 @@ fun PlutusScaffold() {
         drawerGesturesEnabled = true,
     )
 }
-
 
 @Preview(showBackground = true)
 @Composable

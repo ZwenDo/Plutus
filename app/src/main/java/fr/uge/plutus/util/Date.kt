@@ -32,10 +32,8 @@ fun Date.toStringFormatted(): String {
     return "$day/$month/$year"
 }
 
-
 fun Date.toLocalDate(): LocalDate = Instant.ofEpochMilli(time)
     .atZone(ZoneId.systemDefault())
     .toLocalDate()
-
 
 fun LocalDateTime.toDate(): Date = Date.from(atZone(ZoneId.systemDefault()).toInstant())

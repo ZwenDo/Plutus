@@ -12,11 +12,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
 import fr.uge.plutus.frontend.store.globalState
@@ -45,7 +48,7 @@ fun BookListItem(
                     maxLines = 1,
                 )
                 Text(
-                    text = "$transactions transactions",
+                    text = stringResource(R.string.number_of_transactions).format(transactions),
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
@@ -103,12 +106,12 @@ fun EmptyBookListPlaceholder() {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "No book found",
+            text = stringResource(R.string.no_book_found),
             style = MaterialTheme.typography.h5,
             textAlign = TextAlign.Center,
         )
         Text(
-            text = "Click on the button below to create a new one",
+            text = stringResource(R.string.click_to_create_a_new_one),
             style = MaterialTheme.typography.body1,
             color = Color.Gray,
             textAlign = TextAlign.Center,
@@ -140,69 +143,6 @@ fun BookSelectionView() {
         EmptyBookListPlaceholder()
     }
 }
-
-/*
-@Composable
-fun BookSelectionItem(book: Book) {
-    val globalState = globalState()
-    var exporting by rememberSaveable { mutableStateOf(ImportExportState.NONE) }
-
-    if (exporting.isNotNone) {
-        ImportExportModal(
-            book,
-            isImport = exporting.isImport
-        ) {
-            exporting = ImportExportState.NONE
-        }
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(
-            modifier = Modifier
-                .scale(0.8f)
-                .border(1.dp, Color.Black, CircleShape),
-            onClick = {
-                exporting = ImportExportState.EXPORT
-            }
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.file_upload),
-                contentDescription = "Export"
-            )
-        }
-        IconButton(
-            modifier = Modifier
-                .scale(0.8f)
-                .border(1.dp, Color.Black, CircleShape),
-            onClick = {
-                exporting = ImportExportState.IMPORT
-            }) {
-            Icon(
-                painter = painterResource(id = R.drawable.file_download),
-                contentDescription = "Import"
-            )
-
-        }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    globalState.currentBook = book
-                    globalState.currentView = View.TRANSACTION_LIST
-                }
-                .border(1.dp, Color.Black, RoundedCornerShape(8.dp))
-                .padding(8.dp),
-        ) {
-            Text(book.name)
-        }
-    }
-}
- */
 
 enum class ImportExportState {
     NONE,

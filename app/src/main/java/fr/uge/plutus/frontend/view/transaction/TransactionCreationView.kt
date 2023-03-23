@@ -11,9 +11,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fr.uge.plutus.R
+import fr.uge.plutus.MainActivity
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.util.getLocation
@@ -24,10 +27,7 @@ import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.attachment.AttachmentCreationView
 import fr.uge.plutus.util.toDateOrNull
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.util.*
 
 enum class Field {
@@ -66,6 +66,8 @@ fun TransactionCreationView() {
     var description by rememberSaveable { mutableStateOf(initialTransaction?.description ?: "") }
     var date by rememberSaveable { mutableStateOf(initialTransaction?.date?.toString() ?: "") }
     var amount by rememberSaveable { mutableStateOf(initialTransaction?.amount?.toString() ?: "") }
+    var askLocation by rememberSaveable { mutableStateOf(false) }
+
     var latitude by rememberSaveable {
         mutableStateOf(
             initialTransaction?.latitude?.toString() ?: ""
@@ -83,6 +85,15 @@ fun TransactionCreationView() {
     val initialAttachments = remember { mutableStateMapOf<UUID, Attachment>() }
     val attachments = remember { mutableStateMapOf<UUID, Attachment>() }
 
+    val descriptionInvalidMessage = stringResource(R.string.description_cannot_be_empty)
+    val dateFormatInvalidMessage = stringResource(R.string.date_format_invalid)
+    val amountInvalidMessage = stringResource(R.string.amount_invalid)
+    val latitudeAndLongitudeInvalidMessage = stringResource(R.string.latitude_and_longitude_invalid)
+    val latitudeInvalidMessage = stringResource(R.string.latitude_invalid)
+    val longitudeInvalidMessage = stringResource(R.string.longitude_invalid)
+    val transactionCreatedMessage = stringResource(R.string.transaction_created)
+    val transactionErrorMessage = stringResource(R.string.error_while_creating_transaction)
+
     LaunchedEffect(Unit) {
         if (initialTransaction != null) {
             withContext(Dispatchers.IO) {
@@ -96,32 +107,50 @@ fun TransactionCreationView() {
         }
     }
 
+    LaunchedEffect(globalState.locationPermission, askLocation) {
+        if (!askLocation) return@LaunchedEffect
+
+        if (!globalState.locationPermission) {
+            MainActivity.requestLocationPermission()
+        } else {
+            getLocation(
+                context = context,
+                onError = {
+                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show(); askLocation = false
+                }) {
+                latitude = it.latitude.toString()
+                longitude = it.longitude.toString()
+                askLocation = false
+            }
+        }
+    }
+
     LaunchedEffect(creating) {
         if (!creating) return@LaunchedEffect
 
         errors.clear()
         if (description.isBlank()) {
-            errors[Field.DESCRIPTION] = "Description cannot be empty"
+            errors[Field.DESCRIPTION] = descriptionInvalidMessage
         }
         val actualDate = date.toDateOrNull()
         if (actualDate == null) {
-            errors[Field.DATE] = "Date format is invalid"
+            errors[Field.DATE] = dateFormatInvalidMessage
         }
         val actualAmount = amount.toDoubleOrNull()
         if (actualAmount == null) {
-            errors[Field.AMOUNT] = "Amount is invalid"
+            errors[Field.AMOUNT] = amountInvalidMessage
         }
         if ((longitude.isBlank()) xor (latitude.isBlank())) {
-            errors[Field.LATITUDE] = "Latitude and longitude must be both set or both unset"
-            errors[Field.LONGITUDE] = "Latitude and longitude must be both set or both unset"
+            errors[Field.LATITUDE] = latitudeAndLongitudeInvalidMessage
+            errors[Field.LONGITUDE] = latitudeAndLongitudeInvalidMessage
         }
         val actualLatitude = latitude.toDoubleOrNull()
         if (actualLatitude == null && latitude.isNotBlank()) {
-            errors[Field.LATITUDE] = "Latitude is invalid"
+            errors[Field.LATITUDE] = latitudeInvalidMessage
         }
         val actualLongitude = longitude.toDoubleOrNull()
         if (actualLongitude == null && longitude.isNotBlank()) {
-            errors[Field.LONGITUDE] = "Longitude is invalid"
+            errors[Field.LONGITUDE] = longitudeInvalidMessage
         }
         if (errors.isNotEmpty()) {
             creating = false
@@ -172,12 +201,12 @@ fun TransactionCreationView() {
                     Database.tagTransactionJoin().insert(transaction, todoTag)
                 }
             }
-            Toast.makeText(context, "Transaction created", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, transactionCreatedMessage, Toast.LENGTH_SHORT).show()
 
             globalState.currentView = View.TRANSACTION_LIST
             globalState.currentTransaction = null
         } catch (e: SQLiteConstraintException) {
-            Toast.makeText(context, "Error while creating transaction", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, transactionErrorMessage, Toast.LENGTH_SHORT).show()
         }
         creating = false
     }
@@ -190,7 +219,7 @@ fun TransactionCreationView() {
         verticalArrangement = Arrangement.Center
     ) {
         InputText(
-            "Description",
+            stringResource(R.string.description),
             description,
             singleLine = false,
             errorMessage = errors[Field.DESCRIPTION]
@@ -198,20 +227,20 @@ fun TransactionCreationView() {
             description = it
             errors.clear()
         }
-        InputDate("Date", errors[Field.DATE]) {
+        InputDate(stringResource(R.string.date), errors[Field.DATE]) {
             date = it
             errors.clear()
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(Modifier.weight(3f / 5f)) {
-                InputText("Amount", amount, errorMessage = errors[Field.AMOUNT]) {
+                InputText(stringResource(R.string.amount), amount, errorMessage = errors[Field.AMOUNT]) {
                     amount = it
                     errors.clear()
                 }
             }
             Box(Modifier.weight(2f / 5f)) {
                 InputSelectEnum(
-                    label = "Currency",
+                    label = stringResource(R.string.currency),
                     options = Currency.values().toList(),
                     initial = currency,
                     mapper = { Currency.valueOf(it) },
@@ -229,13 +258,13 @@ fun TransactionCreationView() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(modifier = Modifier.weight(1f / 2f)) {
-                InputText("Latitude", latitude, errorMessage = errors[Field.LATITUDE]) {
+                InputText(stringResource(R.string.latitude), latitude, errorMessage = errors[Field.LATITUDE]) {
                     latitude = it
                     errors.clear()
                 }
             }
             Box(modifier = Modifier.weight(1f / 2f)) {
-                InputText("Longitude", longitude, errorMessage = errors[Field.LONGITUDE]) {
+                InputText(stringResource(R.string.longitude), longitude, errorMessage = errors[Field.LONGITUDE]) {
                     longitude = it
                     errors.clear()
                 }
@@ -245,17 +274,12 @@ fun TransactionCreationView() {
                     .weight(1f / 5f)
                     .padding(top = 0.dp),
                 onClick = {
-                    getLocation(
-                        context = context,
-                        onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }) {
-                        latitude = it.latitude.toString()
-                        longitude = it.longitude.toString()
-                    }
+                    askLocation = true
                 }
             ) {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
-                    contentDescription = "My location"
+                    contentDescription = stringResource(R.string.my_location)
                 )
             }
         }
@@ -274,7 +298,7 @@ fun TransactionCreationView() {
         )
         Button(modifier = Modifier.fillMaxWidth(), onClick = { creating = true }) {
             Text(
-                text = if (initialTransaction == null) "CREATE" else "SAVE",
+                text = if (initialTransaction == null) stringResource(R.string.create) else stringResource(R.string.save),
                 fontWeight = FontWeight.SemiBold
             )
         }

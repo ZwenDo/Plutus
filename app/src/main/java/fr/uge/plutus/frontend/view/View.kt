@@ -20,6 +20,7 @@ import fr.uge.plutus.frontend.view.transaction.TransactionCreationView
 import fr.uge.plutus.frontend.view.transaction.TransactionDetails
 import fr.uge.plutus.frontend.view.transaction.TransactionHeader
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 enum class View(
     val headerComponent: @Composable () -> Unit,
@@ -30,7 +31,7 @@ enum class View(
 
     BOOK_SELECTION(
         headerComponent = {
-            TopAppBar(title = { Text("Books") })
+            TopAppBar(title = { Text(stringResource(id = R.string.books)) })
         },
         contentComponent = { BookSelectionView() },
         fabComponent = {
@@ -40,7 +41,7 @@ enum class View(
             }) {
                 Icon(
                     Icons.Default.Add,
-                    "New book"
+                    stringResource(R.string.new_book)
                 )
             }
         }
@@ -48,7 +49,7 @@ enum class View(
 
     BOOK_CREATION(
         headerComponent = {
-            TopAppBar(title = { Text("New book") })
+            TopAppBar(title = { Text(stringResource(R.string.new_book)) })
         },
         contentComponent = { BookCreationView() }
     ),
@@ -56,21 +57,21 @@ enum class View(
     BOOK_OVERVIEW(
         headerComponent = {
             val globalState = globalState()
-            TopAppBar(title = { Text("Overview: ${globalState.currentBook!!.name}") })
+            TopAppBar(title = { Text(stringResource(id = R.string.overview_book_name).format(globalState.currentBook!!.name)) })
         },
         contentComponent = { BookOverviewLoader() }
     ),
 
     TRANSACTION_CREATION(
         headerComponent = {
-            TopAppBar(title = { Text("New transaction") })
+            TopAppBar(title = { Text(stringResource(R.string.new_transaction)) })
         },
         contentComponent = { TransactionCreationView() }
     ),
 
     TRANSACTION_EDIT(
         headerComponent = {
-            TopAppBar(title = { Text("Edit transaction") })
+            TopAppBar(title = { Text(stringResource(R.string.edit_transaction)) })
         },
         contentComponent = { TransactionCreationView() }
     ),
@@ -78,13 +79,14 @@ enum class View(
     TRANSACTION_LIST(
         headerComponent = {
             val globalState = globalState()
+            TopAppBar(title = { Text(stringResource(R.string.transaction_book_name).format(globalState.currentBook!!.name)) })
             val coroutineScope = rememberCoroutineScope()
             var showMenu by remember { mutableStateOf(false) }
 
             TopAppBar(
                 title = {
                     Text(
-                        "Transactions: ${globalState.currentBook?.name}",
+                        stringResource(R.string.transaction_book_name).format(globalState.currentBook?.name),
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                     )
@@ -95,7 +97,7 @@ enum class View(
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.sort),
-                            "Sort"
+                            stringResource(R.string.sort)
                         )
                     }
                     IconButton(onClick = {
@@ -105,7 +107,7 @@ enum class View(
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.filter),
-                            "Filters"
+                            stringResource(R.string.filters)
                         )
                     }
                     IconButton(onClick = { showMenu = !showMenu }) {
@@ -119,25 +121,25 @@ enum class View(
                             showMenu = false
                             globalState.importExportState = ImportExportState.IMPORT
                         }) {
-                            Text("Import")
+                            Text(stringResource(R.string.import_))
                         }
                         DropdownMenuItem(onClick = {
                             showMenu = false
                             globalState.importExportState = ImportExportState.EXPORT
                         }) {
-                            Text("Export")
+                            Text(stringResource(R.string.export))
                         }
                         DropdownMenuItem(onClick = {
                             showMenu = false
                             globalState.duplicatingBook = true
                         }) {
-                            Text("Duplicate book")
+                            Text(stringResource(R.string.duplicate_book))
                         }
                         DropdownMenuItem(onClick = {
                             showMenu = false
                             globalState.deletingBook = true
                         }) {
-                            Text("Delete book")
+                            Text(stringResource(R.string.delete_book))
                         }
                     }
                 }
@@ -152,7 +154,7 @@ enum class View(
             }) {
                 Icon(
                     Icons.Default.Add,
-                    "New transaction"
+                    stringResource(R.string.new_transaction)
                 )
             }
         }
@@ -162,17 +164,18 @@ enum class View(
         headerComponent = {
             val globalState = globalState()
             val currentTransaction = globalState.currentTransaction
+
             var showMenu by remember { mutableStateOf(false) }
 
             Column {
                 TopAppBar(
-                    title = { Text("Transaction details") },
+                    title = { Text(stringResource(R.string.transaction_details)) },
                     navigationIcon = {
                         IconButton(onClick = {
                             globalState.currentView = TRANSACTION_LIST
                             globalState.currentTransaction = null
                         }) {
-                            Icon(Icons.Default.ArrowBack, "Back")
+                            Icon(Icons.Default.ArrowBack, stringResource(R.string.back))
                         }
                     },
                     actions = {
@@ -187,7 +190,7 @@ enum class View(
                                 showMenu = false
                                 globalState.deletingTransaction = true
                             }) {
-                                Text("Delete transaction")
+                                Text(stringResource(R.string.delete_transaction))
                             }
                         }
                     })
@@ -207,7 +210,7 @@ enum class View(
             }) {
                 Icon(
                     Icons.Default.Edit,
-                    "Edit"
+                    stringResource(R.string.edit)
                 )
             }
         }

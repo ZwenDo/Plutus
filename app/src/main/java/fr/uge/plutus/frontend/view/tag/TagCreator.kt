@@ -11,9 +11,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.BudgetTarget
 import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.backend.TimePeriod
@@ -47,8 +49,8 @@ fun TagCreator(
 
     Dialog(
         open = open,
-        title = "Create a new tag",
-        submitButtonText = "CREATE",
+        title = stringResource(R.string.create_a_new_tag),
+        submitButtonText = stringResource(R.string.create),
         onClose = { submit ->
             if (submit) {
                 if (addBudgetTarget) {
@@ -70,7 +72,7 @@ fun TagCreator(
             item {
                 Box(Modifier.padding(horizontal = 8.dp)) {
                     InputText(
-                        label = "Name",
+                        label = stringResource(R.string.name),
                         value = name,
                         onValueChange = { name = it },
                     )
@@ -86,7 +88,7 @@ fun TagCreator(
                 ) {
                     Checkbox(checked = addBudgetTarget, onCheckedChange = { addBudgetTarget = it })
                     Text(
-                        text = "Budget target",
+                        text = stringResource(R.string.budget_target),
                         fontSize = 16.sp,
                     )
                 }
@@ -99,7 +101,7 @@ fun TagCreator(
                 ) {
                     Box(Modifier.weight(1f / 2f)) {
                         InputText(
-                            label = "Budget",
+                            label = stringResource(R.string.budget),
                             value = budgetTarget.toString(),
                             onValueChange = { budgetTarget = it.toDouble() },
                             enabled = addBudgetTarget,
@@ -107,7 +109,7 @@ fun TagCreator(
                     }
                     Box(Modifier.weight(1f / 2f)) {
                         InputSelectEnum(
-                            label = "Currency",
+                            label = stringResource(R.string.currency),
                             options = Currency.values().toList(),
                             initial = Currency.USD,
                             mapper = { Currency.valueOf(it) },
@@ -120,7 +122,7 @@ fun TagCreator(
             item {
                 Box(Modifier.padding(horizontal = 8.dp)) {
                     InputSelectEnum(
-                        label = "Period",
+                        label = stringResource(R.string.period),
                         options = TimePeriod.values().toList(),
                         initial = TimePeriod.DAILY,
                         mapper = { TimePeriod.valueOf(it) },

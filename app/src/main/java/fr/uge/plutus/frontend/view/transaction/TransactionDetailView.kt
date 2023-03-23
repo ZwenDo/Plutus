@@ -1,5 +1,6 @@
 package fr.uge.plutus.frontend.view.transaction
 
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -22,11 +23,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import createNotificationChannel
 import fr.uge.plutus.R
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
@@ -40,6 +43,7 @@ import fr.uge.plutus.util.DateFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import showSimpleNotification
 import java.util.*
 
 
@@ -59,17 +63,40 @@ private suspend fun getBookTags(bookId: UUID): List<Tag> =
         Database.tags().findByBookId(bookId)
     }
 
+private suspend fun checkTagTarget(tag: Tag, transaction: Transaction, context: Context) =
+    withContext(Dispatchers.Main) {
+        val channelId = "Budget Plutus"
+        val notificationId = 0
+        val textTitle = "Budget exceeded"
+        val textContent = "You have exceeded your budget for the tag ${tag.name}"
+        createNotificationChannel(channelId, context)
+        if (tag.budgetTarget == null) {
+            return@withContext
+        }
+
+        val (from, to) = tag.budgetTarget.timePeriod.toDateRange(transaction.date)
+        val bookId = transaction.bookId
+        val transactions = Database.transactions()
+            .findByBookIdAndDateRangeAndTagId(bookId, from, to, tag.tagId)
+        val total = transactions.sumOf { it.amount }
+        if (total > tag.budgetTarget.value) {
+            showSimpleNotification(context, channelId, notificationId, textTitle, textContent)
+        }
+    }
+
 
 private suspend fun updateTransactionTags(
     transaction: Transaction,
     transactionTags: List<Tag>,
-    tags: List<Tag>
+    tags: List<Tag>,
+    context: Context
 ) = withContext(Dispatchers.IO) {
     // Adding tags
     tags.filter {
         it !in transactionTags
     }.forEach {
         Database.tagTransactionJoin().insert(transaction, it)
+        checkTagTarget(it, transaction, context)
     }
     // Removing tags
     transactionTags.filter {
@@ -77,7 +104,6 @@ private suspend fun updateTransactionTags(
     }.forEach {
         Database.tagTransactionJoin().delete(transaction, it)
     }
-
 }
 
 
@@ -91,7 +117,7 @@ private fun createMapWithLocation(latitude: Double, longitude: Double): ImageBit
     val canvas = Canvas(mapBitmap)
     val radius = minOf(canvas.width, canvas.height) / 50f
     val x = (longitude + 180.0) / 360.0 * canvas.width
-    val y = (latitude + 90.0) / 180.0 * canvas.height
+    val y = (90.0 - latitude) / 180.0 * canvas.height
     canvas.drawCircle(
         x.toFloat(),
         y.toFloat(),
@@ -141,7 +167,7 @@ private fun DescriptionSection(transaction: Transaction) {
             .padding(16.dp)
     ) {
         Text(
-            text = "Description",
+            text = stringResource(R.string.description),
             fontSize = 14.sp,
             color = Color.Gray
         )
@@ -183,6 +209,8 @@ private fun TagsSection(transaction: Transaction) {
     var tagCreatorOpen by rememberSaveable { mutableStateOf(false) }
     var tagDto by rememberSaveable { mutableStateOf<TagDTO?>(null) }
 
+    val tagCreatedMessage = stringResource(R.string.tag_name_created)
+
     LaunchedEffect(Unit, tagDto) {
         if (tagDto != null) {
             return@LaunchedEffect
@@ -201,7 +229,7 @@ private fun TagsSection(transaction: Transaction) {
                 Database.tags().insert(dto.name, globalState.currentBook!!.uuid, dto.budgetTarget)
             }
         }
-        Toast.makeText(context, "Tag “${newTag.name}” created", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, tagCreatedMessage.format(newTag.name), Toast.LENGTH_SHORT).show()
         tagDto = null
     }
 
@@ -215,13 +243,13 @@ private fun TagsSection(transaction: Transaction) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = "Tags",
+                    text = stringResource(R.string.tags),
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
                 if (transactionTags.isEmpty()) {
                     Text(
-                        text = "No tags",
+                        text = stringResource(R.string.no_tags),
                         style = MaterialTheme.typography.body1,
                     )
                 } else {
@@ -231,7 +259,7 @@ private fun TagsSection(transaction: Transaction) {
                 }
             }
             TextButton(onClick = { tagCreatorOpen = true }) {
-                Text(text = "NEW TAG")
+                Text(text = stringResource(R.string.new_tag))
             }
         }
     }
@@ -244,7 +272,7 @@ private fun TagsSection(transaction: Transaction) {
         tagSelectorOpen = false
         if (it != null) { // null means the user clicked to cancel the dialog
             coroutineScope.launch {
-                updateTransactionTags(transaction, transactionTags, it)
+                updateTransactionTags(transaction, transactionTags, it, context)
                 viewId++
             }
         }
@@ -266,7 +294,7 @@ fun LocationSection(latitude: Double, longitude: Double) {
             .padding(16.dp)
     ) {
         Text(
-            text = "Location",
+            text = stringResource(R.string.location),
             fontSize = 14.sp,
             color = Color.Gray
         )
@@ -298,6 +326,8 @@ fun TransactionDetails(transaction: Transaction) {
     val globalState = globalState()
     val coroutineScope = rememberCoroutineScope()
 
+    val transactionDeletedMessage = stringResource(R.string.transaction_deleted)
+
     Column(Modifier.fillMaxSize()) {
         DescriptionSection(transaction)
         Divider()
@@ -314,7 +344,7 @@ fun TransactionDetails(transaction: Transaction) {
             globalState.currentView = View.TRANSACTION_LIST
             globalState.deletingTransaction = false
             deleteTransaction(transaction)
-            Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, transactionDeletedMessage, Toast.LENGTH_SHORT).show()
             globalState.currentTransaction = null
         }
     }
@@ -324,26 +354,26 @@ fun TransactionDetails(transaction: Transaction) {
             onDismissRequest = { globalState.deletingTransaction = false },
             title = {
                 Text(
-                    "Delete transaction",
+                    stringResource(R.string.delete_transaction),
                     style = MaterialTheme.typography.h6
                 )
             },
             text = {
                 Text(
-                    "Are you sure you want to delete this transaction? This action cannot be undone.",
+                    stringResource(R.string.are_you_sure_you_want_to_delete_this_transaction),
                     style = MaterialTheme.typography.body1
                 )
             },
             confirmButton = {
                 TextButton(onClick = { delete() }) {
-                    Text("DELETE")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = {
                     globalState.deletingTransaction = false
                 }) {
-                    Text("CANCEL")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

@@ -16,8 +16,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.serialization.ExportBook
 import fr.uge.plutus.backend.serialization.importBook
@@ -50,8 +53,8 @@ fun ImportBookModal(
 
     Dialog(
         open = true,
-        title = "Import in “${book.name}”",
-        submitButtonText = "IMPORT",
+        title = stringResource(R.string.import_in_book_name).format(book.name),
+        submitButtonText = stringResource(R.string.import_button),
         onClose = { submit ->
             if (submit) {
                 onClose(ImportDTO(isCloud, fileKey, password))
@@ -113,8 +116,8 @@ fun ExportBookModal(
 
     Dialog(
         open = true,
-        title = "Export “${book.name}”",
-        submitButtonText = "EXPORT",
+        title = stringResource(R.string.export_book).format(book.name),
+        submitButtonText = stringResource(R.string.export_maj),
         onClose = { submit ->
             if (submit) {
                 onClose(ExportDTO(isCloud, fileName, password))
@@ -186,6 +189,10 @@ fun ImportExportModal(
         }
     }
 
+    val exportSuccessfulMessage = stringResource(R.string.export_successful)
+    val passwordInvalidMessage = stringResource(R.string.invalid_password)
+    val importSuccessfulMessage = stringResource(R.string.import_successful)
+
     if (!isImport && submit) {
         ExportBook(
             password.ifEmpty { null },
@@ -200,7 +207,7 @@ fun ImportExportModal(
             // TODO it is the token
             Log.d("YEP", "token: $it")
             submit = false
-            Toast.makeText(currentContext, "Export successful", Toast.LENGTH_SHORT).show()
+            Toast.makeText(currentContext, exportSuccessfulMessage, Toast.LENGTH_SHORT).show()
             onDismiss()
         }
     }
@@ -216,9 +223,9 @@ fun ImportExportModal(
             mergeDestinationBook = target.uuid
         )
         if (!importResult) {
-            Toast.makeText(currentContext, "Invalid password", Toast.LENGTH_SHORT).show()
+            Toast.makeText(currentContext, passwordInvalidMessage, Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(currentContext, "Import successful", Toast.LENGTH_SHORT).show()
+            Toast.makeText(currentContext, importSuccessfulMessage, Toast.LENGTH_SHORT).show()
             globalState.mustRefetchTransactions = true
         }
         importingUri = null
