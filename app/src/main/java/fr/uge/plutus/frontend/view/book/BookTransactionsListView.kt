@@ -14,7 +14,6 @@ import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.transaction.TransactionListView
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -42,11 +41,9 @@ fun BookTransactionsListView() {
     }
 
     fun delete() {
-        // TODO: not working rn
         globalState.currentView = View.BOOK_SELECTION
         globalState.deletingBook = false
         coroutineScope.launch {
-            delay(50)
             deleteBook(book)
             Toast.makeText(context, "Book “${book.name}” deleted", Toast.LENGTH_SHORT).show()
             globalState.currentBook = null
