@@ -1,12 +1,11 @@
 package fr.uge.plutus.util
 
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.text.DateFormat
+import java.util.*
 
 class DateFormatter {
     companion object {
-        private val formatter = SimpleDateFormat("dd MMMM yyyy", Locale.FRANCE)
+        private val formatter = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault())
 
         fun format(date: Date): String {
             return formatter.format(date)
