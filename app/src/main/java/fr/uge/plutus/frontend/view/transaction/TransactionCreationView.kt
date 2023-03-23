@@ -3,10 +3,9 @@ package fr.uge.plutus.frontend.view.transaction
 import android.database.sqlite.SQLiteConstraintException
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -19,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import fr.uge.plutus.R
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
+import fr.uge.plutus.util.getLocation
 import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputSelectEnum
 import fr.uge.plutus.frontend.component.form.InputText
@@ -174,7 +174,7 @@ fun TransactionCreationView() {
                 initialAttachments.forEach { (_, old) -> // delete the rest
                     Database.attachments().delete(old)
                 }
-                if (initialTransaction != null && transaction.date > Date()) {
+                if (transaction.date > Date()) {
                     val tags = Database.tags()
                     val todoTag = tags
                         .findByName("@todo", currentBook.uuid)
@@ -233,7 +233,11 @@ fun TransactionCreationView() {
                 )
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box(modifier = Modifier.weight(1f / 2f)) {
                 InputText(stringResource(R.string.latitude), latitude, errorMessage = errors[Field.LATITUDE]) {
                     latitude = it
@@ -245,6 +249,24 @@ fun TransactionCreationView() {
                     longitude = it
                     errors.clear()
                 }
+            }
+            Button(
+                modifier = Modifier
+                    .weight(1f / 5f)
+                    .padding(top = 0.dp),
+                onClick = {
+                    getLocation(
+                        context = context,
+                        onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }) {
+                        latitude = it.latitude.toString()
+                        longitude = it.longitude.toString()
+                    }
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "My location"
+                )
             }
         }
 

@@ -1,8 +1,6 @@
 package fr.uge.plutus.backend
 
 import android.database.sqlite.SQLiteConstraintException
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.room.*
 import fr.uge.plutus.util.toDate
@@ -55,7 +53,7 @@ enum class TimePeriod(
     MONTHLY("Monthly"),
     YEARLY("Yearly");
 
-    @RequiresApi(Build.VERSION_CODES.O)
+
     fun toDateRange(date: Date): Pair<Date, Date> {
         val localDate = date.toLocalDate()
         return when (this) {
@@ -133,7 +131,7 @@ interface TagDao {
     @Query("SELECT * FROM tag WHERE bookId = :bookId")
     suspend fun findByBookId(bookId: UUID): List<Tag>
 
-    suspend fun insert(tag: String, bookId: UUID, budgetTarget: BudgetTarget?): Tag {
+    suspend fun insert(tag: String, bookId: UUID, budgetTarget: BudgetTarget? = null): Tag {
         val (type, name) = TagType.tagFromString(tag)
         val tagEntity = Tag(name, type, bookId, budgetTarget)
         _insert(tagEntity)

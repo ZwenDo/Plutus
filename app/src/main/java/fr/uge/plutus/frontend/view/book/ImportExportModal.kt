@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import fr.uge.plutus.R
@@ -22,6 +23,64 @@ import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.serialization.ExportBook
 import fr.uge.plutus.backend.serialization.importBook
 import fr.uge.plutus.frontend.component.form.InputText
+import fr.uge.plutus.frontend.component.scaffold.Dialog
+import java.util.*
+import androidx.compose.ui.window.Dialog as JCDialog
+
+
+@Composable
+fun ImportBookModal(
+    book: Book,
+) {
+    Dialog(
+        open = true,
+        title = "Import in “${book.name}”",
+        submitButtonText = "IMPORT",
+        onClose = {}
+    ) {
+        Column(
+            Modifier.padding(24.dp, 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(text = "This book is password protected. Please enter the password to decrypt the file.")
+            InputText(label = "Password", value = "", onValueChange = {})
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ImportBookModalPreview() {
+    val book = Book("Book", UUID.randomUUID())
+    ImportBookModal(book)
+}
+
+@Composable
+fun ExportBookModal(
+    book: Book,
+) {
+    Dialog(
+        open = true,
+        title = "Export “${book.name}”",
+        submitButtonText = "EXPORT",
+        onClose = {}
+    ) {
+        Column(
+            Modifier.padding(24.dp, 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            InputText(label = "Output file name", value = "", onValueChange = {})
+            InputText(label = "Password", value = "", onValueChange = {})
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ExportBookModalPreview() {
+    val book = Book("Book", UUID.randomUUID())
+    ExportBookModal(book)
+}
 
 @Composable
 fun ImportExportModal(
@@ -112,7 +171,7 @@ fun ImportExportModal(
         submit = false
     }
 
-    Dialog(
+    JCDialog(
         onDismissRequest = { onDismiss() },
     ) {
         Surface(shape = RoundedCornerShape(8.dp)) {
@@ -169,5 +228,18 @@ fun ImportExportModal(
             }
         }
     }
+}
 
+@Preview
+@Composable
+fun ExportModalPreview() {
+    val book = Book("Test", UUID.randomUUID())
+    ImportExportModal(book, false) {}
+}
+
+@Preview
+@Composable
+fun ImportModalPreview() {
+    val book = Book("Test", UUID.randomUUID())
+    ImportExportModal(book, true) {}
 }

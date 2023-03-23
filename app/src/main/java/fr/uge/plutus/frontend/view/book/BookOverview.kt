@@ -5,16 +5,18 @@ import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material.TextButton
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fr.uge.plutus.R
@@ -25,6 +27,7 @@ import fr.uge.plutus.frontend.component.BarChart
 import fr.uge.plutus.frontend.component.common.Card
 import fr.uge.plutus.frontend.component.common.Loading
 import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.frontend.view.View
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -210,15 +213,10 @@ fun BookOverviewLoader() {
             loaded = true
         }
     } else {
-        if (transactions.isEmpty()) {
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = stringResource(R.string.no_transactions_yet_visit),
-                    Modifier.padding(10.dp)
-                )
-            }
-        } else {
+        if (transactions.isNotEmpty()) {
             BookOverview(transactions)
+        } else {
+            EmptyTransactionListPlaceholder()
         }
     }
 }
@@ -227,3 +225,41 @@ private suspend fun getTransactions(book: Book): List<Transaction> =
     withContext(Dispatchers.IO) {
         Database.transactions().findAllByBookId(book.uuid)
     }
+
+@Composable
+fun EmptyTransactionListPlaceholder() {
+    val globalState = globalState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Empty book",
+            style = MaterialTheme.typography.h5,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            //R.string.no_transactions_yet_visit
+            text = "Your book doesn't have any transaction yet.\n Create one to get started.",
+            style = MaterialTheme.typography.body1,
+            color = Color.Gray,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(64.dp))
+        TextButton(onClick = {
+            globalState.currentView = View.TRANSACTION_CREATION
+        }) {
+            Text("CREATE A TRANSACTION")
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun EmptyTransactionListPlaceholderPreview() {
+    EmptyTransactionListPlaceholder()
+}

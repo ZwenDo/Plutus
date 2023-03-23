@@ -1,10 +1,9 @@
 package fr.uge.plutus.backend
 
 import android.database.sqlite.SQLiteConstraintException
-import android.util.Log
 import androidx.room.*
-import java.util.UUID
 import java.io.Serializable
+import java.util.*
 
 @Entity(
     tableName = "books",
@@ -18,11 +17,21 @@ data class Book(
     @PrimaryKey val uuid: UUID = UUID.randomUUID()
 ) : Serializable
 
+data class BookWithTransactions(
+    @Embedded val book: Book,
+    val transactionCount: Int,
+) {
+    fun toPair() = Pair(book, transactionCount)
+}
+
 @Dao
 abstract class BookDao {
 
     @Query("SELECT * FROM books")
     abstract suspend fun findAll(): List<Book>
+
+    @Query("SELECT b.*, count(t.transactionId) as transactionCount FROM books AS b LEFT JOIN transactions AS t ON t.bookId = b.uuid GROUP BY b.uuid")
+    abstract suspend fun findAllAndCountTransactions(): List<BookWithTransactions>
 
     @Query("SELECT * FROM books WHERE uuid = :bookId LIMIT 1")
     abstract suspend fun findById(bookId: UUID): Book?
@@ -41,9 +50,7 @@ abstract class BookDao {
 
     suspend fun upsert(book: Book) = try {
         insert(book)
-        Log.d("YEP", "inserted: $book")
     } catch (e: SQLiteConstraintException) {
-        Log.d("YEP", "updated: $book")
         update(book)
     }
 
@@ -55,6 +62,8 @@ abstract class BookDao {
         val tagsPerTransactionDao = database?.tagTransactionJoin()
             ?: Database.tagTransactionJoin()
         val tagDao = database?.tags() ?: Database.tags()
+        val filterDao = database?.filters() ?: Database.filters()
+        val filterTagJoinDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
 
         val tagsMap = mutableMapOf<Pair<String, TagType>, Tag>()
         tagDao.findByBookId(book.uuid)
@@ -79,6 +88,23 @@ abstract class BookDao {
                         tagsPerTransactionDao.insert(newTransaction, tagCopy)
                     }
             }
+
+        filterDao
+            .findAllByBookId(book.uuid)
+            .forEach { filter ->
+                val newFilter = filter.copy(
+                    filterId = UUID.randomUUID(),
+                    bookId = newBook.uuid
+                )
+                filterDao.insert(newFilter) // insert filter copy
+                filterTagJoinDao
+                    .findTagsByFilter(filter.filterId)
+                    .forEach {
+                        val tagCopy = tagsMap[it.name to it.type]!!
+                        filterTagJoinDao.insert(newFilter, tagCopy)
+                    }
+            }
+
         return newBook
     }
 
