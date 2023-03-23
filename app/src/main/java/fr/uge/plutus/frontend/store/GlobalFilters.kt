@@ -1,7 +1,9 @@
 package fr.uge.plutus.frontend.store
 
-import java.util.Date
-import java.util.UUID
+import fr.uge.plutus.backend.Filter
+import fr.uge.plutus.util.ifNotBlank
+import fr.uge.plutus.util.toDateOrNull
+import java.util.*
 
 interface GlobalFilters {
 
@@ -49,4 +51,39 @@ class GlobalFilterImpl : GlobalFilters {
         throw UnsupportedOperationException("Cannot copy a GlobalFilterImpl")
     }
 
+}
+
+
+fun GlobalFilters.toFilter(name: String, bookId: UUID): Filter = Filter.create(name, bookId) { b ->
+    description.ifNotBlank {
+        b.description = it
+    }
+
+    fromDate.ifNotBlank {
+        b.minDate = it.toDateOrNull()
+    }
+
+    toDate.ifNotBlank {
+        b.maxDate = it.toDateOrNull()
+    }
+
+    fromAmount.ifNotBlank {
+        b.minAmount = it.toDouble()
+    }
+
+    toAmount.ifNotBlank {
+        b.maxAmount = it.toDouble()
+    }
+
+    latitude.ifNotBlank {
+        b.latitude = it.toDouble()
+    }
+
+    longitude.ifNotBlank {
+        b.longitude = it.toDouble()
+    }
+
+    radius.ifNotBlank {
+        b.areaRange = it.toDouble()
+    }
 }

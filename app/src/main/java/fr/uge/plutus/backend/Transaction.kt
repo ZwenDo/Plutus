@@ -6,6 +6,7 @@ import androidx.room.*
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 import fr.uge.plutus.frontend.store.GlobalFilters
+import fr.uge.plutus.util.ifNotBlank
 import fr.uge.plutus.util.toDateOrNull
 import java.io.Serializable
 import java.util.*
@@ -149,8 +150,4 @@ suspend fun TransactionDao.findWithGlobalFilters(
 
     val finalQuery = SimpleSQLiteQuery(query, args.toTypedArray())
     return dao.findFiltered(finalQuery)
-}
-
-private inline fun String.ifNotBlank(block: (String) -> Unit) {
-    if (isNotBlank()) block(this)
 }

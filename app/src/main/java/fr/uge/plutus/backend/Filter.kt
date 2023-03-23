@@ -12,8 +12,9 @@ enum class Criteria(val value: String) {
     MIN_DATE("minDate"),
     MAX_DATE("maxDate"),
     AREA_RANGE("areaRange"),
-    MIN_LATITUDE("minLatitude"),
-    MAX_LATITUDE("maxLatitude"),
+    LATITUDE("latitude"),
+    LONGITUDE("longitude"),
+    DESCRIPTION("description"),
 }
 
 @Entity(
@@ -38,21 +39,27 @@ data class Filter(
         return criterias[criteria.value] ?: ""
     }
 
-    data class Builder(
+    companion object {
+
+        fun create(name: String, bookId: UUID, block: (Builder) -> Unit): Filter =
+            Builder(name, bookId).apply(block).build()
+
+    }
+
+    class Builder(
         val name: String,
         val bookId: UUID
     ) {
-        private var minAmount: Double? = null
-        private var maxAmount: Double? = null
-        private var currency: Currency? = null
-        private var minDate: Date? = null
-        private var maxDate: Date? = null
+        var description: String? = null
+        var minAmount: Double? = null
+        var maxAmount: Double? = null
+        var currency: Currency? = null
+        var minDate: Date? = null
+        var maxDate: Date? = null
+        var latitude: Double? = null
+        var longitude: Double? = null
+        var areaRange: Double? = null
 
-        fun minAmount(minAmount: Double) = apply { this.minAmount = minAmount }
-        fun maxAmount(maxAmount: Double) = apply { this.maxAmount = maxAmount }
-        fun currency(currency: Currency) = apply { this.currency = currency }
-        fun minDate(minDate: Date) = apply { this.minDate = minDate }
-        fun maxDate(maxDate: Date) = apply { this.maxDate = maxDate }
 
         fun build(): Filter {
             val vMinAmount = minAmount
@@ -62,6 +69,10 @@ data class Filter(
             val vMaxDate = maxDate
 
             val criterias = HashMap<String, String>()
+
+            description?.let {
+                criterias[Criteria.DESCRIPTION.value] = it
+            }
 
             if (vMinAmount != null && vMaxAmount != null) {
                 require(vMinAmount <= vMaxAmount) { "Min amount must be lower than max amount" }
@@ -89,6 +100,18 @@ data class Filter(
             }
             if (vMaxDate != null) {
                 criterias[Criteria.MAX_DATE.value] = vMaxDate.time.toString()
+            }
+            latitude?.let {
+                criterias[Criteria.LATITUDE.value] = it.toString()
+            }
+            longitude?.let {
+                criterias[Criteria.LONGITUDE.value] = it.toString()
+            }
+            require((latitude == null && longitude == null) || areaRange != null) {
+                "Area range must be specified if latitude or longitude is specified"
+            }
+            areaRange?.let {
+                criterias[Criteria.AREA_RANGE.value] = it.toString()
             }
 
             if (criterias.isEmpty()) {
