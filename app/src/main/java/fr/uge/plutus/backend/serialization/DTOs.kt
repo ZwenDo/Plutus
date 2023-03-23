@@ -76,13 +76,14 @@ data class FilterDTO(
     val filterId: UUID,
     val name: String,
     val criteria: Map<String, String>,
-//    val tags: List<UUID>,
+    val tags: List<UUID>,
 ) {
 
-    fun toFilter(): Filter = Filter(
+    fun toFilter(originalBookId: UUID, bookId: UUID): Filter = Filter(
         name,
-        filterId,
+        bookId,
         criteria,
+        if (bookId != originalBookId) UUID.randomUUID() else filterId,
     )
 
 }

@@ -21,7 +21,7 @@
     <string name="biggest_income_of_this_month">Biggest income of this month</string>
     <string name="biggest_outcome_of_this_month">Biggest outcome of this month</string>
     <string name="no_transactions_yet_visit">Your book doesn\'t have any transaction yet. Create one to get started.</string>
-    <string name="export">Export</string>
+    <string name="export">Export book</string>
     <string name="import_book">Import</string>
     <string name="export_successful">Export successful</string>
     <string name="invalid_password">Invalid password</string>
@@ -130,6 +130,9 @@
     <string name="no_transaction_found">No transaction found</string>
     <string name="click_to_create">Click on the button below to create a new one</string>
     <string name="sort">Sort</string>
-    <string name="import_">Import</string>
+    <string name="import_">Import book</string>
     <string name="delete_book">Delete book</string>
+    <string name="clipboard_copy_tag">Plutus file key</string>
+    <string name="clipboard_copy_toast">Your book key has been stored in your clipboard</string>
+    <string name="duplicate_transaction">Duplicate transaction</string>
 </resources>

@@ -1,7 +1,6 @@
 package fr.uge.plutus.backend
 
 import android.database.sqlite.SQLiteConstraintException
-import android.util.Log
 import androidx.room.*
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
@@ -113,6 +112,20 @@ interface TransactionDao {
 
     @RawQuery
     suspend fun findFiltered(query: SupportSQLiteQuery): List<Transaction>
+
+    suspend fun copy(transaction: Transaction) {
+        val newTransaction = transaction.copy(
+            transactionId = UUID.randomUUID(),
+        )
+        insert(newTransaction)
+        with(Database.tagTransactionJoin()) {
+            findTagsByTransactionId(transaction.transactionId)
+                .forEach { insert(newTransaction, it) }
+        }
+        //transaction.attachments().forEach {
+        //    Database.attachments()._insert(it.copy(transactionId = newTransaction.transactionId))
+        //}
+    }
 
 }
 

@@ -114,7 +114,7 @@ fun TagCreator(
                             initial = Currency.USD,
                             mapper = { Currency.valueOf(it) },
                             onSelected = { currency = it },
-                            enabled = addBudgetTarget,
+                            enabled = false,
                         )
                     }
                 }

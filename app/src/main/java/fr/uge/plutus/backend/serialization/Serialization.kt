@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import fr.uge.plutus.MainActivity
 import fr.uge.plutus.backend.*
+import fr.uge.plutus.backend.serialization.http.getData
+import fr.uge.plutus.backend.serialization.http.sendData
 import fr.uge.plutus.frontend.store.globalState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,55 +24,59 @@ import javax.crypto.IllegalBlockSizeException
 
 @Composable
 fun ExportBook(
+    list: List<Transaction>,
     password: String?,
     book: Book,
     name: String,
-    exportTags: Set<Tag> = emptySet(),
-    onExportCompleted: () -> Unit = {}
+    isCloud: Boolean,
+    onExportCompleted: (String?) -> Unit = {}
 ) {
     val globalState = globalState()
 
-    LaunchedEffect(true) {
-        if (!globalState.writeExternalStoragePermission) {
+    LaunchedEffect(globalState.writeExternalStoragePermission) {
+        if (!globalState.writeExternalStoragePermission && !isCloud) {
             MainActivity.requestWriteExternalStoragePermission()
             return@LaunchedEffect
         }
-        export(book, name, password, exportTags)
-        onExportCompleted()
+        val result = export(list, book, name, password, isCloud)
+        onExportCompleted(result)
     }
 }
 
 suspend fun importBook(
     password: String?,
-    fileUri: Uri,
+    fileUri: Uri?,
     context: Context,
     mergeDestinationBook: UUID,
+    token: String?,
     database: Database? = null
 ): Boolean {
-    require(
-        fileUri.scheme == "content" &&
-                fileUri.lastPathSegment?.endsWith(".book.plutus") == true
-    ) {
+    require(fileUri == null || fileUri.scheme == "content") {
         "Invalid file: $fileUri"
     }
 
-    val content = context
-        .contentResolver
-        .openInputStream(fileUri)!!
-        .use { it.readBytes() }
-        .let {
-            if (password != null) {
-                try {
-                    decrypt(password, it)
-                } catch (e: BadPaddingException) {
-                    return false
-                } catch (e: IllegalBlockSizeException) {
-                    return false
-                }
-            } else {
-                it
+    val array = if (token != null) {
+        getData(token)
+    } else {
+        context.contentResolver
+            .openInputStream(fileUri!!)!!
+            .use { it.readBytes() }
+    }
+
+    val content = array.let {
+        if (password != null) {
+            try {
+                decrypt(password, it)
+            } catch (e: BadPaddingException) {
+                return false
+            } catch (e: IllegalBlockSizeException) {
+                return false
             }
+        } else {
+            it
         }
+    }
+
 
     val bookDTO = try {
         Json.decodeFromString(BookDTO.serializer(), String(content))
@@ -89,7 +95,6 @@ private suspend fun Transaction.toDTO(
     val attachmentDao = database?.attachments() ?: Database.attachments()
 
     val tags = tagDao.findTagIdsByTransactionId(transactionId)
-    Log.d("Export", tags.toString())
     val attachments = attachmentDao.findAllByTransactionId(transactionId).map { it.toDTO() }
     return TransactionDTO(
         transactionId,
@@ -97,7 +102,7 @@ private suspend fun Transaction.toDTO(
         date.time,
         amount,
         currency,
-        latitude?.let { it to longitude!! }, // TODO no.
+        latitude?.let { it to longitude!! },
         tags,
         attachments
     )
@@ -115,32 +120,28 @@ private fun Attachment.toDTO(): AttachmentDTO = AttachmentDTO(
     uri
 )
 
-private fun Filter.toDTO(): FilterDTO {
-    return FilterDTO(
-        filterId,
-        name,
-        criterias,
-//        tags,
-    )
-}
+private fun Filter.toDTO(tags: List<UUID>): FilterDTO = FilterDTO(
+    filterId,
+    name,
+    criterias,
+    tags,
+)
 
-private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null): BookDTO {
-    val transactionDao = database?.transactions() ?: Database.transactions()
+private suspend fun Book.toDTO(
+    list: List<Transaction>,
+    database: Database? = null
+): BookDTO {
     val tagDao = database?.tags() ?: Database.tags()
     val filterDao = database?.filters() ?: Database.filters()
+    val tagFilterDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
 
-    val transactions = transactionDao
-        .run {
-            if (exportTags.isNotEmpty()) { // filter transactions by tags if there is at least one tag selected
-                val tagIds = exportTags.mapTo(HashSet(), Tag::tagId)
-                findAllByBookIdWithTags(uuid, tagIds)
-            } else {
-                findAllByBookId(uuid)
-            }
-        }
+    val transactions = list
         .map { it.toDTO(database) }
     val tags = tagDao.findByBookId(uuid).map { it.toDTO() }
-    val filters = filterDao.findAllByBookId(uuid).map { it.toDTO() }
+    val filters = filterDao.findAllByBookId(uuid).map {
+        val filterTags = tagFilterDao.findTagsByFilter(it.filterId).map { tag -> tag.tagId }
+        it.toDTO(filterTags)
+    }
     return BookDTO(
         uuid,
         name,
@@ -155,17 +156,31 @@ private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID) {
     val transactionDao = database?.transactions() ?: Database.transactions()
     val tagTransactionJoinDao = database?.tagTransactionJoin() ?: Database.tagTransactionJoin()
     val attachmentDao = database?.attachments() ?: Database.attachments()
+    val filterDao = database?.filters() ?: Database.filters()
+    val tagFilterDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
 
     val tagMap = mutableMapOf<UUID, UUID>()
     tags.forEach {
-        // if the book is imported as a new book, we need to generate new ids for the tags
         val tag = it.toTag(uuid, bookId)
         tagDao.upsert(tag)
         tagMap[it.tagId] = tag.tagId
     }
 
+    filters.forEach {
+        val filter = it.toFilter(uuid, bookId)
+        filterDao.upsert(filter)
+        it.tags.forEach { id ->
+            tagFilterDao.upsert(
+                TagFilterJoin(
+                    tagMap[id]!!,
+                    filter.filterId,
+                    bookId
+                )
+            )
+        }
+    }
+
     transactions.forEach {
-        // if the book is imported as a new book, we need to generate new ids for the transactions
         val transaction = it.toTransaction(uuid, bookId)
         transactionDao.upsert(transaction)
         it.tags.forEach { tagId ->
@@ -178,7 +193,6 @@ private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID) {
         }
 
         it.attachments.forEach { attachmentDTO ->
-            // if the book is imported as a new book, we need to generate new ids for the attachments
             val attachment = attachmentDTO.toAttachment(
                 it.transactionId,
                 transaction.transactionId
@@ -193,42 +207,53 @@ private val json = Json {
 }
 
 private suspend fun export(
+    list: List<Transaction>,
     book: Book,
     name: String,
     password: String?,
-    exportTags: Set<Tag>
-): Boolean {
+    isCloud: Boolean,
+): String? {
     require("/" !in name && "\\" !in name) { "Invalid name: $name" }
-    val json = json.encodeToString(book.toDTO(exportTags))
+    val json = json.encodeToString(book.toDTO(list))
 
-    val folder = Environment
-        .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-
-    // create a file with a unique name
-    lateinit var outputFile: File
-    var index = 0
-    do {
-        val fileName = if (index == 0) name else "$name ($index)"
-        outputFile = folder.resolve("$fileName.book.plutus")
-        index++
-    } while (outputFile.exists())
+    Log.d("YEP", "Salam")
 
     try {
-        val didCreate =
-            withContext(Dispatchers.IO) {
-                outputFile.createNewFile()
-            }
-
-        if (!didCreate) throw IllegalStateException("Cannot create file: $outputFile")
-
         val bytes = if (password != null) {
             encrypt(password, json.toByteArray())
         } else {
             json.toByteArray()
         }
-        outputFile.writeBytes(bytes)
+
+        if (!isCloud) {
+            val folder = Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+
+            // create a file with a unique name
+            lateinit var outputFile: File
+            var index = 0
+            do {
+                val fileName = if (index == 0) name else "$name ($index)"
+                outputFile = folder.resolve("$fileName.book.plutus")
+                index++
+            } while (outputFile.exists())
+
+            val didCreate = withContext(Dispatchers.IO) {
+                outputFile.createNewFile()
+            }
+
+            if (!didCreate) throw IllegalStateException("Cannot create file: $outputFile")
+
+            outputFile.writeBytes(bytes)
+        } else {
+            Log.d("YEP", "Salam")
+            return sendData(bytes).also {
+                Log.d("YEP", it)
+            }
+        }
     } catch (e: IOException) {
-        return false
+        Log.d("YEP", e.toString())
+        return null
     }
-    return true
+    return ""
 }

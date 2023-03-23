@@ -1,5 +1,6 @@
 package fr.uge.plutus.backend
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.room.*
 import java.util.*
 
@@ -58,4 +59,12 @@ abstract class TagFilterJoinDao {
 
     @Query("SELECT * FROM tag_filter_join WHERE bookId = :bookId")
     abstract suspend fun findAllByBookId(bookId: UUID): List<TagFilterJoin>
+
+
+    suspend fun upsert(tagFilterJoin: TagFilterJoin) = try {
+        _insert(tagFilterJoin)
+    } catch (e: SQLiteConstraintException) {
+        _delete(tagFilterJoin)
+    }
+
 }

@@ -1,6 +1,7 @@
 package fr.uge.plutus.backend
 
 import android.database.sqlite.SQLiteConstraintException
+import android.util.Log
 import androidx.room.*
 import java.util.*
 
@@ -67,7 +68,9 @@ abstract class TagTransactionJoinDao {
 
     suspend fun upsert(tagTransactionJoin: TagTransactionJoin) = try {
         _insert(tagTransactionJoin)
+        Log.d("YEP", "INSERTED")
     } catch (e: SQLiteConstraintException) {
+        Log.d("YEP", "UPDATED")
         update(tagTransactionJoin)
     }
 

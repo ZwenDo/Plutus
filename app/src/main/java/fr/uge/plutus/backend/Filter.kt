@@ -161,6 +161,13 @@ interface FilterDao {
             tagFilterJoinDao._insert(tagFilterJoin)
         }
     }
+
+    suspend fun upsert(filter: Filter) = try {
+        insert(filter)
+    } catch (e: Exception) {
+        update(filter)
+    }
+
 }
 
 
