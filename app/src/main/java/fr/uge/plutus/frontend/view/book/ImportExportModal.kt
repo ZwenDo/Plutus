@@ -8,8 +8,9 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.Checkbox
+import androidx.compose.material.Divider
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -24,25 +25,72 @@ import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.component.scaffold.Dialog
 import fr.uge.plutus.frontend.store.globalState
 import java.util.*
-import androidx.compose.ui.window.Dialog as JCDialog
 
+
+data class ImportDTO(
+    val isCloud: Boolean,
+    val fileKey: String,
+    val password: String,
+)
+
+data class ExportDTO(
+    val isCloud: Boolean,
+    val fileName: String,
+    val password: String,
+)
 
 @Composable
 fun ImportBookModal(
     book: Book,
+    onClose: (ImportDTO?) -> Unit = {},
 ) {
+    var isCloud by rememberSaveable { mutableStateOf(false) }
+    var fileKey by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+
     Dialog(
         open = true,
         title = "Import in “${book.name}”",
         submitButtonText = "IMPORT",
-        onClose = {}
+        onClose = { submit ->
+            if (submit) {
+                onClose(ImportDTO(isCloud, fileKey, password))
+            } else {
+                onClose(null)
+            }
+        }
     ) {
         Column(
             Modifier.padding(24.dp, 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(text = "This book is password protected. Please enter the password to decrypt the file.")
-            InputText(label = "Password", value = "", onValueChange = {})
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Checkbox(checked = isCloud, onCheckedChange = { isCloud = it })
+                Text(text = "Import from cloud")
+            }
+            InputText(
+                label = "File key",
+                value = fileKey,
+                onValueChange = { fileKey = it },
+                enabled = isCloud,
+            )
+        }
+        Divider()
+        Column(
+            Modifier.padding(24.dp, 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(text = "Please enter the password to decrypt the file if it is password protected.")
+            InputText(
+                label = "Password (optional)",
+                value = password,
+                onValueChange = { password = it },
+                isPassword = true,
+            )
         }
     }
 }
@@ -57,19 +105,54 @@ fun ImportBookModalPreview() {
 @Composable
 fun ExportBookModal(
     book: Book,
+    onClose: (ExportDTO?) -> Unit = {},
 ) {
+    var isCloud by rememberSaveable { mutableStateOf(false) }
+    var fileName by rememberSaveable { mutableStateOf(book.name) }
+    var password by rememberSaveable { mutableStateOf("") }
+
     Dialog(
         open = true,
         title = "Export “${book.name}”",
         submitButtonText = "EXPORT",
-        onClose = {}
+        onClose = { submit ->
+            if (submit) {
+                onClose(ExportDTO(isCloud, fileName, password))
+            } else {
+                onClose(null)
+            }
+        }
     ) {
         Column(
             Modifier.padding(24.dp, 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            InputText(label = "Output file name", value = "", onValueChange = {})
-            InputText(label = "Password", value = "", onValueChange = {})
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Checkbox(checked = isCloud, onCheckedChange = { isCloud = it })
+                Text(text = "Export to cloud")
+            }
+            Text(text = "A unique access key will be generated, please keep it safe.")
+        }
+        Divider()
+        Column(
+            Modifier.padding(24.dp, 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            InputText(
+                label = "Output file name",
+                value = fileName,
+                onValueChange = { fileName = it },
+            )
+            InputText(
+                label = "Password (optional)",
+                value = password,
+                onValueChange = { password = it },
+                isPassword = true,
+            )
         }
     }
 }
@@ -115,6 +198,7 @@ fun ImportExportModal(
                 return@ExportBook
             }
             // TODO it is the token
+            Log.d("YEP", "token: $it")
             submit = false
             Toast.makeText(currentContext, "Export successful", Toast.LENGTH_SHORT).show()
             onDismiss()
@@ -161,75 +245,27 @@ fun ImportExportModal(
         submit = false
     }
 
-    JCDialog(
-        onDismissRequest = { onDismiss() },
-    ) {
-        Surface(shape = RoundedCornerShape(8.dp)) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = if (isImport) {
-                        "Import in ${target.name}"
-                    } else {
-                        "Export ${target.name}"
-                    },
-                    style = MaterialTheme.typography.h6,
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(text = "Cloud ${if (isImport) "import" else "export"}")
-                        Checkbox(checked = isCloud, onCheckedChange = { isCloud = it })
-                    }
-                    InputText(
-                        label = "File key",
-                        value = cloudKey,
-                        enabled = isCloud
-                    ) {
-                        cloudKey = it
-                    }
-                }
-                if (!isImport) {
-                    InputText(
-                        label = "Export name",
-                        value = exportName,
-                    ) {
-                        exportName = it
-                    }
-                }
-                InputText(
-                    label = "Password",
-                    value = password,
-                    isPassword = true
-                ) {
-                    password = it
-                }
-                Button(onClick = { submit = true }) {
-                    Text(text = if (isImport) "Import" else "Export")
-                }
+    if (isImport) {
+        ImportBookModal(target) {
+            if (it != null) {
+                isCloud = it.isCloud
+                cloudKey = it.fileKey
+                password = it.password
+                submit = true
+            } else {
+                onDismiss()
+            }
+        }
+    } else {
+        ExportBookModal(target) {
+            if (it != null) {
+                isCloud = it.isCloud
+                exportName = it.fileName
+                password = it.password
+                submit = true
+            } else {
+                onDismiss()
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun ExportModalPreview() {
-    val book = Book("Test", UUID.randomUUID())
-    ImportExportModal(book, false) {}
-}
-
-@Preview
-@Composable
-fun ImportModalPreview() {
-    val book = Book("Test", UUID.randomUUID())
-    ImportExportModal(book, true) {}
 }
