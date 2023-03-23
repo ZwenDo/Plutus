@@ -44,6 +44,12 @@ data class Transaction(
 
 }
 
+data class TransactionLite(
+    val description: String,
+    val bookId: UUID,
+    val transactionId: UUID
+)
+
 @Dao
 interface TransactionDao {
     @Insert
@@ -69,6 +75,24 @@ interface TransactionDao {
         """
     )
     suspend fun findAllByBookIdWithTags(bookId: UUID, tags: Set<UUID>): List<Transaction>
+
+    @Query(
+        """ 
+        SELECT *
+        FROM transactions
+        JOIN tag_transaction_join
+        ON transactions.transactionId = tag_transaction_join.transactionId
+        JOIN tag
+        ON tag_transaction_join.tagId = tag.tagId
+        WHERE tag.name = '@todo' AND tag.type = 'INFO'
+        AND transactions.date BETWEEN :start AND :end
+        """
+    )
+    suspend fun findAllTransactionDescriptionByTodoByDate(
+        start: Date,
+        end: Date
+    ): List<TransactionLite>
+
 
     @Query("SELECT * FROM transactions WHERE transactionId = :id LIMIT 1")
     suspend fun findById(id: UUID): Transaction?

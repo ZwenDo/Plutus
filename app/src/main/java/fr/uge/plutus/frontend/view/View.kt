@@ -162,6 +162,7 @@ enum class View(
         headerComponent = {
             val globalState = globalState()
             val currentTransaction = globalState.currentTransaction
+
             var showMenu by remember { mutableStateOf(false) }
 
             Column {
