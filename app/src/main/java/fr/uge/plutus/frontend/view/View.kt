@@ -80,12 +80,11 @@ enum class View(
             val globalState = globalState()
             val coroutineScope = rememberCoroutineScope()
             var showMenu by remember { mutableStateOf(false) }
-            val currentBook by remember { mutableStateOf(globalState.currentBook!!.name) }
 
             TopAppBar(
                 title = {
                     Text(
-                        "Transactions: $currentBook",
+                        "Transactions: ${globalState.currentBook?.name}",
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                     )
@@ -130,6 +129,12 @@ enum class View(
                         }
                         DropdownMenuItem(onClick = {
                             showMenu = false
+                            globalState.duplicatingBook = true
+                        }) {
+                            Text("Duplicate book")
+                        }
+                        DropdownMenuItem(onClick = {
+                            showMenu = false
                             globalState.deletingBook = true
                         }) {
                             Text("Delete book")
@@ -157,8 +162,7 @@ enum class View(
         headerComponent = {
             val globalState = globalState()
             val currentTransaction = globalState.currentTransaction
-
-            var showMenu by androidx.compose.runtime.remember { mutableStateOf(false) }
+            var showMenu by remember { mutableStateOf(false) }
 
             Column {
                 TopAppBar(

@@ -25,6 +25,7 @@ interface GlobalState {
     var globalSorting: GlobalSorting?
     var importExportState: ImportExportState
     var deletingBook: Boolean
+    var duplicatingBook: Boolean
     var deletingTransaction: Boolean
     var displaySorting: Boolean
 }
@@ -48,6 +49,7 @@ fun initGlobalState(): GlobalState {
         }
         override var importExportState by rememberSaveable { mutableStateOf(ImportExportState.NONE) }
         override var deletingBook by rememberSaveable { mutableStateOf(false) }
+        override var duplicatingBook by rememberSaveable { mutableStateOf(false) }
         override var deletingTransaction by rememberSaveable { mutableStateOf(false) }
         override var displaySorting by rememberSaveable { mutableStateOf(false) }
         override var globalSorting: GlobalSorting? by rememberSaveable { mutableStateOf(null) }
