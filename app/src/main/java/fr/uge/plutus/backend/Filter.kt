@@ -1,15 +1,22 @@
 package fr.uge.plutus.backend
 
+import android.util.Log
 import androidx.room.*
-import java.util.*
+import fr.uge.plutus.frontend.store.GlobalFilters
+import fr.uge.plutus.util.ifNotBlank
+import fr.uge.plutus.util.toDateOrNull
 import java.io.Serializable
+import java.util.*
 
 enum class Criteria(val value: String) {
     MIN_AMOUNT("minAmount"),
     MAX_AMOUNT("maxAmount"),
-    CURRENCY("currency"),
     MIN_DATE("minDate"),
     MAX_DATE("maxDate"),
+    AREA_RANGE("areaRange"),
+    LATITUDE("latitude"),
+    LONGITUDE("longitude"),
+    DESCRIPTION("description"),
 }
 
 @Entity(
@@ -26,7 +33,6 @@ data class Filter(
     val name: String,
     val bookId: UUID,
     val criterias: Map<String, String> = emptyMap(),
-    val tags: Set<String> = emptySet(),
 
     @PrimaryKey val filterId: UUID = UUID.randomUUID()
 ) : Serializable {
@@ -35,39 +41,41 @@ data class Filter(
         return criterias[criteria.value] ?: ""
     }
 
-    data class Builder(
+    companion object {
+
+        fun create(name: String, bookId: UUID, block: (Builder) -> Unit): Filter =
+            Builder(name, bookId).apply(block).build()
+
+    }
+
+    class Builder(
         val name: String,
         val bookId: UUID
     ) {
-        private var minAmount: Double? = null
-        private var maxAmount: Double? = null
-        private var currency: Currency? = null
-        private var minDate: Date? = null
-        private var maxDate: Date? = null
-        private var tags: Set<Tag>? = null
+        var description: String? = null
+        var minAmount: Double? = null
+        var maxAmount: Double? = null
+        var minDate: Date? = null
+        var maxDate: Date? = null
+        var latitude: Double? = null
+        var longitude: Double? = null
+        var areaRange: Double? = null
 
-        fun minAmount(minAmount: Double) = apply { this.minAmount = minAmount }
-        fun maxAmount(maxAmount: Double) = apply { this.maxAmount = maxAmount }
-        fun currency(currency: Currency) = apply { this.currency = currency }
-        fun minDate(minDate: Date) = apply { this.minDate = minDate }
-        fun maxDate(maxDate: Date) = apply { this.maxDate = maxDate }
-        fun tags(tags: Set<Tag>) = apply { this.tags = tags }
 
         fun build(): Filter {
             val vMinAmount = minAmount
             val vMaxAmount = maxAmount
-            val vCurrency = currency
             val vMinDate = minDate
             val vMaxDate = maxDate
 
             val criterias = HashMap<String, String>()
 
-            if (vMinAmount != null && vMaxAmount != null) {
-                require(vMinAmount <= vMaxAmount) { "Min amount must be lower than max amount" }
+            description?.let {
+                criterias[Criteria.DESCRIPTION.value] = it
             }
 
-            if (vMinAmount != null || vMaxAmount != null) {
-                require(vCurrency != null) { "Currency must be specified" }
+            if (vMinAmount != null && vMaxAmount != null) {
+                require(vMinAmount <= vMaxAmount) { "Min amount must be lower than max amount" }
             }
 
             if (vMinDate != null && vMaxDate != null) {
@@ -80,23 +88,30 @@ data class Filter(
             if (vMaxAmount != null) {
                 criterias[Criteria.MAX_AMOUNT.value] = vMaxAmount.toString()
             }
-            if (vCurrency != null) {
-                criterias[Criteria.CURRENCY.value] = vCurrency.toString()
-            }
             if (vMinDate != null) {
                 criterias[Criteria.MIN_DATE.value] = vMinDate.time.toString()
             }
             if (vMaxDate != null) {
                 criterias[Criteria.MAX_DATE.value] = vMaxDate.time.toString()
             }
-
-            val t = tags?.map { it.name!! }?.toSet() ?: emptySet()
-
-            if (t.isEmpty() && criterias.isEmpty()) {
-                throw IllegalArgumentException("Filter must have at least one criteria or one tag")
+            latitude?.let {
+                criterias[Criteria.LATITUDE.value] = it.toString()
+            }
+            longitude?.let {
+                criterias[Criteria.LONGITUDE.value] = it.toString()
+            }
+            require((latitude == null && longitude == null) || areaRange != null) {
+                "Area range must be specified if latitude or longitude is specified"
+            }
+            areaRange?.let {
+                criterias[Criteria.AREA_RANGE.value] = it.toString()
             }
 
-            return Filter(name, bookId, criterias, t)
+            if (criterias.isEmpty()) {
+                throw IllegalArgumentException("Filter must have at least one criteria")
+            }
+
+            return Filter(name, bookId, criterias)
         }
     }
 }
@@ -109,9 +124,99 @@ interface FilterDao {
     @Delete
     suspend fun delete(filter: Filter)
 
+    @Update
+    suspend fun update(filter: Filter)
+
     @Query("SELECT * FROM filters WHERE bookId = :bookId")
     suspend fun findAllByBookId(bookId: UUID): List<Filter>
 
     @Query("SELECT * FROM filters WHERE filterId = :id LIMIT 1")
     suspend fun findById(id: UUID): Filter?
+
+    @Query("SELECT * FROM filters WHERE name = :name AND bookId = :bookId LIMIT 1")
+    suspend fun findByNameAndBookId(name: String, bookId: UUID): Filter?
+
+    suspend fun insertFromGlobalFilters(
+        name: String,
+        bookId: UUID,
+        globalFilters: GlobalFilters,
+        database: Database? = null
+    ) {
+
+        val old = findByNameAndBookId(name, bookId)
+        val new = globalFilters.toFilter(name, bookId)
+        val filter = if (old != null) {
+            new.copy(filterId = old.filterId).also {
+                update(it)
+            }
+        } else {
+            Log.d("YEP", "Here")
+            insert(new)
+            new
+        }
+
+        val tagFilterJoinDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
+
+        globalFilters.tags.forEach { tag ->
+            val tagFilterJoin = TagFilterJoin(tag, filter.filterId, bookId)
+            tagFilterJoinDao._insert(tagFilterJoin)
+        }
+    }
+}
+
+
+private fun GlobalFilters.toFilter(name: String, bookId: UUID): Filter =
+    Filter.create(name, bookId) { b ->
+        description.ifNotBlank {
+            b.description = it
+        }
+
+        fromDate.ifNotBlank {
+            b.minDate = it.toDateOrNull()
+        }
+
+        toDate.ifNotBlank {
+            b.maxDate = it.toDateOrNull()
+        }
+
+        fromAmount.ifNotBlank {
+            b.minAmount = it.toDouble()
+        }
+
+        toAmount.ifNotBlank {
+            b.maxAmount = it.toDouble()
+        }
+
+        latitude.ifNotBlank {
+            b.latitude = it.toDouble()
+        }
+
+        longitude.ifNotBlank {
+            b.longitude = it.toDouble()
+        }
+
+        radius.ifNotBlank {
+            b.areaRange = it.toDouble()
+        }
+    }
+
+suspend fun Filter.toGlobalFilters(database: Database? = null): GlobalFilters {
+    val tagFilterJoinDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
+    val tagFilterJoins = tagFilterJoinDao.findTagsByFilter(filterId)
+
+    return GlobalFilters.new {
+        description = getCriteriaValue(Criteria.DESCRIPTION)
+
+        fromDate = getCriteriaValue(Criteria.MIN_DATE)
+        toDate = getCriteriaValue(Criteria.MAX_DATE)
+
+        fromAmount = getCriteriaValue(Criteria.MIN_AMOUNT)
+        toAmount = getCriteriaValue(Criteria.MAX_AMOUNT)
+
+        latitude = getCriteriaValue(Criteria.LATITUDE)
+        longitude = getCriteriaValue(Criteria.LONGITUDE)
+        radius = getCriteriaValue(Criteria.AREA_RANGE)
+
+        tags = tagFilterJoins.mapTo(mutableSetOf(), Tag::tagId)
+    }
 }

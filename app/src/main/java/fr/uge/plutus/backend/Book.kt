@@ -1,16 +1,9 @@
 package fr.uge.plutus.backend
 
-import androidx.room.ColumnInfo
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.Insert
-import androidx.room.PrimaryKey
-import androidx.room.Query
-import androidx.room.Update
-import java.util.UUID
+import android.database.sqlite.SQLiteConstraintException
+import androidx.room.*
 import java.io.Serializable
+import java.util.*
 
 @Entity(
     tableName = "books",
@@ -24,26 +17,42 @@ data class Book(
     @PrimaryKey val uuid: UUID = UUID.randomUUID()
 ) : Serializable
 
+data class BookWithTransactions(
+    @Embedded val book: Book,
+    val transactionCount: Int,
+) {
+    fun toPair() = Pair(book, transactionCount)
+}
+
 @Dao
-interface BookDao {
+abstract class BookDao {
 
     @Query("SELECT * FROM books")
-    suspend fun getAll(): List<Book>
+    abstract suspend fun findAll(): List<Book>
+
+    @Query("SELECT b.*, count(t.transactionId) as transactionCount FROM books AS b LEFT JOIN transactions AS t ON t.bookId = b.uuid GROUP BY b.uuid")
+    abstract suspend fun findAllAndCountTransactions(): List<BookWithTransactions>
 
     @Query("SELECT * FROM books WHERE uuid = :bookId LIMIT 1")
-    suspend fun findById(bookId: UUID): Book?
+    abstract suspend fun findById(bookId: UUID): Book?
 
     @Query("SELECT * FROM books WHERE name LIKE :name LIMIT 1")
-    suspend fun findByName(name: String): Book?
+    abstract suspend fun findByName(name: String): Book?
 
     @Insert
-    suspend fun insert(vararg books: Book)
+    abstract suspend fun insert(vararg books: Book)
 
     @Delete
-    suspend fun delete(vararg book: Book)
+    abstract suspend fun delete(vararg book: Book)
 
     @Update
-    suspend fun update(book: Book)
+    abstract suspend fun update(book: Book)
+
+    suspend fun upsert(book: Book) = try {
+        insert(book)
+    } catch (e: SQLiteConstraintException) {
+        update(book)
+    }
 
     suspend fun copy(book: Book, newName: String, database: Database? = null): Book {
         val newBook = book.copy(uuid = UUID.randomUUID(), name = newName)

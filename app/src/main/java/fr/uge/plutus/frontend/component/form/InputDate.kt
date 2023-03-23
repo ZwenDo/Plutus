@@ -1,36 +1,30 @@
 package fr.uge.plutus.frontend.component.form
 
 import android.app.DatePickerDialog
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.Button
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fr.uge.plutus.util.useDoOnceOnMounted
 import fr.uge.plutus.util.toStringFormatted
-import java.util.Calendar
-import java.util.Date
+import fr.uge.plutus.util.useDoOnceOnMounted
+import java.util.*
 
 @Composable
 fun InputDate(
     label: String,
     errorMessage: String? = null,
+    value: String = Date().toStringFormatted(),
+    enabled: Boolean = true,
     onValueChange: (String) -> Unit,
 ) {
     val calendar = Calendar.getInstance()
@@ -39,7 +33,11 @@ fun InputDate(
     val currentMonth = calendar.get(Calendar.MONTH)
     val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
 
-    var date by rememberSaveable { mutableStateOf(Date().toStringFormatted()) }
+    var date by rememberSaveable { mutableStateOf(value) }
+
+    LaunchedEffect(value) {
+        date = value
+    }
 
     useDoOnceOnMounted {
         onValueChange(date)
@@ -56,21 +54,20 @@ fun InputDate(
         currentDay
     )
 
-    Row(
-        Modifier,
-        Arrangement.Center,
-        Alignment.CenterVertically
+    InputText(label, date, "dd/mm/yyyy",
+        errorMessage = errorMessage,
+        leadingIcon = {
+            IconButton(
+                modifier = Modifier.padding(start = 8.dp),
+                onClick = { dialog.show() }
+            ) {
+                Icon(Icons.Default.DateRange, contentDescription = null)
+            }
+        },
+        enabled = enabled,
     ) {
-        Button(onClick = { dialog.show() }) {
-            Icon(Icons.Default.DateRange, contentDescription = null)
-        }
-
-        Spacer(Modifier.width(10.dp))
-
-        InputText(label, date, "dd/mm/yyyy", errorMessage = errorMessage) {
-            date = it
-            onValueChange(date)
-        }
+        date = it
+        onValueChange(date)
     }
 }
 

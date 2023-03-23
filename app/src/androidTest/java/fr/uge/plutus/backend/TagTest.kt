@@ -49,16 +49,16 @@ class TagTest {
     @Test
     fun shouldCreateTagsWithoutFailing() = runTest {
 
-        val tag = tagDao.insert("+First Tag", book.uuid)
+        val tag = tagDao.insert("+First Tag", book.uuid, null)
         val tagFromDb = tagDao.findByName("First Tag", book.uuid)
 
-        val tag2 = tagDao.insert("-test", book.uuid)
+        val tag2 = tagDao.insert("-test", book.uuid, null)
         val tagFromDb2 = tagDao.findByName("test", book.uuid)
 
-        val tag3 = tagDao.insert("=testTag", book.uuid)
+        val tag3 = tagDao.insert("=testTag", book.uuid, null)
         val tagFromDb3 = tagDao.findByName("testTag", book.uuid)
 
-        val tag4 = tagDao.insert("tests", book.uuid)
+        val tag4 = tagDao.insert("tests", book.uuid, null)
         val tagFromDb4 = tagDao.findByName("tests", book.uuid)
 
         assertEquals(tag, tagFromDb[0])
@@ -101,10 +101,10 @@ class TagTest {
     @Test
     fun shouldFailBecauseOfInvalidTagName() = runTest {
 
-        assertThrows(IllegalArgumentException::class.java) {
+        inlinedAssertThrows(IllegalArgumentException::class.java) {
             tagDao.insert("=", book.uuid)
         }
-        assertThrows(IllegalArgumentException::class.java) {
+        inlinedAssertThrows(IllegalArgumentException::class.java) {
             tagDao.insert(" ", book.uuid)
         }
     }
@@ -118,7 +118,7 @@ class TagTest {
 
         val tag = tagDao.insert("4th", book.uuid)
         tagTransactionJoinDao.insert(transaction, tag)
-        assertThrows(IllegalArgumentException::class.java) {
+        inlinedAssertThrows(IllegalArgumentException::class.java) {
             tagTransactionJoinDao.insert(transaction2, tag)
         }
     }
@@ -128,7 +128,7 @@ class TagTest {
         val transaction = Transaction("First", Date(0), 10.0, book.uuid)
 
         val tag = tagDao.insert("4th", book.uuid)
-        assertThrows(SQLiteConstraintException::class.java) {
+        inlinedAssertThrows(SQLiteConstraintException::class.java) {
             tagTransactionJoinDao.insert(transaction, tag)
         }
     }

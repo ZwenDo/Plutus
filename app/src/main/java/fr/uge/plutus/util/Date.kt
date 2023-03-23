@@ -1,7 +1,5 @@
 package fr.uge.plutus.util
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -15,7 +13,7 @@ fun String.isValidDate(): Boolean {
     return day in 1..31 && month in 1..12 && year in 0..9999
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 fun String.toDateOrNull(): Date? {
     if (!isValidDate()) return null
     val parts = split("/").map(String::toInt)
@@ -34,10 +32,10 @@ fun Date.toStringFormatted(): String {
     return "$day/$month/$year"
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 fun Date.toLocalDate(): LocalDate = Instant.ofEpochMilli(time)
     .atZone(ZoneId.systemDefault())
     .toLocalDate()
 
-@RequiresApi(Build.VERSION_CODES.O)
+
 fun LocalDateTime.toDate(): Date = Date.from(atZone(ZoneId.systemDefault()).toInstant())
