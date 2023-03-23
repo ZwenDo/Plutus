@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fr.uge.plutus.R
+import fr.uge.plutus.MainActivity
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
 import fr.uge.plutus.util.getLocation
@@ -26,10 +27,7 @@ import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.attachment.AttachmentCreationView
 import fr.uge.plutus.util.toDateOrNull
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.util.*
 
 enum class Field {
@@ -68,6 +66,8 @@ fun TransactionCreationView() {
     var description by rememberSaveable { mutableStateOf(initialTransaction?.description ?: "") }
     var date by rememberSaveable { mutableStateOf(initialTransaction?.date?.toString() ?: "") }
     var amount by rememberSaveable { mutableStateOf(initialTransaction?.amount?.toString() ?: "") }
+    var askLocation by rememberSaveable { mutableStateOf(false) }
+
     var latitude by rememberSaveable {
         mutableStateOf(
             initialTransaction?.latitude?.toString() ?: ""
@@ -103,6 +103,24 @@ fun TransactionCreationView() {
                     .associateBy { it.id }
                 initialAttachments += loaded
                 attachments += loaded
+            }
+        }
+    }
+
+    LaunchedEffect(globalState.locationPermission, askLocation) {
+        if (!askLocation) return@LaunchedEffect
+
+        if (!globalState.locationPermission) {
+            MainActivity.requestLocationPermission()
+        } else {
+            getLocation(
+                context = context,
+                onError = {
+                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show(); askLocation = false
+                }) {
+                latitude = it.latitude.toString()
+                longitude = it.longitude.toString()
+                askLocation = false
             }
         }
     }
@@ -255,12 +273,7 @@ fun TransactionCreationView() {
                     .weight(1f / 5f)
                     .padding(top = 0.dp),
                 onClick = {
-                    getLocation(
-                        context = context,
-                        onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }) {
-                        latitude = it.latitude.toString()
-                        longitude = it.longitude.toString()
-                    }
+                    askLocation = true
                 }
             ) {
                 Icon(
