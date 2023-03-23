@@ -12,7 +12,7 @@ suspend fun sendData(data: ByteArray): String {
     val client = HttpClient(CIO)
 
     val response: HttpResponse = client.submitFormWithBinaryData(
-        url = "http://10.0.2.2:8080/api/store/book",
+        url = "https://plutus.slama.io/api/store/book",
         formData = formData {
             append("file", data, Headers.build {
                 append(HttpHeaders.ContentType, ContentType.Text.Plain.toString())
@@ -29,7 +29,7 @@ suspend fun sendData(data: ByteArray): String {
 suspend fun getData(token: String): ByteArray {
     val client = HttpClient(CIO)
 
-    val response: HttpResponse = client.get("http://10.0.2.2:8080/api/store/book") {
+    val response: HttpResponse = client.get("https://plutus.slama.io/api/store/book") {
         bearerAuth(token)
     }
     return response.body()
