@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fr.uge.plutus.R
@@ -499,31 +500,40 @@ fun FilterLoadComponent(onDismiss: () -> Unit) {
         open = true,
         displaySubmitButton = false,
     ) {
-        Box(Modifier.requiredHeightIn(min = 200.dp, max = 300.dp)) {
-            LazyColumn(
-                Modifier
-                    .fillMaxSize()
-                    .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
-            ) {
-                items(filters) {
-                    Surface(onClick = { toImport = it },) {
-                        Column {
-                            Row(
-                                Modifier.padding(24.dp, 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    modifier = Modifier.weight(1f),
-                                    text = it.name,
-                                )
-                                IconButton(onClick = { toDelete = it }) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.close),
-                                        contentDescription = null,
+        Box(Modifier.height(300.dp)) {
+            if (filters.isEmpty()) {
+                Text(
+                    modifier = Modifier.padding(24.dp, 64.dp).fillMaxWidth(),
+                    text = "No filters found",
+                    style = MaterialTheme.typography.body1,
+                    textAlign = TextAlign.Center,
+                )
+            } else {
+                LazyColumn(
+                    Modifier
+                        .fillMaxSize()
+                        .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
+                ) {
+                    items(filters) {
+                        Surface(onClick = { toImport = it }) {
+                            Column {
+                                Row(
+                                    Modifier.padding(24.dp, 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        modifier = Modifier.weight(1f),
+                                        text = it.name,
                                     )
+                                    IconButton(onClick = { toDelete = it }) {
+                                        Icon(
+                                            painter = painterResource(id = R.drawable.close),
+                                            contentDescription = null,
+                                        )
+                                    }
                                 }
+                                Divider()
                             }
-                            Divider()
                         }
                     }
                 }
