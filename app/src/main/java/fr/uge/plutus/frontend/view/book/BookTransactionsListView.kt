@@ -2,6 +2,9 @@ package fr.uge.plutus.frontend.view.book
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import fr.uge.plutus.R
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
+import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.component.scaffold.Dialog
 import fr.uge.plutus.frontend.store.SortField
 import fr.uge.plutus.frontend.store.globalState
@@ -49,10 +53,16 @@ fun BookTransactionsListView() {
         if (delete) {
             globalState.currentView = View.BOOK_SELECTION
             globalState.deletingBook = false
+            globalState.currentBook = null
             deleteBook(book)
             Toast.makeText(context, "Book “${book.name}” deleted", Toast.LENGTH_SHORT).show()
-            globalState.currentBook = null
             delete = false
+        }
+    }
+
+    if (globalState.duplicatingBook) {
+        BookDuplicationDialog {
+            globalState.duplicatingBook = false
         }
     }
 
@@ -141,6 +151,66 @@ fun TransactionSortingDialog(onDismiss: () -> Unit = {}) {
                 if (index != SortField.values().size - 1) {
                     Divider()
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun BookDuplicationDialog(
+    onDismiss: () -> Unit = {}
+) {
+    val globalState = globalState()
+    var bookName by remember {
+        mutableStateOf("${globalState.currentBook!!.name} (copy)")
+    }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var duplicateInProgress by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    LaunchedEffect(duplicateInProgress) {
+        if (!duplicateInProgress) return@LaunchedEffect
+
+        val copy = Database.books().copy(globalState.currentBook!!, bookName)
+        globalState.currentBook = copy
+        globalState.duplicatingBook = false
+        Toast.makeText(
+            context,
+            "Book “${copy.name}” created",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        duplicateInProgress = false
+        onDismiss()
+    }
+
+    Dialog(
+        open = true,
+        title = "Duplicate book",
+        submitButtonText = "DUPLICATE",
+        onClose = {
+            if (!it) {
+                onDismiss()
+                return@Dialog
+            }
+            if (bookName.isBlank()) {
+                errorMessage = "Book name cannot be blank"
+                return@Dialog
+            }
+            duplicateInProgress = true
+        }
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(24.dp, 16.dp)
+        ) {
+            InputText(
+                label = "New Book Name",
+                value = bookName,
+                errorMessage = errorMessage
+            ) {
+                errorMessage = null
+                bookName = it
             }
         }
     }
