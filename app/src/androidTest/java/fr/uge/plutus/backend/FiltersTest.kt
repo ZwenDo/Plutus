@@ -46,9 +46,9 @@ class FiltersTest {
         bookDao.insert(b2)
         book2 = b2
 
-        tag1 = tagDao.insert("+Tag1", book.uuid)
-        tag2 = tagDao.insert("-Tag2", book.uuid)
-        tag3 = tagDao.insert("=Tag3", book.uuid)
+        tag1 = tagDao.insert("+Tag1", book.uuid, null)
+        tag2 = tagDao.insert("-Tag2", book.uuid, null)
+        tag3 = tagDao.insert("=Tag3", book.uuid, null)
     }
 
 
@@ -280,7 +280,7 @@ class FiltersTest {
             .minDate(Date(1000000))
             .build()
 
-        val tag = tagDao.insert("Tag4", book2.uuid)
+        val tag = tagDao.insert("Tag4", book2.uuid, null)
 
         filterDao.insert(filter)
 

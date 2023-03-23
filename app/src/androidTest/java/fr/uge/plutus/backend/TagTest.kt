@@ -49,16 +49,16 @@ class TagTest {
     @Test
     fun shouldCreateTagsWithoutFailing() = runTest {
 
-        val tag = tagDao.insert("+First Tag", book.uuid)
+        val tag = tagDao.insert("+First Tag", book.uuid, null)
         val tagFromDb = tagDao.findByName("First Tag", book.uuid)
 
-        val tag2 = tagDao.insert("-test", book.uuid)
+        val tag2 = tagDao.insert("-test", book.uuid, null)
         val tagFromDb2 = tagDao.findByName("test", book.uuid)
 
-        val tag3 = tagDao.insert("=testTag", book.uuid)
+        val tag3 = tagDao.insert("=testTag", book.uuid, null)
         val tagFromDb3 = tagDao.findByName("testTag", book.uuid)
 
-        val tag4 = tagDao.insert("tests", book.uuid)
+        val tag4 = tagDao.insert("tests", book.uuid, null)
         val tagFromDb4 = tagDao.findByName("tests", book.uuid)
 
         assertEquals(tag, tagFromDb[0])
