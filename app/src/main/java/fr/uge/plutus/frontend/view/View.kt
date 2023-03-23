@@ -8,16 +8,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.runtime.*
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import fr.uge.plutus.R
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.book.BookCreationView
 import fr.uge.plutus.frontend.view.book.BookOverviewLoader
 import fr.uge.plutus.frontend.view.book.BookSelectionView
-import fr.uge.plutus.frontend.view.search.*
-import fr.uge.plutus.frontend.view.transaction.*
+import fr.uge.plutus.frontend.view.book.ImportExportState
+import fr.uge.plutus.frontend.view.search.SearchFiltersView
+import fr.uge.plutus.frontend.view.transaction.TransactionCreationView
+import fr.uge.plutus.frontend.view.transaction.TransactionDetails
+import fr.uge.plutus.frontend.view.transaction.TransactionHeader
+import fr.uge.plutus.frontend.view.transaction.TransactionListView
 import kotlinx.coroutines.launch
 
 enum class View(
@@ -78,8 +83,16 @@ enum class View(
         headerComponent = {
             val globalState = globalState()
             val coroutineScope = rememberCoroutineScope()
+            var showMenu by remember { mutableStateOf(false) }
+
             TopAppBar(
-                title = { Text("Transactions: ${globalState.currentBook!!.name}") },
+                title = {
+                    Text(
+                        "Transactions: ${globalState.currentBook!!.name}",
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1,
+                    )
+                },
                 actions = {
                     IconButton(onClick = {
                         coroutineScope.launch {
@@ -88,13 +101,51 @@ enum class View(
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.filter),
-                            "Search"
+                            "Filters"
                         )
+                    }
+                    IconButton(onClick = { showMenu = !showMenu }) {
+                        Icon(Icons.Default.MoreVert, null)
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false },
+                    ) {
+                        DropdownMenuItem(onClick = {
+                            showMenu = false
+                            globalState.importExportState = ImportExportState.IMPORT
+                        }) {
+                            Text("Import")
+                        }
+                        DropdownMenuItem(onClick = {
+                            showMenu = false
+                            globalState.importExportState = ImportExportState.EXPORT
+                        }) {
+                            Text("Export")
+                        }
+                        DropdownMenuItem(onClick = {
+                            showMenu = false
+                        }) {
+                            Text("Delete book")
+                        }
                     }
                 }
             )
         },
-        contentComponent = { TransactionSearchView() },
+        contentComponent = {
+            val globalState = globalState()
+            TransactionListView()
+
+            val importExportState = globalState.importExportState
+            if (importExportState.isNotNone) {
+                fr.uge.plutus.frontend.view.book.ImportExportModal(
+                    globalState.currentBook!!,
+                    isImport = importExportState.isImport
+                ) {
+                    globalState.importExportState = ImportExportState.NONE
+                }
+            }
+        },
         drawerComponent = { SearchFiltersView() },
         fabComponent = {
             val globalState = globalState()
