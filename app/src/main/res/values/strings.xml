@@ -134,4 +134,5 @@
     <string name="delete_book">Delete book</string>
     <string name="clipboard_copy_tag">Plutus file key</string>
     <string name="clipboard_copy_toast">Your book key has been stored in your clipboard</string>
+    <string name="duplicate_transaction">Duplicate transaction</string>
 </resources>

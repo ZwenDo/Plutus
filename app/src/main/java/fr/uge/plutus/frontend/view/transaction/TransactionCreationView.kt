@@ -15,19 +15,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fr.uge.plutus.R
 import fr.uge.plutus.MainActivity
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.*
 import fr.uge.plutus.backend.Currency
-import fr.uge.plutus.util.getLocation
 import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputSelectEnum
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.attachment.AttachmentCreationView
+import fr.uge.plutus.util.getLocation
 import fr.uge.plutus.util.toDateOrNull
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 
 enum class Field {
@@ -170,6 +173,12 @@ fun TransactionCreationView() {
                 longitude = actualLongitude
             )
             withContext(Dispatchers.IO) {
+                if (globalState.duplicatingTransaction) {
+                    Database.transactions().copy(transaction)
+                    globalState.duplicatingTransaction = false
+                    return@withContext
+                }
+
                 if (initialTransaction != null) {
                     Database.transactions().update(transaction)
                 } else {
@@ -233,7 +242,11 @@ fun TransactionCreationView() {
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(Modifier.weight(3f / 5f)) {
-                InputText(stringResource(R.string.amount), amount, errorMessage = errors[Field.AMOUNT]) {
+                InputText(
+                    stringResource(R.string.amount),
+                    amount,
+                    errorMessage = errors[Field.AMOUNT]
+                ) {
                     amount = it
                     errors.clear()
                 }
@@ -258,13 +271,21 @@ fun TransactionCreationView() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(modifier = Modifier.weight(1f / 2f)) {
-                InputText(stringResource(R.string.latitude), latitude, errorMessage = errors[Field.LATITUDE]) {
+                InputText(
+                    stringResource(R.string.latitude),
+                    latitude,
+                    errorMessage = errors[Field.LATITUDE]
+                ) {
                     latitude = it
                     errors.clear()
                 }
             }
             Box(modifier = Modifier.weight(1f / 2f)) {
-                InputText(stringResource(R.string.longitude), longitude, errorMessage = errors[Field.LONGITUDE]) {
+                InputText(
+                    stringResource(R.string.longitude),
+                    longitude,
+                    errorMessage = errors[Field.LONGITUDE]
+                ) {
                     longitude = it
                     errors.clear()
                 }
@@ -298,7 +319,9 @@ fun TransactionCreationView() {
         )
         Button(modifier = Modifier.fillMaxWidth(), onClick = { creating = true }) {
             Text(
-                text = if (initialTransaction == null) stringResource(R.string.create) else stringResource(R.string.save),
+                text = if (initialTransaction == null) stringResource(R.string.create) else stringResource(
+                    R.string.save
+                ),
                 fontWeight = FontWeight.SemiBold
             )
         }

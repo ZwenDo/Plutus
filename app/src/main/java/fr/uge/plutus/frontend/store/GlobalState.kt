@@ -30,6 +30,7 @@ interface GlobalState {
     var displaySorting: Boolean
     var locationPermission: Boolean
     var mustRefetchTransactions: Boolean
+    var duplicatingTransaction: Boolean
 }
 
 @Composable
@@ -63,6 +64,7 @@ fun initGlobalState(): GlobalState {
         override var displaySorting by rememberSaveable { mutableStateOf(false) }
         override var globalSorting: GlobalSorting? by rememberSaveable { mutableStateOf(null) }
         override var mustRefetchTransactions by rememberSaveable { mutableStateOf(false) }
+        override var duplicatingTransaction by rememberSaveable { mutableStateOf(false) }
     }
 
     return globalState

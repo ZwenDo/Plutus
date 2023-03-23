@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import fr.uge.plutus.R
 import fr.uge.plutus.frontend.store.globalState
@@ -20,7 +21,6 @@ import fr.uge.plutus.frontend.view.transaction.TransactionCreationView
 import fr.uge.plutus.frontend.view.transaction.TransactionDetails
 import fr.uge.plutus.frontend.view.transaction.TransactionHeader
 import kotlinx.coroutines.launch
-import androidx.compose.ui.res.stringResource
 
 enum class View(
     val headerComponent: @Composable () -> Unit,
@@ -188,9 +188,20 @@ enum class View(
                         ) {
                             DropdownMenuItem(onClick = {
                                 showMenu = false
+                                globalState.duplicatingTransaction = true
+                                globalState.currentView = TRANSACTION_CREATION
+                            }) {
+                                Text(stringResource(R.string.duplicate_transaction))
+                            }
+                            DropdownMenuItem(onClick = {
+                                showMenu = false
                                 globalState.deletingTransaction = true
                             }) {
-                                Text(stringResource(R.string.delete_transaction))
+                                Text(
+                                    stringResource(
+                                        R.string.delete_transaction
+                                    )
+                                )
                             }
                         }
                     })
