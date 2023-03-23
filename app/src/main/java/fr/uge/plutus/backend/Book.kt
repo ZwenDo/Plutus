@@ -62,6 +62,8 @@ abstract class BookDao {
         val tagsPerTransactionDao = database?.tagTransactionJoin()
             ?: Database.tagTransactionJoin()
         val tagDao = database?.tags() ?: Database.tags()
+        val filterDao = database?.filters() ?: Database.filters()
+        val filterTagJoinDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
 
         val tagsMap = mutableMapOf<Pair<String, TagType>, Tag>()
         tagDao.findByBookId(book.uuid)
@@ -86,6 +88,23 @@ abstract class BookDao {
                         tagsPerTransactionDao.insert(newTransaction, tagCopy)
                     }
             }
+
+        filterDao
+            .findAllByBookId(book.uuid)
+            .forEach { filter ->
+                val newFilter = filter.copy(
+                    filterId = UUID.randomUUID(),
+                    bookId = newBook.uuid
+                )
+                filterDao.insert(newFilter) // insert filter copy
+                filterTagJoinDao
+                    .findTagsByFilter(filter.filterId)
+                    .forEach {
+                        val tagCopy = tagsMap[it.name to it.type]!!
+                        filterTagJoinDao.insert(newFilter, tagCopy)
+                    }
+            }
+
         return newBook
     }
 

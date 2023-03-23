@@ -22,9 +22,13 @@ interface GlobalState {
     var writeExternalStoragePermission: Boolean
     var scaffoldState: ScaffoldState
     var globalFilters: GlobalFilters
+    var globalSorting: GlobalSorting?
     var importExportState: ImportExportState
     var deletingBook: Boolean
+    var duplicatingBook: Boolean
     var deletingTransaction: Boolean
+    var displaySorting: Boolean
+    var locationPermission: Boolean
 }
 
 @Composable
@@ -44,9 +48,19 @@ fun initGlobalState(): GlobalState {
             )
             mutableStateOf(permission == PackageManager.PERMISSION_GRANTED)
         }
+        override var locationPermission: Boolean by rememberSaveable {
+            val permission = ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+            )
+            mutableStateOf(permission == PackageManager.PERMISSION_GRANTED)
+        }
         override var importExportState by rememberSaveable { mutableStateOf(ImportExportState.NONE) }
         override var deletingBook by rememberSaveable { mutableStateOf(false) }
+        override var duplicatingBook by rememberSaveable { mutableStateOf(false) }
         override var deletingTransaction by rememberSaveable { mutableStateOf(false) }
+        override var displaySorting by rememberSaveable { mutableStateOf(false) }
+        override var globalSorting: GlobalSorting? by rememberSaveable { mutableStateOf(null) }
     }
 
     return globalState

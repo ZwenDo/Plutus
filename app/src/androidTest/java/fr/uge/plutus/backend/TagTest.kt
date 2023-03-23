@@ -72,7 +72,7 @@ class TagTest {
         val unknownBookId = UUID.randomUUID()
 
         runCatching {
-            tagDao.insert("secondTest", unknownBookId)
+            tagDao.insert("secondTest", unknownBookId, null)
         }.onSuccess {
             error("Should have failed")
         }.onFailure {
@@ -82,7 +82,7 @@ class TagTest {
 
     @Test
     fun shouldGetTagWithBookId() = runTest {
-        val tag = tagDao.insert("3rd", book.uuid)
+        val tag = tagDao.insert("3rd", book.uuid, null)
         val tagFromDb = tagDao.findByBookId(book.uuid)
 
         assertEquals(tag, tagFromDb[0])
@@ -90,7 +90,7 @@ class TagTest {
 
     @Test
     fun shouldDeleteATag() = runTest {
-        val tag = tagDao.insert("3rd", book.uuid)
+        val tag = tagDao.insert("3rd", book.uuid, null)
         val tagFromDb = tagDao.findByBookId(book.uuid)
         assertEquals(tag, tagFromDb[0])
         tagDao.delete(tag)
@@ -102,10 +102,10 @@ class TagTest {
     fun shouldFailBecauseOfInvalidTagName() = runTest {
 
         inlinedAssertThrows(IllegalArgumentException::class.java) {
-            tagDao.insert("=", book.uuid)
+            tagDao.insert("=", book.uuid, null)
         }
         inlinedAssertThrows(IllegalArgumentException::class.java) {
-            tagDao.insert(" ", book.uuid)
+            tagDao.insert(" ", book.uuid, null)
         }
     }
 
@@ -116,7 +116,7 @@ class TagTest {
         val transaction2 = Transaction("First", Date(0), 10.0, book2.uuid)
         transactionDao.insert(transaction2)
 
-        val tag = tagDao.insert("4th", book.uuid)
+        val tag = tagDao.insert("4th", book.uuid, null)
         tagTransactionJoinDao.insert(transaction, tag)
         inlinedAssertThrows(IllegalArgumentException::class.java) {
             tagTransactionJoinDao.insert(transaction2, tag)
@@ -127,7 +127,7 @@ class TagTest {
     fun shouldFailIfTransactionIsNotInDb() = runTest {
         val transaction = Transaction("First", Date(0), 10.0, book.uuid)
 
-        val tag = tagDao.insert("4th", book.uuid)
+        val tag = tagDao.insert("4th", book.uuid, null)
         inlinedAssertThrows(SQLiteConstraintException::class.java) {
             tagTransactionJoinDao.insert(transaction, tag)
         }
@@ -138,8 +138,8 @@ class TagTest {
         val transaction = Transaction("First", Date(0), 10.0, book.uuid)
         transactionDao.insert(transaction)
 
-        val tag = tagDao.insert("4th", book.uuid)
-        val tag2 = tagDao.insert("3rd", book.uuid)
+        val tag = tagDao.insert("4th", book.uuid, null)
+        val tag2 = tagDao.insert("3rd", book.uuid, null)
         tagTransactionJoinDao.insert(transaction, tag)
         tagTransactionJoinDao.insert(transaction, tag2)
         val findTags = tagTransactionJoinDao.findTagsByTransactionId(transaction.transactionId)
@@ -154,7 +154,7 @@ class TagTest {
         val transaction2 = Transaction("Second", Date(0), 10.0, book.uuid)
         transactionDao.insert(transaction2)
 
-        val tag = tagDao.insert("4th", book.uuid)
+        val tag = tagDao.insert("4th", book.uuid, null)
         tagTransactionJoinDao.insert(transaction, tag)
         tagTransactionJoinDao.insert(transaction2, tag)
         val findTransactions = tagTransactionJoinDao.findTransactionByTagId(tag.tagId)
@@ -169,7 +169,7 @@ class TagTest {
         val transaction2 = Transaction("Second", Date(0), 10.0, book.uuid)
         transactionDao.insert(transaction2)
 
-        val tag = tagDao.insert("4th", book.uuid)
+        val tag = tagDao.insert("4th", book.uuid, null)
         tagTransactionJoinDao.insert(transaction, tag)
         tagTransactionJoinDao.insert(transaction2, tag)
         val findTransactions = tagTransactionJoinDao.findTransactionByTagId(tag.tagId)
@@ -182,7 +182,7 @@ class TagTest {
 
     @Test
     fun shouldDeleteTagOnCascade() = runTest {
-        val tag = tagDao.insert("+1st", book.uuid)
+        val tag = tagDao.insert("+1st", book.uuid, null)
 
         val findTag = tagDao.findByBookId(book.uuid)
         assertEquals(findTag[0], tag)
@@ -197,7 +197,7 @@ class TagTest {
 
     @Test
     fun shouldDeleteTagTransactionJoinOnCascade() = runTest {
-        val tag = tagDao.insert("+1st", book.uuid)
+        val tag = tagDao.insert("+1st", book.uuid, null)
         val transaction = Transaction("First", Date(0), 10.0, book.uuid)
         transactionDao.insert(transaction)
 
@@ -226,7 +226,7 @@ class TagTest {
 
     @Test
     fun shouldDeleteTagTransactionJoinOnCascade2() = runTest {
-        val tag = tagDao.insert("+1st", book.uuid)
+        val tag = tagDao.insert("+1st", book.uuid, null)
         val transaction = Transaction("First", Date(0), 10.0, book.uuid)
         transactionDao.insert(transaction)
 
@@ -255,8 +255,8 @@ class TagTest {
 
     @Test
     fun deleteTagTransactionJoinDao() = runTest {
-        val tag = tagDao.insert("+1st", book.uuid)
-        val tag2 = tagDao.insert("+2nd", book.uuid)
+        val tag = tagDao.insert("+1st", book.uuid, null)
+        val tag2 = tagDao.insert("+2nd", book.uuid, null)
         val transaction = Transaction("First", Date(0), 10.0, book.uuid)
         transactionDao.insert(transaction)
 

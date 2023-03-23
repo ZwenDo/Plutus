@@ -84,12 +84,20 @@ enum class View(
             TopAppBar(
                 title = {
                     Text(
-                        "Transactions: ${globalState.currentBook!!.name}",
+                        "Transactions: ${globalState.currentBook?.name}",
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                     )
                 },
                 actions = {
+                    IconButton(onClick = {
+                        globalState.displaySorting = true
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.sort),
+                            "Sort"
+                        )
+                    }
                     IconButton(onClick = {
                         coroutineScope.launch {
                             globalState.scaffoldState.drawerState.open()
@@ -118,6 +126,12 @@ enum class View(
                             globalState.importExportState = ImportExportState.EXPORT
                         }) {
                             Text("Export")
+                        }
+                        DropdownMenuItem(onClick = {
+                            showMenu = false
+                            globalState.duplicatingBook = true
+                        }) {
+                            Text("Duplicate book")
                         }
                         DropdownMenuItem(onClick = {
                             showMenu = false

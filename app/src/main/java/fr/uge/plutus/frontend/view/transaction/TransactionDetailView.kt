@@ -346,7 +346,7 @@ fun TransactionDetails(transaction: Transaction) {
 
     if (globalState.deletingTransaction) {
         AlertDialog(
-            onDismissRequest = { globalState.deletingBook = false },
+            onDismissRequest = { globalState.deletingTransaction = false },
             title = {
                 Text(
                     "Delete transaction",
@@ -366,7 +366,7 @@ fun TransactionDetails(transaction: Transaction) {
             },
             dismissButton = {
                 TextButton(onClick = {
-                    globalState.deletingBook = false
+                    globalState.deletingTransaction = false
                 }) {
                     Text("CANCEL")
                 }
