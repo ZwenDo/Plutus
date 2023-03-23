@@ -3,6 +3,7 @@ package fr.uge.plutus
 import android.Manifest
 import android.content.Context
 import android.os.Bundle
+import android.provider.ContactsContract.Data
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -16,6 +17,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import createNotificationChannel
 import fr.uge.plutus.backend.Database
+import fr.uge.plutus.backend.TagType
 import fr.uge.plutus.frontend.component.scaffold.PlutusScaffold
 import fr.uge.plutus.frontend.store.GlobalState
 import fr.uge.plutus.frontend.store.initGlobalState
@@ -70,9 +72,25 @@ class MainActivity : ComponentActivity() {
             calendar.add(Calendar.DAY_OF_YEAR, 1)
             val end = calendar.time
             createNotificationChannel(channelId, context)
-            val transactions = Database.transactions().findAllTodoByDate(start, end)
+            val transactions =
+                Database.transactions().findAllTransactionDescriptionByTodoByDate(start, end)
             transactions.forEach {
-                showSimpleNotification(context, channelId, notificationId, textTitle, it)
+                showSimpleNotification(
+                    context,
+                    channelId,
+                    notificationId,
+                    textTitle,
+                    it.description
+                )
+                Database.transactions().findById(it.transactionId)?.let { transaction ->
+                    val tags = Database.tagTransactionJoin()
+                        .findTagsByTransactionId(transaction.transactionId)
+                    for (tag in tags) {
+                        val todoTag = Database.tags().findByName("@todo", it.bookId)
+                            .firstOrNull { tag.type == TagType.INFO } ?: continue
+                        Database.tagTransactionJoin().delete(transaction, todoTag)
+                    }
+                }
             }
         }
     }
@@ -92,11 +110,17 @@ class MainActivity : ComponentActivity() {
         locationPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
                 when {
-                    permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
+                    permissions.getOrDefault(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        false
+                    ) -> {
                         // Precise location access granted.
                         globalState.locationPermission = true
                     }
-                    permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
+                    permissions.getOrDefault(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        false
+                    ) -> {
                         // Only approximate location access granted.
                         globalState.locationPermission = true
                     }
