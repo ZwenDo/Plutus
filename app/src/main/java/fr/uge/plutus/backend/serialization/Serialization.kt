@@ -4,9 +4,12 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import android.util.Log
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import fr.uge.plutus.MainActivity
 import fr.uge.plutus.backend.*
+import fr.uge.plutus.backend.serialization.http.getData
+import fr.uge.plutus.backend.serialization.http.sendData
 import fr.uge.plutus.frontend.store.globalState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,52 +27,60 @@ fun ExportBook(
     password: String?,
     book: Book,
     name: String,
+    isCloud: Boolean,
     exportTags: Set<Tag> = emptySet(),
-    onExportCompleted: () -> Unit = {}
+    onExportCompleted: (String?) -> Unit = {}
 ) {
     val globalState = globalState()
 
     LaunchedEffect(globalState.writeExternalStoragePermission) {
-        if (!globalState.writeExternalStoragePermission) {
+        if (!globalState.writeExternalStoragePermission && !isCloud) {
             MainActivity.requestWriteExternalStoragePermission()
             return@LaunchedEffect
         }
-        export(book, name, password, exportTags)
-        onExportCompleted()
+        val result = export(book, name, password, isCloud, exportTags)
+        onExportCompleted(result)
     }
 }
 
 suspend fun importBook(
     password: String?,
-    fileUri: Uri,
+    fileUri: Uri?,
     context: Context,
     mergeDestinationBook: UUID,
+    token: String?,
     database: Database? = null
 ): Boolean {
     require(
-        fileUri.scheme == "content" &&
-                fileUri.lastPathSegment?.endsWith(".book.plutus") == true
+        fileUri == null ||
+                (fileUri.scheme == "content" &&
+                        fileUri.lastPathSegment?.endsWith(".book.plutus") == true)
     ) {
         "Invalid file: $fileUri"
     }
 
-    val content = context
-        .contentResolver
-        .openInputStream(fileUri)!!
-        .use { it.readBytes() }
-        .let {
-            if (password != null) {
-                try {
-                    decrypt(password, it)
-                } catch (e: BadPaddingException) {
-                    return false
-                } catch (e: IllegalBlockSizeException) {
-                    return false
-                }
-            } else {
-                it
+    val array = if (token != null) {
+        getData(token)
+    } else {
+        context.contentResolver
+            .openInputStream(fileUri!!)!!
+            .use { it.readBytes() }
+    }
+
+    val content = array.let {
+        if (password != null) {
+            try {
+                decrypt(password, it)
+            } catch (e: BadPaddingException) {
+                return false
+            } catch (e: IllegalBlockSizeException) {
+                return false
             }
+        } else {
+            it
         }
+    }
+
 
     val bookDTO = try {
         Json.decodeFromString(BookDTO.serializer(), String(content))
@@ -192,39 +203,50 @@ private suspend fun export(
     book: Book,
     name: String,
     password: String?,
+    isCloud: Boolean,
     exportTags: Set<Tag>
-): Boolean {
+): String? {
     require("/" !in name && "\\" !in name) { "Invalid name: $name" }
     val json = json.encodeToString(book.toDTO(exportTags))
 
-    val folder = Environment
-        .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-
-    // create a file with a unique name
-    lateinit var outputFile: File
-    var index = 0
-    do {
-        val fileName = if (index == 0) name else "$name ($index)"
-        outputFile = folder.resolve("$fileName.book.plutus")
-        index++
-    } while (outputFile.exists())
+    Log.d("YEP", "Salam")
 
     try {
-        val didCreate =
-            withContext(Dispatchers.IO) {
-                outputFile.createNewFile()
-            }
-
-        if (!didCreate) throw IllegalStateException("Cannot create file: $outputFile")
-
         val bytes = if (password != null) {
             encrypt(password, json.toByteArray())
         } else {
             json.toByteArray()
         }
-        outputFile.writeBytes(bytes)
+
+        if (!isCloud) {
+            val folder = Environment
+                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+
+            // create a file with a unique name
+            lateinit var outputFile: File
+            var index = 0
+            do {
+                val fileName = if (index == 0) name else "$name ($index)"
+                outputFile = folder.resolve("$fileName.book.plutus")
+                index++
+            } while (outputFile.exists())
+
+            val didCreate = withContext(Dispatchers.IO) {
+                outputFile.createNewFile()
+            }
+
+            if (!didCreate) throw IllegalStateException("Cannot create file: $outputFile")
+
+            outputFile.writeBytes(bytes)
+        } else {
+            Log.d("YEP", "Salam")
+            return sendData(bytes).also {
+                Log.d("YEP", it)
+            }
+        }
     } catch (e: IOException) {
-        return false
+        Log.d("YEP", e.toString())
+        return null
     }
-    return true
+    return ""
 }

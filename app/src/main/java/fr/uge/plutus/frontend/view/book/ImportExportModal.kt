@@ -3,6 +3,7 @@ package fr.uge.plutus.frontend.view.book
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -103,34 +104,32 @@ fun ImportExportModal(
     }
 
     if (!isImport && submit) {
-        if (isCloud) {
-            Toast.makeText(
-                currentContext,
-                "Cloud import not implemented yet",
-                Toast.LENGTH_SHORT
-            ).show()
-            submit = false
-        } else {
-            ExportBook(
-                password.ifEmpty { null },
-                book = target,
-                name = exportName.ifBlank { target.name },
-            ) {
-                submit = false
-                Toast.makeText(currentContext, "Export successful", Toast.LENGTH_SHORT).show()
-                onDismiss()
+        ExportBook(
+            password.ifEmpty { null },
+            book = target,
+            name = exportName.ifBlank { target.name },
+            isCloud = isCloud,
+        ) {
+            if (it == null) {
+                Toast.makeText(currentContext, "Invalid password", Toast.LENGTH_SHORT).show()
+                return@ExportBook
             }
+            // TODO it is the token
+            submit = false
+            Toast.makeText(currentContext, "Export successful", Toast.LENGTH_SHORT).show()
+            onDismiss()
         }
     }
 
-    LaunchedEffect(importingUri) {
-        if (importingUri == null) return@LaunchedEffect
+    LaunchedEffect(importingUri, submit) {
+        if (!isImport || (!isCloud && importingUri == null)) return@LaunchedEffect
 
         val importResult = importBook(
             password = password.ifEmpty { null },
-            fileUri = importingUri!!,
+            fileUri = if (isCloud) null else importingUri,
             context = currentContext,
-            target.uuid
+            token = cloudKey.ifBlank { null },
+            mergeDestinationBook = target.uuid
         )
         if (!importResult) {
             Toast.makeText(currentContext, "Invalid password", Toast.LENGTH_SHORT).show()
@@ -146,11 +145,6 @@ fun ImportExportModal(
         if (!submit || !isImport) return@LaunchedEffect
 
         if (isCloud) {
-            Toast.makeText(
-                currentContext,
-                "Cloud import not implemented yet",
-                Toast.LENGTH_SHORT
-            ).show()
             submit = false
             return@LaunchedEffect
         }
