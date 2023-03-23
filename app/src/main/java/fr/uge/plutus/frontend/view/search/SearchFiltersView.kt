@@ -1,6 +1,5 @@
 package fr.uge.plutus.frontend.view.search
 
-import android.util.Log
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
@@ -469,14 +468,22 @@ fun FilterSaveComponent(onDismiss: () -> Unit) {
 @Composable
 fun FilterLoadComponent(onDismiss: () -> Unit) {
     val globalState = globalState()
-    var filters by remember { mutableStateOf(listOf<Filter>()) }
+    val filters = remember { mutableStateListOf<Filter>() }
     var toImport by remember { mutableStateOf<Filter?>(null) }
+    var toDelete by remember { mutableStateOf<Filter?>(null) }
 
     LaunchedEffect(Unit) {
-        filters = Database
+        filters += Database
             .filters()
             .findAllByBookId(globalState.currentBook!!.uuid)
-        Log.d("YEP", "Filters: $filters")
+    }
+
+    LaunchedEffect(toDelete) {
+        if (toDelete == null) return@LaunchedEffect
+
+        Database.filters().delete(toDelete!!)
+        filters.remove(toDelete!!)
+        toDelete = null
     }
 
     LaunchedEffect(toImport) {
@@ -512,7 +519,7 @@ fun FilterLoadComponent(onDismiss: () -> Unit) {
                                 modifier = Modifier.weight(1f),
                                 text = it.name,
                             )
-                            IconButton(onClick = { /*TODO*/ }) {
+                            IconButton(onClick = { toDelete = it }) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.close),
                                     contentDescription = null,
