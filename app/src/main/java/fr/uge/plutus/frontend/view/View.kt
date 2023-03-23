@@ -14,15 +14,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import fr.uge.plutus.R
 import fr.uge.plutus.frontend.store.globalState
-import fr.uge.plutus.frontend.view.book.BookCreationView
-import fr.uge.plutus.frontend.view.book.BookOverviewLoader
-import fr.uge.plutus.frontend.view.book.BookSelectionView
-import fr.uge.plutus.frontend.view.book.ImportExportState
+import fr.uge.plutus.frontend.view.book.*
 import fr.uge.plutus.frontend.view.search.SearchFiltersView
 import fr.uge.plutus.frontend.view.transaction.TransactionCreationView
 import fr.uge.plutus.frontend.view.transaction.TransactionDetails
 import fr.uge.plutus.frontend.view.transaction.TransactionHeader
-import fr.uge.plutus.frontend.view.transaction.TransactionListView
 import kotlinx.coroutines.launch
 
 enum class View(
@@ -125,6 +121,7 @@ enum class View(
                         }
                         DropdownMenuItem(onClick = {
                             showMenu = false
+                            globalState.deletingBook = true
                         }) {
                             Text("Delete book")
                         }
@@ -132,20 +129,7 @@ enum class View(
                 }
             )
         },
-        contentComponent = {
-            val globalState = globalState()
-            TransactionListView()
-
-            val importExportState = globalState.importExportState
-            if (importExportState.isNotNone) {
-                fr.uge.plutus.frontend.view.book.ImportExportModal(
-                    globalState.currentBook!!,
-                    isImport = importExportState.isImport
-                ) {
-                    globalState.importExportState = ImportExportState.NONE
-                }
-            }
-        },
+        contentComponent = { BookTransactionsListView() },
         drawerComponent = { SearchFiltersView() },
         fabComponent = {
             val globalState = globalState()

@@ -23,6 +23,7 @@ interface GlobalState {
     var scaffoldState: ScaffoldState
     var globalFilters: GlobalFilters
     var importExportState: ImportExportState
+    var deletingBook: Boolean
 }
 
 @Composable
@@ -43,6 +44,7 @@ fun initGlobalState(): GlobalState {
             mutableStateOf(permission == PackageManager.PERMISSION_GRANTED)
         }
         override var importExportState by rememberSaveable { mutableStateOf(ImportExportState.NONE) }
+        override var deletingBook by rememberSaveable { mutableStateOf(false) }
     }
 
     return globalState

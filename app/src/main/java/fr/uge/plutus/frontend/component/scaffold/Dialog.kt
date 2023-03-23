@@ -24,7 +24,7 @@ fun Dialog(
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(4.dp),
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
@@ -48,17 +48,11 @@ fun Dialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
                     ) {
                         TextButton(
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = MaterialTheme.colors.secondary
-                            ),
                             onClick = { onClose(false) }
                         ) {
                             Text(text = cancelButtonText)
                         }
                         TextButton(
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = MaterialTheme.colors.secondary
-                            ),
                             onClick = { onClose(true) }
                         ) {
                             Text(text = submitButtonText)
