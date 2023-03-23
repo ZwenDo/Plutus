@@ -27,6 +27,7 @@ interface GlobalState {
     var deletingBook: Boolean
     var deletingTransaction: Boolean
     var displaySorting: Boolean
+    var locationPermission: Boolean
 }
 
 @Composable
@@ -43,6 +44,13 @@ fun initGlobalState(): GlobalState {
             val permission = ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            )
+            mutableStateOf(permission == PackageManager.PERMISSION_GRANTED)
+        }
+        override var locationPermission: Boolean by rememberSaveable {
+            val permission = ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
             )
             mutableStateOf(permission == PackageManager.PERMISSION_GRANTED)
         }
