@@ -81,7 +81,7 @@ data class FilterDTO(
 
     fun toFilter(originalBookId: UUID, bookId: UUID): Filter = Filter(
         name,
-        filterId,
+        bookId,
         criteria,
         if (bookId != originalBookId) UUID.randomUUID() else filterId,
     )

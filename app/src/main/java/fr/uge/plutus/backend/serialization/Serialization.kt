@@ -95,7 +95,6 @@ private suspend fun Transaction.toDTO(
     val attachmentDao = database?.attachments() ?: Database.attachments()
 
     val tags = tagDao.findTagIdsByTransactionId(transactionId)
-    Log.d("Export", tags.toString())
     val attachments = attachmentDao.findAllByTransactionId(transactionId).map { it.toDTO() }
     return TransactionDTO(
         transactionId,
@@ -121,19 +120,18 @@ private fun Attachment.toDTO(): AttachmentDTO = AttachmentDTO(
     uri
 )
 
-private fun Filter.toDTO(): FilterDTO {
-    return FilterDTO(
-        filterId,
-        name,
-        criterias,
-TODO()//        tags,
-    )
-}
+private fun Filter.toDTO(tags: List<UUID>): FilterDTO = FilterDTO(
+    filterId,
+    name,
+    criterias,
+    tags,
+)
 
 private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null): BookDTO {
     val transactionDao = database?.transactions() ?: Database.transactions()
     val tagDao = database?.tags() ?: Database.tags()
     val filterDao = database?.filters() ?: Database.filters()
+    val tagFilterDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
 
     val transactions = transactionDao
         .run {
@@ -146,7 +144,10 @@ private suspend fun Book.toDTO(exportTags: Set<Tag>, database: Database? = null)
         }
         .map { it.toDTO(database) }
     val tags = tagDao.findByBookId(uuid).map { it.toDTO() }
-    val filters = filterDao.findAllByBookId(uuid).map { it.toDTO() }
+    val filters = filterDao.findAllByBookId(uuid).map {
+        val filterTags = tagFilterDao.findTagsByFilter(it.filterId).map { tag -> tag.tagId }
+        it.toDTO(filterTags)
+    }
     return BookDTO(
         uuid,
         name,
@@ -175,7 +176,13 @@ private suspend fun BookDTO.loadToDB(database: Database? = null, bookId: UUID) {
         val filter = it.toFilter(uuid, bookId)
         filterDao.upsert(filter)
         it.tags.forEach { id ->
-
+            tagFilterDao.upsert(
+                TagFilterJoin(
+                    tagMap[id]!!,
+                    filter.filterId,
+                    bookId
+                )
+            )
         }
     }
 
