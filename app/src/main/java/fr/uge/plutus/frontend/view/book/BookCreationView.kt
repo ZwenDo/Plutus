@@ -32,7 +32,6 @@ import fr.uge.plutus.frontend.view.View
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun BookCreatorPreview() {
@@ -49,7 +48,6 @@ private suspend fun defaultTags(book: Book) =
         tag.insert("=Standard", book.uuid, null)
     }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BookCreationView() {
     val globalState = globalState()

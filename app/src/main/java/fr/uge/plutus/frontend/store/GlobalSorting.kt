@@ -1,13 +1,15 @@
 package fr.uge.plutus.frontend.store
 
+import androidx.compose.ui.res.stringResource
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.Transaction
 
 enum class SortField(
-    val displayName: String,
+    val displayName: Int,
     val comparator: Comparator<Transaction>,
 ) {
-    DATE("Date", { t1, t2 -> t1.date.compareTo(t2.date) }),
-    AMOUNT("Amount", { t1, t2 -> t1.amount.compareTo(t2.amount) }),
+    DATE(R.string.date, { t1, t2 -> t1.date.compareTo(t2.date) }),
+    AMOUNT(R.string.amount, { t1, t2 -> t1.amount.compareTo(t2.amount) }),
 }
 
 class GlobalSorting(

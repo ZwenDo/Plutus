@@ -34,16 +34,16 @@ fun ImportBookModal(
 ) {
     Dialog(
         open = true,
-        title = "Import in “${book.name}”",
-        submitButtonText = "IMPORT",
+        title = stringResource(R.string.import_in_book_name).format(book.name),
+        submitButtonText = stringResource(R.string.import_button),
         onClose = {}
     ) {
         Column(
             Modifier.padding(24.dp, 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(text = "This book is password protected. Please enter the password to decrypt the file.")
-            InputText(label = "Password", value = "", onValueChange = {})
+            Text(text = stringResource(R.string.this_book_is_password_protected))
+            InputText(label = stringResource(R.string.password), value = "", onValueChange = {})
         }
     }
 }
@@ -61,16 +61,16 @@ fun ExportBookModal(
 ) {
     Dialog(
         open = true,
-        title = "Export “${book.name}”",
-        submitButtonText = "EXPORT",
+        title = stringResource(R.string.export_book).format(book.name),
+        submitButtonText = stringResource(R.string.export_maj),
         onClose = {}
     ) {
         Column(
             Modifier.padding(24.dp, 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            InputText(label = "Output file name", value = "", onValueChange = {})
-            InputText(label = "Password", value = "", onValueChange = {})
+            InputText(label = stringResource(R.string.output_file_name), value = "", onValueChange = {})
+            InputText(label = stringResource(R.string.password), value = "", onValueChange = {})
         }
     }
 }

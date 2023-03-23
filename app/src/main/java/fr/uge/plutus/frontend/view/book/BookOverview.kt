@@ -238,13 +238,12 @@ fun EmptyTransactionListPlaceholder() {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Empty book",
+            text = stringResource(R.string.empty_book),
             style = MaterialTheme.typography.h5,
             textAlign = TextAlign.Center,
         )
         Text(
-            //R.string.no_transactions_yet_visit
-            text = "Your book doesn't have any transaction yet.\n Create one to get started.",
+            text = stringResource(R.string.no_transactions_yet_visit),
             style = MaterialTheme.typography.body1,
             color = Color.Gray,
             textAlign = TextAlign.Center,
@@ -253,7 +252,7 @@ fun EmptyTransactionListPlaceholder() {
         TextButton(onClick = {
             globalState.currentView = View.TRANSACTION_CREATION
         }) {
-            Text("CREATE A TRANSACTION")
+            Text(stringResource(R.string.create_a_transaction))
         }
     }
 }

@@ -13,9 +13,11 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import fr.uge.plutus.R
 import fr.uge.plutus.backend.Tag
 import fr.uge.plutus.frontend.component.scaffold.Dialog
 import java.util.*
@@ -43,7 +45,7 @@ fun TagSelector(
         }
     }
 
-    Dialog(open = open, title = "Select tags", onClose = { submit ->
+    Dialog(open = open, title = stringResource(R.string.select_tags), onClose = { submit ->
         if (submit) {
             onClose(tags.filter { selection.contains(it.tagId) })
         } else {
@@ -83,7 +85,7 @@ fun TagSelector(
         } else {
             Text(
                 modifier = Modifier.padding(24.dp, 64.dp).fillMaxWidth(),
-                text = "No tags found",
+                text = stringResource(R.string.no_tags_found),
                 style = MaterialTheme.typography.body1,
                 textAlign = TextAlign.Center,
             )

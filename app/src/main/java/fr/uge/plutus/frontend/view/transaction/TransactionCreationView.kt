@@ -265,7 +265,7 @@ fun TransactionCreationView() {
             ) {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
-                    contentDescription = "My location"
+                    contentDescription = stringResource(R.string.my_location)
                 )
             }
         }

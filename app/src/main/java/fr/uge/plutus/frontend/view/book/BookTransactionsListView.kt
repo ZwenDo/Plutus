@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import fr.uge.plutus.R
 import fr.uge.plutus.backend.Book
@@ -37,6 +38,8 @@ fun BookTransactionsListView() {
 
     var delete by remember { mutableStateOf(false) }
 
+    val bookDeleteMessage = stringResource(id = R.string.book_deleted)
+
     TransactionListView()
 
     val importExportState = globalState.importExportState
@@ -55,7 +58,7 @@ fun BookTransactionsListView() {
             globalState.deletingBook = false
             globalState.currentBook = null
             deleteBook(book)
-            Toast.makeText(context, "Book “${book.name}” deleted", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, bookDeleteMessage.format(book.name), Toast.LENGTH_SHORT).show()
             delete = false
         }
     }
@@ -77,26 +80,26 @@ fun BookTransactionsListView() {
             onDismissRequest = { globalState.deletingBook = false },
             title = {
                 Text(
-                    "Delete book “${book.name}”",
+                    stringResource(R.string.delete_book_name).format(book.name),
                     style = MaterialTheme.typography.h6
                 )
             },
             text = {
                 Text(
-                    "Are you sure you want to delete this book? This action cannot be undone.",
+                    stringResource(R.string.are_you_sure_you_want_to_delete),
                     style = MaterialTheme.typography.body1
                 )
             },
             confirmButton = {
                 TextButton(onClick = { delete = true }) {
-                    Text("DELETE")
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = {
                     globalState.deletingBook = false
                 }) {
-                    Text("CANCEL")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -112,7 +115,7 @@ fun TransactionSortingDialog(onDismiss: () -> Unit = {}) {
     Dialog(
         open = true,
         displayCancelButton = false,
-        title = "Sorting",
+        title = stringResource(R.string.sorting),
         onClose = {
             if (it) {
                 globalState.globalSorting = currentSorting
@@ -131,7 +134,7 @@ fun TransactionSortingDialog(onDismiss: () -> Unit = {}) {
                     ) {
                         Text(
                             modifier = Modifier.weight(1f),
-                            text = it.displayName,
+                            text = stringResource(it.displayName),
                         )
 
                         val current = currentSorting
@@ -168,6 +171,9 @@ fun BookDuplicationDialog(
     var duplicateInProgress by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
+    val bookCreatedMessage = stringResource(id = R.string.book_created)
+    val bookNameCannotBeBlancMessage = stringResource(R.string.book_name_cannot_be_blank)
+
     LaunchedEffect(duplicateInProgress) {
         if (!duplicateInProgress) return@LaunchedEffect
 
@@ -176,7 +182,7 @@ fun BookDuplicationDialog(
         globalState.duplicatingBook = false
         Toast.makeText(
             context,
-            "Book “${copy.name}” created",
+            bookCreatedMessage.format(copy.name),
             Toast.LENGTH_SHORT
         ).show()
 
@@ -186,15 +192,15 @@ fun BookDuplicationDialog(
 
     Dialog(
         open = true,
-        title = "Duplicate book",
-        submitButtonText = "DUPLICATE",
+        title = stringResource(R.string.duplicate_book),
+        submitButtonText = stringResource(R.string.duplicate),
         onClose = {
             if (!it) {
                 onDismiss()
                 return@Dialog
             }
             if (bookName.isBlank()) {
-                errorMessage = "Book name cannot be blank"
+                errorMessage = bookNameCannotBeBlancMessage
                 return@Dialog
             }
             duplicateInProgress = true
@@ -205,7 +211,7 @@ fun BookDuplicationDialog(
                 .padding(24.dp, 16.dp)
         ) {
             InputText(
-                label = "New Book Name",
+                label = stringResource(R.string.new_book_name),
                 value = bookName,
                 errorMessage = errorMessage
             ) {

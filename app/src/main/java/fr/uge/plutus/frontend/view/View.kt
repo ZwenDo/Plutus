@@ -1,6 +1,7 @@
 package fr.uge.plutus.frontend.view
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -20,7 +21,6 @@ import fr.uge.plutus.frontend.view.transaction.TransactionDetails
 import fr.uge.plutus.frontend.view.transaction.TransactionHeader
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
-import fr.uge.plutus.R
 
 enum class View(
     val headerComponent: @Composable () -> Unit,
@@ -86,7 +86,7 @@ enum class View(
             TopAppBar(
                 title = {
                     Text(
-                        "Transactions: ${globalState.currentBook?.name}",
+                        stringResource(R.string.transaction_book_name).format(globalState.currentBook?.name),
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1,
                     )
@@ -97,7 +97,7 @@ enum class View(
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.sort),
-                            "Sort"
+                            stringResource(R.string.sort)
                         )
                     }
                     IconButton(onClick = {
@@ -107,7 +107,7 @@ enum class View(
                     }) {
                         Icon(
                             painter = painterResource(id = R.drawable.filter),
-                            "Filters"
+                            stringResource(R.string.filters)
                         )
                     }
                     IconButton(onClick = { showMenu = !showMenu }) {
@@ -121,25 +121,25 @@ enum class View(
                             showMenu = false
                             globalState.importExportState = ImportExportState.IMPORT
                         }) {
-                            Text("Import")
+                            Text(stringResource(R.string.import_))
                         }
                         DropdownMenuItem(onClick = {
                             showMenu = false
                             globalState.importExportState = ImportExportState.EXPORT
                         }) {
-                            Text("Export")
+                            Text(stringResource(R.string.export))
                         }
                         DropdownMenuItem(onClick = {
                             showMenu = false
                             globalState.duplicatingBook = true
                         }) {
-                            Text("Duplicate book")
+                            Text(stringResource(R.string.duplicate_book))
                         }
                         DropdownMenuItem(onClick = {
                             showMenu = false
                             globalState.deletingBook = true
                         }) {
-                            Text("Delete book")
+                            Text(stringResource(R.string.delete_book))
                         }
                     }
                 }
@@ -189,7 +189,7 @@ enum class View(
                                 showMenu = false
                                 globalState.deletingTransaction = true
                             }) {
-                                Text("Delete transaction")
+                                Text(stringResource(R.string.delete_transaction))
                             }
                         }
                     })
