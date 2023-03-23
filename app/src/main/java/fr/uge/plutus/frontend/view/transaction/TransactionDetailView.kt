@@ -91,7 +91,7 @@ private fun createMapWithLocation(latitude: Double, longitude: Double): ImageBit
     val canvas = Canvas(mapBitmap)
     val radius = minOf(canvas.width, canvas.height) / 50f
     val x = (longitude + 180.0) / 360.0 * canvas.width
-    val y = (latitude + 90.0) / 180.0 * canvas.height
+    val y = (90.0 - latitude) / 180.0 * canvas.height
     canvas.drawCircle(
         x.toFloat(),
         y.toFloat(),
