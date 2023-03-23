@@ -1,5 +1,8 @@
 package fr.uge.plutus.frontend.view.search
 
+import android.util.Log
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
@@ -13,19 +16,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import fr.uge.plutus.R
-import fr.uge.plutus.backend.Database
-import fr.uge.plutus.backend.Tag
-import fr.uge.plutus.backend.TagType
+import fr.uge.plutus.backend.*
 import fr.uge.plutus.frontend.component.form.InputDate
 import fr.uge.plutus.frontend.component.form.InputText
 import fr.uge.plutus.frontend.store.GlobalFilters
-import fr.uge.plutus.frontend.store.GlobalFiltersWrapper
 import fr.uge.plutus.frontend.store.globalState
+import fr.uge.plutus.ui.theme.Gray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -68,8 +70,10 @@ private fun checkFilters(filters: GlobalFilters): Map<FilterFields, String> {
         errors[FilterFields.TO_AMOUNT] = "To amount must be after from amount"
     }
     if (filters.latitude.isNotEmpty() != filters.longitude.isNotEmpty()) {
-        errors[FilterFields.AREA_LATITUDE] = "Latitude and longitude must be either both set of both unset"
-        errors[FilterFields.AREA_LONGITUDE] = "Latitude and longitude must be either both set of both unset"
+        errors[FilterFields.AREA_LATITUDE] =
+            "Latitude and longitude must be either both set of both unset"
+        errors[FilterFields.AREA_LONGITUDE] =
+            "Latitude and longitude must be either both set of both unset"
     }
     if (filters.latitude.isNotEmpty() && filters.longitude.isNotEmpty() && filters.radius.isEmpty()) {
         errors[FilterFields.AREA_RADIUS] = "Radius must be set if latitude and longitude are set"
@@ -79,10 +83,12 @@ private fun checkFilters(filters: GlobalFilters): Map<FilterFields, String> {
         val lon = filters.longitude.toDoubleOrNull()
         val radius = filters.radius.toDoubleOrNull()
         if (lat == null || lat < -90 || lat > 90) {
-            errors[FilterFields.AREA_LATITUDE] = "Latitude must be a valid number between -90 and 90"
+            errors[FilterFields.AREA_LATITUDE] =
+                "Latitude must be a valid number between -90 and 90"
         }
         if (lon == null || lon < -180 || lon > 180) {
-            errors[FilterFields.AREA_LONGITUDE] = "Longitude must be a valid number between -180 and 180"
+            errors[FilterFields.AREA_LONGITUDE] =
+                "Longitude must be a valid number between -180 and 180"
         }
         if (radius == null || radius < 0) {
             errors[FilterFields.AREA_RADIUS] = "Radius must be a valid number greater than 0"
@@ -473,7 +479,7 @@ fun SearchFilters(
 @Preview(showBackground = true)
 @Composable
 fun SearchFiltersPreview() {
-    val globalFilters = GlobalFiltersWrapper()
+    val globalFilters = GlobalFilters.new()
     SearchFilters(globalFilters)
 }
 
@@ -483,11 +489,25 @@ fun SearchFiltersView() {
 
     val globalState = globalState()
     var availableTags by remember { mutableStateOf(emptyList<Tag>()) }
+    var saveClicked by remember { mutableStateOf(false) }
+    var loadClicked by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        globalState.globalFilters = GlobalFiltersWrapper()
+        globalState.globalFilters = GlobalFilters.new()
         withContext(Dispatchers.IO) {
             availableTags = Database.tags().findByBookId(globalState.currentBook!!.uuid)
+        }
+    }
+
+    if (saveClicked) {
+        FilterSaveComponent {
+            saveClicked = false
+        }
+    }
+
+    if (loadClicked) {
+        FilterLoadComponent {
+            loadClicked = false
         }
     }
 
@@ -505,8 +525,124 @@ fun SearchFiltersView() {
     SearchFilters(
         globalFilters = globalState.globalFilters,
         onOpenTagSelector = { openTagSelector = true },
-        onResetFilter = { globalState.globalFilters = GlobalFiltersWrapper() },
+        onResetFilter = { globalState.globalFilters = GlobalFilters.new() },
+        onSaveFilter = { saveClicked = true },
+        onLoadFilter = { loadClicked = true },
     ) {
         globalState.globalFilters = it
+    }
+}
+
+@Composable
+fun FilterSaveComponent(onDismiss: () -> Unit) {
+    var filterName by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var buttonClicked by remember { mutableStateOf(false) }
+    val globalState = globalState()
+
+    LaunchedEffect(buttonClicked) {
+        if (!buttonClicked) return@LaunchedEffect
+
+        Database
+            .filters()
+            .insertFromGlobalFilters(
+                filterName,
+                globalState.currentBook!!.uuid,
+                globalState.globalFilters
+            )
+
+        onDismiss()
+    }
+
+    Dialog(onDismissRequest = { onDismiss() }) {
+        Surface(shape = RoundedCornerShape(8.dp)) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = "Save filter",
+                    style = MaterialTheme.typography.h6,
+                )
+                InputText(
+                    label = "Filter name",
+                    value = filterName,
+                    errorMessage = errorMessage,
+                ) {
+                    errorMessage = null
+                    filterName = it
+                }
+                Button(
+                    onClick = {
+                        if (filterName.isNotBlank()) {
+                            buttonClicked = true
+                        } else {
+                            errorMessage = "Filter name cannot be blank"
+                        }
+                    }
+                ) {
+                    Text(text = "Save")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FilterLoadComponent(onDismiss: () -> Unit) {
+    val globalState = globalState()
+    var filters by remember { mutableStateOf(listOf<Filter>()) }
+    var toImport by remember { mutableStateOf<Filter?>(null) }
+
+    LaunchedEffect(Unit) {
+        filters = Database
+            .filters()
+            .findAllByBookId(globalState.currentBook!!.uuid)
+        Log.d("YEP", "Filters: $filters")
+    }
+
+    LaunchedEffect(toImport) {
+        if (toImport == null) return@LaunchedEffect
+
+        globalState.globalFilters = toImport!!.toGlobalFilters()
+        onDismiss()
+    }
+
+    Dialog(onDismissRequest = { onDismiss() }) {
+        Surface(shape = RoundedCornerShape(8.dp)) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = "Load filter",
+                    style = MaterialTheme.typography.h6,
+                )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .scrollable(rememberScrollState(), orientation = Orientation.Vertical),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    items(filters) {
+                        Text(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(4.dp)
+                                .border(1.dp, Gray, RoundedCornerShape(8.dp))
+                                .padding(4.dp)
+                                .clickable {
+                                    toImport = it
+                                },
+                            textAlign = TextAlign.Center,
+                            text = it.name
+                        )
+                    }
+                }
+            }
+        }
     }
 }

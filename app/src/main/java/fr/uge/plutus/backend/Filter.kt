@@ -1,5 +1,6 @@
 package fr.uge.plutus.backend
 
+import android.util.Log
 import androidx.room.*
 import fr.uge.plutus.frontend.store.GlobalFilters
 import fr.uge.plutus.util.ifNotBlank
@@ -10,7 +11,6 @@ import java.util.*
 enum class Criteria(val value: String) {
     MIN_AMOUNT("minAmount"),
     MAX_AMOUNT("maxAmount"),
-    CURRENCY("currency"),
     MIN_DATE("minDate"),
     MAX_DATE("maxDate"),
     AREA_RANGE("areaRange"),
@@ -55,7 +55,6 @@ data class Filter(
         var description: String? = null
         var minAmount: Double? = null
         var maxAmount: Double? = null
-        var currency: Currency? = null
         var minDate: Date? = null
         var maxDate: Date? = null
         var latitude: Double? = null
@@ -66,7 +65,6 @@ data class Filter(
         fun build(): Filter {
             val vMinAmount = minAmount
             val vMaxAmount = maxAmount
-            val vCurrency = currency
             val vMinDate = minDate
             val vMaxDate = maxDate
 
@@ -80,10 +78,6 @@ data class Filter(
                 require(vMinAmount <= vMaxAmount) { "Min amount must be lower than max amount" }
             }
 
-            if (vMinAmount != null || vMaxAmount != null) {
-                require(vCurrency != null) { "Currency must be specified" }
-            }
-
             if (vMinDate != null && vMaxDate != null) {
                 require(vMinDate <= vMaxDate) { "Min date must be lower than max date" }
             }
@@ -93,9 +87,6 @@ data class Filter(
             }
             if (vMaxAmount != null) {
                 criterias[Criteria.MAX_AMOUNT.value] = vMaxAmount.toString()
-            }
-            if (vCurrency != null) {
-                criterias[Criteria.CURRENCY.value] = vCurrency.toString()
             }
             if (vMinDate != null) {
                 criterias[Criteria.MIN_DATE.value] = vMinDate.time.toString()
@@ -133,11 +124,17 @@ interface FilterDao {
     @Delete
     suspend fun delete(filter: Filter)
 
+    @Update
+    suspend fun update(filter: Filter)
+
     @Query("SELECT * FROM filters WHERE bookId = :bookId")
     suspend fun findAllByBookId(bookId: UUID): List<Filter>
 
     @Query("SELECT * FROM filters WHERE filterId = :id LIMIT 1")
     suspend fun findById(id: UUID): Filter?
+
+    @Query("SELECT * FROM filters WHERE name = :name AND bookId = :bookId LIMIT 1")
+    suspend fun findByNameAndBookId(name: String, bookId: UUID): Filter?
 
     suspend fun insertFromGlobalFilters(
         name: String,
@@ -145,8 +142,18 @@ interface FilterDao {
         globalFilters: GlobalFilters,
         database: Database? = null
     ) {
-        val filter = globalFilters.toFilter(name, bookId)
-        insert(filter)
+
+        val old = findByNameAndBookId(name, bookId)
+        val new = globalFilters.toFilter(name, bookId)
+        val filter = if (old != null) {
+            new.copy(filterId = old.filterId).also {
+                update(it)
+            }
+        } else {
+            Log.d("YEP", "Here")
+            insert(new)
+            new
+        }
 
         val tagFilterJoinDao = database?.tagFilterJoin() ?: Database.tagFilterJoin()
 
