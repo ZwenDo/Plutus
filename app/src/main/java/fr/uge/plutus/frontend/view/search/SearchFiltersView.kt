@@ -9,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -28,8 +27,69 @@ import fr.uge.plutus.frontend.store.GlobalFilters
 import fr.uge.plutus.frontend.store.GlobalFiltersWrapper
 import fr.uge.plutus.frontend.store.globalState
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
+
+private enum class FilterFields {
+    DESCRIPTION,
+    FROM_DATE,
+    TO_DATE,
+    FROM_AMOUNT,
+    TO_AMOUNT,
+    AREA_LATITUDE,
+    AREA_LONGITUDE,
+    AREA_RADIUS,
+}
+
+val DATE_REGEX = Regex("""\d{1,2}/\d{1,2}/\d{4}""")
+
+private fun checkFilters(filters: GlobalFilters): Map<FilterFields, String> {
+    val errors = mutableMapOf<FilterFields, String>()
+    if (filters.fromDate.isNotEmpty() && filters.toDate.isNotEmpty() && filters.fromDate > filters.toDate) {
+        errors[FilterFields.FROM_DATE] = "From date must be before to date"
+        errors[FilterFields.TO_DATE] = "To date must be after from date"
+    }
+    if (filters.fromDate.isNotEmpty() && !filters.fromDate.matches(DATE_REGEX)) {
+        errors[FilterFields.FROM_DATE] = "From date must be valid"
+    }
+    if (filters.toDate.isNotEmpty() && !filters.toDate.matches(DATE_REGEX)) {
+        errors[FilterFields.TO_DATE] = "To date must be valid"
+    }
+    // check if amount is a valid number
+    if (filters.fromAmount.isNotEmpty() && filters.fromAmount.toDoubleOrNull() == null) {
+        errors[FilterFields.FROM_AMOUNT] = "From amount must be a valid number"
+    }
+    if (filters.toAmount.isNotEmpty() && filters.toAmount.toDoubleOrNull() == null) {
+        errors[FilterFields.TO_AMOUNT] = "To amount must be a valid number"
+    }
+    if (filters.fromAmount.isNotEmpty() && filters.toAmount.isNotEmpty() && filters.fromAmount.toDouble() > filters.toAmount.toDouble()) {
+        errors[FilterFields.FROM_AMOUNT] = "From amount must be before to amount"
+        errors[FilterFields.TO_AMOUNT] = "To amount must be after from amount"
+    }
+    if (filters.latitude.isNotEmpty() != filters.longitude.isNotEmpty()) {
+        errors[FilterFields.AREA_LATITUDE] = "Latitude and longitude must be either both set of both unset"
+        errors[FilterFields.AREA_LONGITUDE] = "Latitude and longitude must be either both set of both unset"
+    }
+    if (filters.latitude.isNotEmpty() && filters.longitude.isNotEmpty() && filters.radius.isEmpty()) {
+        errors[FilterFields.AREA_RADIUS] = "Radius must be set if latitude and longitude are set"
+    }
+    if (filters.latitude.isNotEmpty() && filters.longitude.isNotEmpty() && filters.radius.isNotEmpty()) {
+        val lat = filters.latitude.toDoubleOrNull()
+        val lon = filters.longitude.toDoubleOrNull()
+        val radius = filters.radius.toDoubleOrNull()
+        if (lat == null || lat < -90 || lat > 90) {
+            errors[FilterFields.AREA_LATITUDE] = "Latitude must be a valid number between -90 and 90"
+        }
+        if (lon == null || lon < -180 || lon > 180) {
+            errors[FilterFields.AREA_LONGITUDE] = "Longitude must be a valid number between -180 and 180"
+        }
+        if (radius == null || radius < 0) {
+            errors[FilterFields.AREA_RADIUS] = "Radius must be a valid number greater than 0"
+        }
+    }
+    return errors
+}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -162,7 +222,6 @@ fun TagSelectorPreview() {
     }
 }
 
-
 @Composable
 fun SearchFilters(
     globalFilters: GlobalFilters,
@@ -172,11 +231,14 @@ fun SearchFilters(
     onOpenTagSelector: () -> Unit = {},
     onFilterUpdate: (GlobalFilters) -> Unit = {},
 ) {
-    var filterDetails by rememberSaveable { mutableStateOf(false) }
-    var filterDates by rememberSaveable { mutableStateOf(false) }
-    var filterAmount by rememberSaveable { mutableStateOf(false) }
-    var filterTags by rememberSaveable { mutableStateOf(false) }
-    var filterArea by rememberSaveable { mutableStateOf(false) }
+    val globalState = globalState()
+    val coroutineScope = rememberCoroutineScope()
+    var errors by remember { mutableStateOf(emptyMap<FilterFields, String>()) }
+
+    fun updateFilters(globalFilters: GlobalFilters) {
+        errors = emptyMap()
+        onFilterUpdate(globalFilters)
+    }
 
     Column(Modifier.fillMaxSize()) {
         Surface(elevation = 12.dp) {
@@ -222,21 +284,13 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filterDetails, onCheckedChange = {
-                                filterDetails = it
-                            })
-                            Text("Transaction details", style = MaterialTheme.typography.h6)
-                        }
+                        Text("Transaction details", style = MaterialTheme.typography.h6)
                         InputText(
                             label = "Description",
                             value = globalFilters.description,
-                            enabled = filterDetails
+                            errorMessage = errors[FilterFields.DESCRIPTION],
                         ) {
-                            onFilterUpdate(globalFilters.copy { description = it })
+                            updateFilters(globalFilters.copy { description = it })
                         }
                     }
                     Divider()
@@ -248,20 +302,12 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filterDates, onCheckedChange = {
-                                filterDates = it
-                            })
-                            Text("Date range", style = MaterialTheme.typography.h6)
+                        Text("Date range", style = MaterialTheme.typography.h6)
+                        InputDate(label = "From", errorMessage = errors[FilterFields.FROM_DATE]) {
+                            updateFilters(globalFilters.copy { fromDate = it })
                         }
-                        InputDate(label = "From", enabled = filterDates) {
-                            onFilterUpdate(globalFilters.copy { fromDate = it })
-                        }
-                        InputDate(label = "To", enabled = filterDates) {
-                            onFilterUpdate(globalFilters.copy { toDate = it })
+                        InputDate(label = "To", errorMessage = errors[FilterFields.TO_DATE]) {
+                            updateFilters(globalFilters.copy { toDate = it })
                         }
                     }
                     Divider()
@@ -273,24 +319,16 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filterAmount, onCheckedChange = {
-                                filterAmount = it
-                            })
-                            Text("Amount range", style = MaterialTheme.typography.h6)
-                        }
+                        Text("Amount range", style = MaterialTheme.typography.h6)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Minimum",
                                     value = globalFilters.fromAmount,
                                     keyboardType = KeyboardType.Number,
-                                    enabled = filterAmount
+                                    errorMessage = errors[FilterFields.FROM_AMOUNT],
                                 ) {
-                                    onFilterUpdate(globalFilters.copy { fromAmount = it })
+                                    updateFilters(globalFilters.copy { fromAmount = it })
                                 }
                             }
                             Box(Modifier.weight(1f / 2f)) {
@@ -298,9 +336,9 @@ fun SearchFilters(
                                     label = "Maximum",
                                     value = globalFilters.toAmount,
                                     keyboardType = KeyboardType.Number,
-                                    enabled = filterAmount
+                                    errorMessage = errors[FilterFields.TO_AMOUNT],
                                 ) {
-                                    onFilterUpdate(globalFilters.copy { toAmount = it })
+                                    updateFilters(globalFilters.copy { toAmount = it })
                                 }
                             }
                         }
@@ -317,16 +355,8 @@ fun SearchFilters(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filterTags, onCheckedChange = {
-                                filterTags = it
-                            })
-                            Text("Tags", style = MaterialTheme.typography.h6)
-                        }
-                        TextButton(onClick = { onOpenTagSelector() }, enabled = filterTags) {
+                        Text("Tags", style = MaterialTheme.typography.h6)
+                        TextButton(onClick = { onOpenTagSelector() }) {
                             Text(text = "${globalFilters.tags.size} selected ")
                         }
                     }
@@ -339,24 +369,16 @@ fun SearchFilters(
                         Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(checked = filterArea, onCheckedChange = {
-                                filterArea = it
-                            })
-                            Text("Area range", style = MaterialTheme.typography.h6)
-                        }
+                        Text("Area range", style = MaterialTheme.typography.h6)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(Modifier.weight(1f / 2f)) {
                                 InputText(
                                     label = "Latitude",
                                     value = globalFilters.latitude,
                                     keyboardType = KeyboardType.Number,
-                                    enabled = filterArea
+                                    errorMessage = errors[FilterFields.AREA_LATITUDE],
                                 ) {
-                                    onFilterUpdate(globalFilters.copy { latitude = it })
+                                    updateFilters(globalFilters.copy { latitude = it })
                                 }
                             }
                             Box(Modifier.weight(1f / 2f)) {
@@ -364,9 +386,9 @@ fun SearchFilters(
                                     label = "Longitude",
                                     value = globalFilters.longitude,
                                     keyboardType = KeyboardType.Number,
-                                    enabled = filterArea
+                                    errorMessage = errors[FilterFields.AREA_LONGITUDE],
                                 ) {
-                                    onFilterUpdate(globalFilters.copy { longitude = it })
+                                    updateFilters(globalFilters.copy { longitude = it })
                                 }
                             }
                         }
@@ -374,9 +396,9 @@ fun SearchFilters(
                             label = "Radius",
                             value = globalFilters.radius,
                             keyboardType = KeyboardType.Number,
-                            enabled = filterArea
+                            errorMessage = errors[FilterFields.AREA_RADIUS],
                         ) {
-                            onFilterUpdate(globalFilters.copy { radius = it })
+                            updateFilters(globalFilters.copy { radius = it })
                         }
                     }
                     Divider()
@@ -423,8 +445,13 @@ fun SearchFilters(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
-
-                        onFilterUpdate(globalFilters.copy { mustApply = true })
+                        errors = checkFilters(globalFilters)
+                        if (errors.isEmpty()) {
+                            coroutineScope.launch {
+                                globalState.scaffoldState.drawerState.close()
+                            }
+                            onFilterUpdate(globalFilters.copy { mustApply = true })
+                        }
                     }
                 ) {
                     Row(
@@ -443,14 +470,12 @@ fun SearchFilters(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun SearchFiltersPreview() {
     val globalFilters = GlobalFiltersWrapper()
     SearchFilters(globalFilters)
 }
-
 
 @Composable
 fun SearchFiltersView() {
