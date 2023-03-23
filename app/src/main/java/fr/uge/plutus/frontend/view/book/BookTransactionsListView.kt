@@ -5,8 +5,7 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import fr.uge.plutus.backend.Book
 import fr.uge.plutus.backend.Database
@@ -14,7 +13,6 @@ import fr.uge.plutus.frontend.store.globalState
 import fr.uge.plutus.frontend.view.View
 import fr.uge.plutus.frontend.view.transaction.TransactionListView
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private suspend fun deleteBook(book: Book) = withContext(Dispatchers.IO) {
@@ -28,6 +26,8 @@ fun BookTransactionsListView() {
     val coroutineScope = rememberCoroutineScope()
     val book = globalState.currentBook!!
 
+    var delete by remember { mutableStateOf(false) }
+
     TransactionListView()
 
     val importExportState = globalState.importExportState
@@ -40,13 +40,14 @@ fun BookTransactionsListView() {
         }
     }
 
-    fun delete() {
-        globalState.currentView = View.BOOK_SELECTION
-        globalState.deletingBook = false
-        coroutineScope.launch {
+    LaunchedEffect(delete) {
+        if (delete) {
+            globalState.currentView = View.BOOK_SELECTION
+            globalState.deletingBook = false
             deleteBook(book)
             Toast.makeText(context, "Book “${book.name}” deleted", Toast.LENGTH_SHORT).show()
             globalState.currentBook = null
+            delete = false
         }
     }
 
@@ -66,7 +67,7 @@ fun BookTransactionsListView() {
                 )
             },
             confirmButton = {
-                TextButton(onClick = { delete() }) {
+                TextButton(onClick = { delete = true }) {
                     Text("DELETE")
                 }
             },

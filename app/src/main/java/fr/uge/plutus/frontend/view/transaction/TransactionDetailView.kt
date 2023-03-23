@@ -310,9 +310,9 @@ fun TransactionDetails(transaction: Transaction) {
     }
 
     fun delete() {
-        globalState.currentView = View.TRANSACTION_LIST
-        globalState.deletingTransaction = false
         coroutineScope.launch {
+            globalState.currentView = View.TRANSACTION_LIST
+            globalState.deletingTransaction = false
             deleteTransaction(transaction)
             Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show()
             globalState.currentTransaction = null

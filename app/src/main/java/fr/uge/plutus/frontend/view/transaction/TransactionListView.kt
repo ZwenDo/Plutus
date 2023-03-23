@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -132,12 +133,14 @@ fun EmptyTransactionListPlaceholder() {
     ) {
         Text(
             text = "No transaction found",
-            style = MaterialTheme.typography.h5
+            style = MaterialTheme.typography.h5,
+            textAlign = TextAlign.Center,
         )
         Text(
             text = "Click on the button below to create a new one",
             style = MaterialTheme.typography.body1,
-            color = Color.Gray
+            color = Color.Gray,
+            textAlign = TextAlign.Center,
         )
     }
 }
